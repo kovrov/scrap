@@ -128,24 +128,41 @@ class Board:
 		elif rank == "knight":
 			return self.__knight_moves(index, enemy_and_empty)
 		elif rank == "pawn":
-			return self.__pawn_moves(index, enemy_and_empty, (color == "white"))
+			if (color == "white"):
+				return self.__pawn_moves_up(index, enemy_and_empty)
+			else:
+				return self.__pawn_moves_down(index, enemy_and_empty)
 		elif rank == "king":
 			return self.__king_moves(index, enemy_and_empty)
 
+#-------------------------------------8<-----------------------------cut-it-out-
 
-	def __pawn_moves(self, index, enemy_and_empty, up):
-		#pawn_captures = moves.pawn_captures[index] & (enemy_and_empty & self.occupied)
+	def __pawn_moves_up(self, index, enemy_and_empty):
 		pos = 1L << index
-		if up:
-			pawn_moves = pos << 8
-			if index >= 8 and index < 16:
-				pawn_moves |= pos << 16
-		else:
-			pawn_moves = pos >> 8
-			if index >= 48 and index < 56:
-				pawn_moves |= pos >> 16
+		captures = 0L
+		pawn_moves = pos << 8 & ~self.occupied
+		if pawn_moves and index >= 8 and index < 16:
+			pawn_moves |= pos << 16 & ~self.occupied
+		if index % 8:
+			captures = pos << 7
+		if (index + 1) % 8:
+			captures |= pos << 9
+		captures &= (enemy_and_empty & self.occupied)
+		# TODO: en passant
+		return pawn_moves | captures
 
-		return pawn_moves #| pawn_captures
+	def __pawn_moves_down(self, index, enemy_and_empty):
+		pos = 1L << index
+		captures = 0L
+		pawn_moves = pos >> 8 & ~self.occupied
+		if pawn_moves and index >= 48 and index < 56:
+			pawn_moves |= pos >> 16 & ~self.occupied
+		if index % 8:
+			captures = pos >> 7
+		if (index + 1) % 8:
+			captures |= pos >> 9
+		captures &= (enemy_and_empty & self.occupied)
+		return pawn_moves | captures
 
 	def __knight_moves(self, index, enemy_and_empty):
 		return moves.knight[index] & enemy_and_empty
@@ -158,15 +175,24 @@ class Board:
 
 	def __rook_moves(self, index, enemy_and_empty):
 		return self.__moves_right(index, enemy_and_empty) | \
-		       self.__moves_left(index, enemy_and_empty) | \
-		       self.__moves_up(index, enemy_and_empty) | \
+		       self.__moves_left(index, enemy_and_empty)  | \
+		       self.__moves_up(index, enemy_and_empty)    | \
 		       self.__moves_down(index, enemy_and_empty)
 
 	def __queen_moves(self, index, enemy_and_empty):
 		return self.__rook_moves(index, enemy_and_empty) | self.__bishop_moves(index, enemy_and_empty)
 
 	def __king_moves(self, index, enemy_and_empty):
-		return moves.king[index] & enemy_and_empty
+		pos = 1L << index
+		king_moves = pos << 8 | pos >> 8
+		if index % 8:
+			king_moves |= pos << 7 | pos >> 9
+			king_moves |= pos >> 1
+		if (index + 1) % 8:
+			king_moves |= pos << 9 | pos >> 7
+			king_moves |= pos << 1
+		# TODO: castling
+		return king_moves & enemy_and_empty
 
 	def __moves_right(self, index, enemy_and_empty):
 		blockers = moves.right[index] & self.occupied
