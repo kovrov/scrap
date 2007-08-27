@@ -16,6 +16,23 @@ class Board:
 	def __init__(self):
 		self.reset()
 
+	def move(self, src, dst):
+		src_index = coords.index(src)
+		dst_index = coords.index(dst)
+		moves_bitboard = self.get_moves(src)
+		draw.bitboard(1L << dst_index, src_index)
+		if (None == moves_bitboard): moves_bitboard = 0L
+		draw.bitboard(moves_bitboard, src_index)
+		return
+		if moves_bitboard ^ dst_index:
+			raise Exception("invalid move")
+		if discovered_check :
+			raise Exception("discovered check ")
+		if in_check:
+			raise Exception("king in check")
+		uset_bit(src_bitboard, 1L << src_index)
+		set_bit(dst_bitboard, 1L << dst_index)
+
 	def get_pieces(self, color, type):
 		pass
 
@@ -47,10 +64,12 @@ class Board:
 			return ("black", "king", index)
 
 	def reset(self):
-		self.white_pawns = 0x000000000400FB00 # 0x000000000000FF00
+		self.white_pawns = 0x000000000000FF00
+		self.white_pawns_en_passant = 0x0000000000000000
 		#print "white_pawns"
 		#draw.bitboard(self.white_pawns)
-		self.black_pawns = 0x00BF000040000000 # 0x00FF000000000000
+		self.black_pawns = 0x00FF000000000000
+		self.black_pawns_en_passant = 0x0000000000000000
 		#print "black_pawns"
 		#draw.bitboard(self.black_pawns)
 		self.white_knights = 0x0000000000000042
@@ -65,7 +84,7 @@ class Board:
 		self.black_bishops = 0x2400000000000000
 		#print "black_bishops"
 		#draw.bitboard(self.black_bishops)
-		self.white_rooks = 0x0000000010000001 #0x0000000000000081
+		self.white_rooks = 0x0000000000000081
 		#print "white_rooks"
 		#draw.bitboard(self.white_rooks)
 		self.black_rooks = 0x8100000000000000
@@ -108,10 +127,25 @@ class Board:
 			return self.__queen_moves(index, enemy_and_empty)
 		elif rank == "knight":
 			return self.__knight_moves(index, enemy_and_empty)
+		elif rank == "pawn":
+			return self.__pawn_moves(index, enemy_and_empty, (color == "white"))
+		elif rank == "king":
+			return self.__king_moves(index, enemy_and_empty)
 
 
-	def __pawn_moves(self, index, enemy_and_empty):
-		return (moves.pawn[index] & enemy_and_empty) | (moves.pawn_capture[index] & enemy)
+	def __pawn_moves(self, index, enemy_and_empty, up):
+		#pawn_captures = moves.pawn_captures[index] & (enemy_and_empty & self.occupied)
+		pos = 1L << index
+		if up:
+			pawn_moves = pos << 8
+			if index >= 8 and index < 16:
+				pawn_moves |= pos << 16
+		else:
+			pawn_moves = pos >> 8
+			if index >= 48 and index < 56:
+				pawn_moves |= pos >> 16
+
+		return pawn_moves #| pawn_captures
 
 	def __knight_moves(self, index, enemy_and_empty):
 		return moves.knight[index] & enemy_and_empty
@@ -178,27 +212,22 @@ class Board:
 
 	def __moves_nw(self, index, enemy_and_empty):
 		blockers = moves.nw[index] & self.occupied
-		blocked_slide = blockers>>7 | blockers>>14 | blockers>>21 | blockers>>28 | blockers>>35 | blockers>>42
+		blocked_slide = blockers<<7 | blockers<<14 | blockers<<21 | blockers<<28 | blockers<<35 | blockers<<42
 		blocked_moves = blocked_slide & moves.nw[index]
 		return ~blocked_moves & (moves.nw[index] & enemy_and_empty)
 
 
 def test():
-	#draw.bitboards(Piece.moves_left)
-	#draw.bitboards(Piece.moves_right)
-	#draw.bitboards(Piece.moves_up)
-	#draw.bitboards(Piece.moves_down)
-	#draw.bitboards(Piece.moves_ne)
-	#draw.bitboards(Piece.moves_nw)
-	#draw.bitboards(Piece.moves_sw)
-	#draw.bitboards(Piece.moves_se)
-	#draw.bitboards(Piece.moves_knight)
+	#draw.bitboards(moves.pawn_captures)
+	#draw.bitboards(moves.right)
+	#draw.bitboards(moves.up)
+	#draw.bitboards(moves.down)
+	#draw.bitboards(moves.ne)
+	#draw.bitboards(moves.nw)
+	#draw.bitboards(moves.sw)
+	#draw.bitboards(moves.se)
+	#draw.bitboards(moves.knight)
 	
-	board = Board() # new game, white turn
-	(color, rank, index) = board.get_piece("d1")
-	print "d1", color, rank
-	draw.bitboard(board.get_moves("d1"), index)
-
 	board = Board() # new game, white turn
 	# move white pawn e2 - e4
 	board.move("e2", "e4")
