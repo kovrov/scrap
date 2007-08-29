@@ -45,6 +45,7 @@ class Board:
 			self.enemy = self.white
 		else:
 			self.enemy = self.black
+		self.in_check = self.__in_check()
 
 	def move(self, src, dst):
 		src_index = coords.index(src)
@@ -52,10 +53,10 @@ class Board:
 		moves_bitboard = self.get_moves(src)
 		if not moves_bitboard or not (moves_bitboard & 1L << dst_index):
 			raise Exception("invalid move")
-		if discovered_check :
-			raise Exception("discovered check ")
-		if in_check:
-			raise Exception("king in check")
+		if self.__in_check(src_index, dst_index):
+			if self.in_check:
+				raise Exception("invalid move: king in check")
+			raise Exception("invalid move: discovered check")
 		uset_bit(src_bitboard, 1L << src_index)
 		set_bit(dst_bitboard, 1L << dst_index)
 		self.turn += 1
@@ -113,6 +114,23 @@ class Board:
 		return possible_moves
 
 #-------------------------------------8<-----------------------------cut-it-out-
+
+	def __in_check(self, src_index=None, dst_index=None):
+		if :
+			self.black_pawns ^ 1L << src_index | 1L << dst_index
+			self.black_knights ^ 1L << src_index | 1L << dst_index
+			self.black_bishops ^ 1L << src_index | 1L << dst_index
+			self.black_rooks ^ 1L << src_index | 1L << dst_index
+			self.black_queens ^ 1L << src_index | 1L << dst_index
+			self.black_king ^ 1L << src_index | 1L << dst_index
+		else:
+			self.white_pawns ^ 1L << src_index | 1L << dst_index
+			self.white_knights ^ 1L << src_index | 1L << dst_index
+			self.white_bishops ^ 1L << src_index | 1L << dst_index
+			self.white_rooks ^ 1L << src_index | 1L << dst_index
+			self.white_queens ^ 1L << src_index | 1L << dst_index
+			self.white_king ^ 1L << src_index | 1L << dst_index
+		return False
 
 	def __white_pawn_moves(self, index, enemy_and_empty):
 		pos = 1L << index
