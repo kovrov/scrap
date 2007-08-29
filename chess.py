@@ -16,15 +16,41 @@ class Board:
 	def __init__(self):
 		self.reset()
 
+	def reset(self):
+		self.white_pawns = 0x000000000000FF00
+		self.black_pawns = 0x00FF000000000000
+		self.white_knights = 0x0000000000000042
+		self.black_knights = 0x4200000000000000
+		self.white_bishops = 0x0000000000000024
+		self.black_bishops = 0x2400000000000000
+		self.white_rooks = 0x0000000000000081
+		self.black_rooks = 0x8100000000000000
+		self.white_queens = 0x0000000000000008
+		self.black_queens = 0x0800000000000000
+		self.white_king = 0x0000000000000010
+		self.black_king = 0x1000000000000000
+		self.en_passant = 0x0000000000000000
+		self.turn = 1
+		self.__recalc_board()
+
+	def __recalc_board(self):
+		self.white = self.white_pawns | self.white_knights | \
+		             self.white_bishops | self.white_rooks | \
+		             self.white_queens | self.white_king
+		self.black = self.black_pawns | self.black_knights | \
+		             self.black_bishops | self.black_rooks | \
+		             self.black_queens | self.black_king
+		self.occupied = self.white | self.black
+		if self.turn % 2:
+			self.enemy = self.white
+		else:
+			self.enemy = self.black
+
 	def move(self, src, dst):
 		src_index = coords.index(src)
 		dst_index = coords.index(dst)
 		moves_bitboard = self.get_moves(src)
-		draw.bitboard(1L << dst_index, src_index)
-		if (None == moves_bitboard): moves_bitboard = 0L
-		draw.bitboard(moves_bitboard, src_index)
-		return
-		if moves_bitboard ^ dst_index:
+		if not moves_bitboard or not (moves_bitboard & 1L << dst_index):
 			raise Exception("invalid move")
 		if discovered_check :
 			raise Exception("discovered check ")
@@ -32,9 +58,8 @@ class Board:
 			raise Exception("king in check")
 		uset_bit(src_bitboard, 1L << src_index)
 		set_bit(dst_bitboard, 1L << dst_index)
-
-	def get_pieces(self, color, type):
-		pass
+		self.turn += 1
+		self.__recalc_board()
 
 	def get_piece(self, square):
 		index = coords.index(square)
@@ -63,81 +88,33 @@ class Board:
 		if (self.black_king >> index) & 1:
 			return ("black", "king", index)
 
-	def reset(self):
-		self.white_pawns = 0x000000000000FF00
-		self.white_pawns_en_passant = 0x0000000000000000
-		#print "white_pawns"
-		#draw.bitboard(self.white_pawns)
-		self.black_pawns = 0x00FF000000000000
-		self.black_pawns_en_passant = 0x0000000000000000
-		#print "black_pawns"
-		#draw.bitboard(self.black_pawns)
-		self.white_knights = 0x0000000000000042
-		#print "white_knights"
-		#draw.bitboard(self.white_knights)
-		self.black_knights = 0x4200000000000000
-		#print "black_knights"
-		#draw.bitboard(self.black_knights)
-		self.white_bishops = 0x0000000000000024
-		#print "white_bishops"
-		#draw.bitboard(self.white_bishops)
-		self.black_bishops = 0x2400000000000000
-		#print "black_bishops"
-		#draw.bitboard(self.black_bishops)
-		self.white_rooks = 0x0000000000000081
-		#print "white_rooks"
-		#draw.bitboard(self.white_rooks)
-		self.black_rooks = 0x8100000000000000
-		#print "black_rooks"
-		#draw.bitboard(self.black_rooks)
-		self.white_queens = 0x0000000000000008
-		#print "white_queens"
-		#draw.bitboard(self.white_queens)
-		self.black_queens = 0x0800000000000000
-		#print "black_queens"
-		#draw.bitboard(self.black_queens)
-		self.white_king = 0x0000000000000010
-		#print "white_king"
-		#draw.bitboard(self.white_king)
-		self.black_king = 0x1000000000000000
-		#print "black_king"
-		#draw.bitboard(self.black_king)
-		self.__recalc_board()
-
-	def __recalc_board(self):
-		self.white = self.white_pawns | self.white_knights | \
-					self.white_bishops | self.white_rooks | \
-					self.white_queens | self.white_king
-		self.black = self.black_pawns | self.black_knights | \
-					self.black_bishops | self.black_rooks | \
-					self.black_queens | self.black_king
-		self.occupied = self.white | self.black
-
 	def get_moves(self, square):
 		(color, rank, index) = self.get_piece(square)
 		if color == "white":
 			enemy_and_empty = ~self.occupied ^ self.black
 		else:
 			enemy_and_empty = ~self.occupied ^ self.white
-		if rank == "rook":
-			return self.__rook_moves(index, enemy_and_empty)
-		elif rank == "bishop":
-			return self.__bishop_moves(index, enemy_and_empty)
-		elif rank == "queen":
-			return self.__queen_moves(index, enemy_and_empty)
-		elif rank == "knight":
-			return self.__knight_moves(index, enemy_and_empty)
-		elif rank == "pawn":
-			if (color == "white"):
-				return self.__pawn_moves_up(index, enemy_and_empty)
+		possible_moves = 0L
+		if rank == "pawn":
+			if color == "white":
+				possible_moves = self.__white_pawn_moves(index, enemy_and_empty)
 			else:
-				return self.__pawn_moves_down(index, enemy_and_empty)
+				possible_moves = self.__black_pawn_moves(index, enemy_and_empty)
+		elif rank == "knight":
+			possible_moves = self.__knight_moves(index, enemy_and_empty)
+		elif rank == "bishop":
+			possible_moves = self.__bishop_moves(index, enemy_and_empty)
+		elif rank == "rook":
+			possible_moves = self.__rook_moves(index, enemy_and_empty)
+		elif rank == "queen":
+			possible_moves = self.__queen_moves(index, enemy_and_empty)
 		elif rank == "king":
-			return self.__king_moves(index, enemy_and_empty)
+			possible_moves = self.__king_moves(index, enemy_and_empty)
+		return possible_moves
 
 #-------------------------------------8<-----------------------------cut-it-out-
 
-	def __pawn_moves_up(self, index, enemy_and_empty):
+	def __white_pawn_moves(self, index, enemy_and_empty):
 		pos = 1L << index
 		captures = 0L
 		pawn_moves = pos << 8 & ~self.occupied
@@ -147,11 +124,11 @@ class Board:
 			captures = pos << 7
 		if (index + 1) % 8:
 			captures |= pos << 9
-		captures &= (enemy_and_empty & self.occupied)
+		captures &= enemy_and_empty & self.occupied
 		# TODO: en passant
 		return pawn_moves | captures
 
-	def __pawn_moves_down(self, index, enemy_and_empty):
+	def __black_pawn_moves(self, index, enemy_and_empty):
 		pos = 1L << index
 		captures = 0L
 		pawn_moves = pos >> 8 & ~self.occupied
@@ -161,7 +138,7 @@ class Board:
 			captures = pos >> 7
 		if (index + 1) % 8:
 			captures |= pos >> 9
-		captures &= (enemy_and_empty & self.occupied)
+		captures &= enemy_and_empty & self.occupied
 		return pawn_moves | captures
 
 	def __knight_moves(self, index, enemy_and_empty):
