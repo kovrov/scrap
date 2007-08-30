@@ -53,7 +53,7 @@ class Board:
 		moves_bitboard = self.get_moves(src)
 		if not moves_bitboard or not (moves_bitboard & 1L << dst_index):
 			raise Exception("invalid move")
-		if self.__in_check(1L << src_index | 1L << dst_index):
+		if self.__in_check(1L << src_index, 1L << dst_index):
 			if self.in_check:
 				raise Exception("invalid move: king in check")
 			raise Exception("invalid move: discovered check")
@@ -115,21 +115,11 @@ class Board:
 
 #-------------------------------------8<-----------------------------cut-it-out-
 
-	def __in_check(self, mask=0):
-		if :
-			self.black_pawns ^ mask
-			self.black_knights ^ mask
-			self.black_bishops ^ mask
-			self.black_rooks ^ mask
-			self.black_queens ^ mask
-			self.black_king ^ mask
-		else:
-			self.white_pawns ^ mask
-			self.white_knights ^ mask
-			self.white_bishops ^ mask
-			self.white_rooks ^ mask
-			self.white_queens ^ mask
-			self.white_king ^ mask
+	def __in_check(self, move=0):
+		if self.turn % 2: # black turn
+			pass
+		else: # white turn
+			pass
 		return False
 
 	def __white_pawn_moves(self, index, enemy_and_empty):
@@ -239,26 +229,15 @@ class Board:
 
 
 def test():
-	#draw.bitboards(moves.pawn_captures)
-	#draw.bitboards(moves.right)
-	#draw.bitboards(moves.up)
-	#draw.bitboards(moves.down)
-	#draw.bitboards(moves.ne)
-	#draw.bitboards(moves.nw)
-	#draw.bitboards(moves.sw)
-	#draw.bitboards(moves.se)
-	#draw.bitboards(moves.knight)
-	
 	board = Board() # new game, white turn
-	# move white pawn e2 - e4
-	board.move("e2", "e4")
-	# move black pawn e7 - e5
-	board.move("e7", "e5")
-	# error exampes
-	board.get_moves("e7") # e7 empty - throw
-	# queen
-	board.move("d1", "d5") # invalid move - throw
-	# etc...
+	board.move("e2", "e4") # white pawn
+	board.move("e7", "e5") # black pawn
+	board.move("d1", "h5") # white queen
+	board.move("b8", "c6") # black knight
+	board.move("f1", "c4") # white bishop
+	board.move("g8", "f6") # black knight
+	board.move("h5", "f7") # white queen
+	# Scholar's Mate...
 
 if __name__ == '__main__':
 	test()

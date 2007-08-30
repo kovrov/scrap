@@ -18,3 +18,8 @@ def bitboards(bitboards):
 	for m in bitboards:
 		bitboard(m, i)
 		i += 1
+
+
+def toDecimal(x):
+	return sum(map(lambda z: int(x[z]) and 2**(len(x) - z - 1),
+	               range(len(x)-1, -1, -1)))
