@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
+SOLUTION_DIR = "c:/home/projects/twin"
+CONFIG_NAME = "Release|Win32"
+
+
 import sys, os, re
 import xml.etree.ElementTree as ElementTree
-
-
-SOLUTION_DIR = "D:/data/twin/Platform"
-CONFIG_NAME = "Release|Win32"
 
 
 class Project():
@@ -70,9 +70,10 @@ class Project():
 				for tool in conf.findall("Tool"):
 					if tool.attrib["Name"] == "VCLinkerTool" or tool.attrib["Name"] == "VCLibrarianTool":
 						if tool.attrib.has_key("AdditionalDependencies"):
-							return tool.attrib["AdditionalDependencies"].split()
+							return [lib.lower() for lib in tool.attrib["AdditionalDependencies"].split()]
 						break
 				break
+		return []
 
 
 	def get_project_library(self, projtree, config):
@@ -82,11 +83,11 @@ class Project():
 					if tool.attrib["Name"] == "VCLinkerTool":
 						if tool.attrib.has_key("ImportLibrary"): lib = tool.attrib["ImportLibrary"]
 						else: lib = "$(TargetDir)$(TargetName).lib"
-						return re.sub('\$\((\w+)\)', self.__re_sub_callback, lib).strip('\\/')
+						return re.sub('\$\((\w+)\)', self.__re_sub_callback, lib).strip('\\/').lower()
 					if tool.attrib["Name"] == "VCLibrarianTool":
 						if tool.attrib.has_key("OutputFile"): lib = tool.attrib["OutputFile"]
 						else: lib = "$(OutDir)\$(ProjectName).lib"
-						return re.sub('\$\((\w+)\)', self.__re_sub_callback, lib).strip('\\/')
+						return re.sub('\$\((\w+)\)', self.__re_sub_callback, lib).strip('\\/').lower()
 				break
 
 
@@ -116,7 +117,10 @@ if __name__ == '__main__':
 		projects[project.name] = project
 		for lib in project.produces:
 			libs[lib] = project
-
+	for k, project in projects.iteritems():
 		print project.name
-		print "dependencies", project.dependencies
-		print "produces", project.produces, "\n"
+		for lib in project.dependencies:
+			if libs.has_key(lib):
+				print "", libs[lib].name
+			else:
+				print "", lib, "(external)"
