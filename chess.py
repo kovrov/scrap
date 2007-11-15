@@ -115,7 +115,7 @@ class Board:
 
 #-------------------------------------8<-----------------------------cut-it-out-
 
-	def __in_check(self, move=0):
+	def __in_check(self, move_src=0L, move_dst=0L):
 		if self.turn % 2: # black turn
 			pass
 		else: # white turn
