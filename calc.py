@@ -12,11 +12,14 @@ mod (a%b)
 #in ['push 3', 'push 2', 'add', 'push 1', 'add']
 #out 6
 def calculate(statements):
-	#print statements
 	stack = []
 	for s in statements:
 		if s.startswith('push'):
-			stack.append(int(s.split()[1]))
+			i = s.split()[1]
+			if i.isdigit():
+				stack.append(int(i))
+			else:
+				stack.append(float(i))
 		elif s == 'add':
 			a = stack.pop()
 			b = stack.pop()
@@ -57,7 +60,7 @@ def tokenize(s):
 	for c in s:
 		if c == ' ':
 			pass
-		elif c.isdigit():
+		elif c.isdigit() or c == '.':
 			digit += c
 		else:
 			if len(digit):
@@ -66,14 +69,12 @@ def tokenize(s):
 			res.append(c)
 	if len(digit):
 		res.append(digit)
-	#print "###", res
 	return res
 
 
 #in tokenize('1+(2-3)*2')
 #out ['1', '+', [ '2', '-', '3', ] '*', '2',]
 def parse(tokens):
-	#print "parse(%s)" % tokens
 	current = []
 	res = current
 	stack = [current]
@@ -87,38 +88,38 @@ def parse(tokens):
 			current = stack[-1]
 		else:
 			current.append(i)
-	#print " ", res
 	return res
 
-opmap = {
-	'*':'mul',
-	'-':'sub',
-	'/':'div',
-	'+':'add',
-	'r':'root',
-	'^':'pow',
-	'%':'mod'}
+
+opmap = {'*' : 'mul',
+		 '-' : 'sub',
+		 '/' : 'div',
+		 '+' : 'add',
+		 'r' : 'root',
+		 '^' : 'pow',
+		 '%' : 'mod'}
 #in calculate(visit(parse(tokenize('1+(2+3)'))))
 #out 6
 def visit(tree):
-	print "visit(%s)" % tree
 	res = []
 	ops = []
 	def unfold(nodes):
+		ops.append(None)
 		for i in reversed(nodes):
 			if type(i) is list:
 				unfold(i)
 			else:
-				if i.isdigit():
+				if i.isdigit() or '.' in i:
 					res.append('push ' + i)
-				if ops:
-					for op in ops:
-						res.append(opmap[op])
-					ops[:] = []
-				if not i.isdigit():
-					ops.append(i)
+					if ops[-1]:
+						res.append(opmap[ops[-1]])
+						ops[-1] = None
+				if not i.isdigit() and '.' not in i:
+					ops[-1] = i
+		op = ops.pop()
+		if op:
+			res.append(opmap[op])
 	unfold(tree)
-	print " ", res
 	return res
 
 
