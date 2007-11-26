@@ -1,0 +1,52 @@
+= Test 3 =
+== Preparations ==
+ You have to familiarize yourself with the following items (give to the candiate prior to the assignement)
+ * [http://www.wsgi.org wsgi]
+ * [http://www.sqlalchemy.org sqlalchemy]
+ * [http://genshi.edgewall.org genshi]
+ * [http://de.wikipedia.org/wiki/Hypertext_Transfer_Protocol http]
+ * [http://en.wikipedia.org/wiki/HTML html]
+ * [http://docs.python.org/dev/library/wsgiref wsgiref]
+ * [http://docs.python.org/dev/library/re regular expression]
+
+In order to do this test you need a text editor and python2.5 with installations of sqlalchemy and genshi.
+
+== Assignement ==
+ * time to complete: 60 minutes
+ * post result to http://rafb.net/paste OR send the packed archive of files to pyalot@gmail.com
+
+Write a simple blog application, there are no comments. Each blog entry consists of a title, content and posting date. Each page you render has to be valid html.
+
+These 4 urls are supported by the blog application
+ * GET / goes to the homepage showing all blog entries with the newest on top.
+ * GET /entry/<id> shows a single blog entry with this id.
+ * GET /create shows a formular for creating blog entries
+ * POST /create creates a new blog entry
+
+You will use:
+ * sqlalchemy for database handling
+ * genshi for templating
+ * wsgi as an application protocol
+ * wsgiref.simple_server as a webserver
+
+The only allowed imports for this exercise are:
+ * datetime
+ * cgi
+ * wsgiref
+ * genshi
+ * sqlalchemy
+ * re
+
+Tips:
+ * using re to match paths is a viable strategy
+ * If you're unfamiliar with sqlalchemy's ORM, don't try to use it and aim for working with the basic interface instead.
+ * you can use this function for post input with wsgi:
+{{{
+#!python
+def get_post_data(environ):
+    return cgi.FieldStorage(
+       fp                = environ['wsgi.input'],
+       environ           = environ,
+       keep_blank_values = 1,
+    )
+}}}
