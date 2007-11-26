@@ -1,4 +1,21 @@
+
+# GET / goes to the homepage showing all blog entries with the newest on top.
+# GET /entry/<id> shows a single blog entry with this id.
+# GET /create shows a formular for creating blog entries
+# POST /create creates a new blog entry 
+
+
+import os.path
 import wsgiref.headers, wsgiref.util
+import genshi.template
+import models
+
+
+
+loader = genshi.template.TemplateLoader(
+		os.path.join(os.path.dirname(__file__), 'templates'),
+	    auto_reload=True)
+
 
 
 class App:
@@ -8,7 +25,7 @@ class App:
 		self.appname = wsgiref.util.shift_path_info(environ)
 
 	def __iter__(self):
-		ctrl = BlogCtrl(wsgiref.util.request_uri(self.environ))
+		ctrl = BlogCtrl(self.environ)
 		if not self.appname:
 			status = '200 ok'
 			res = ctrl.index()
@@ -17,7 +34,7 @@ class App:
 			res = ctrl.entry()
 		elif (self.appname == 'create'):
 			status = '200 ok'
-			res = ctrl.entry()
+			res = ctrl.create()
 		else:
 			status = '404 not found'
 			res = "%s not found" % self.appname
@@ -27,40 +44,38 @@ class App:
 
 
 
-
-import models
-
 class BlogCtrl(object):
-	def __init__(self, data):
-		self.data = data
+	def __init__(self, environ):
+		self.environ = environ
 
 	def index(self):
-		models.BlogEntry.query
-		return 'index'
+		tmpl = loader.load('index.html')
+		return tmpl.generate(entries=models.BlogEntry.query).render('html', doctype='html')
 
 	def entry(self):
-		return self.data
+		id = self.environ['PATH_INFO'].strip('/').split('/')[0]
+		tmpl = loader.load('entry.html')
+		return tmpl.generate(entry=models.BlogEntry.query.filter_by(id=id).first()).render('html', doctype='html')
 
 	def create(self):
-		return self.data
+		if self.environ['REQUEST_METHOD'] == 'POST':
+			form = get_post_data(self.environ)
+			entry = models.BlogEntry()
+			entry.title = form['title'].value
+			entry.content = form['content'].value
+			entry.save()
+			models.session.commit()
+			return "/"
+		else:
+			tmpl = loader.load('create.html')
+			return tmpl.generate().render('html', doctype='html')
 
-"""
-* GET / goes to the homepage showing all blog entries with the newest on top.
-* GET /entry/<id> shows a single blog entry with this id.
-* GET /create shows a formular for creating blog entries
-* POST /create creates a new blog entry 
-"""
 
 
+import cgi
 
-import genshi
-import models
-
-def index(environ, start_response):
-    rows = models.entry_table.select().execute()
-    return genshi.render(start_response, 'list.html', locals())
-
-def member_get(environ, start_response):
-    id = environ['selector.vars']['id']
-    row = models.entry_table.select(models.entry_table.c.id==id).execute().fetchone()
-    return genshi.render(start_response, 'entry.html', locals())
+def get_post_data(environ):
+    return cgi.FieldStorage(
+       fp                = environ['wsgi.input'],
+       environ           = environ,
+       keep_blank_values = 1)

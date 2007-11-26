@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
+	<head>
+		<title>!dumBLOG</title>
+	</head>
+	<body>
+
+		<div>
+			<h1>Wellcome to my !dumBLOG</h1>
+		</div>
+
+		<div py:if="entries" py:for="entry in entries">
+			<h2>${entry.title}</h2>
+				<p><a href="/entry/${entry.id}">read</a></p>
+				<p>${entry.date}</p>
+		</div>
+
+		<p><a class="action" href="/create">Create new entry</a></p>
+
+	</body>
+</html>

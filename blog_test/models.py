@@ -2,7 +2,7 @@ from datetime import datetime
 import sqlalchemy, sqlalchemy.orm
 
 
-engine = sqlalchemy.create_engine('sqlite:////temp/sqlite.db', echo=True)
+engine = sqlalchemy.create_engine('sqlite:///sqlite.db', echo=True)
 metadata = sqlalchemy.MetaData()
 session = sqlalchemy.orm.sessionmaker(engine)()
 
@@ -15,7 +15,7 @@ class BlogEntry(object):
 	def load():
 		pass
 
-	def save():
+	def save(self):
 		session.save(self)
 # I want class decorators!
 BlogEntry.table = sqlalchemy.Table('entries', metadata,
@@ -26,8 +26,5 @@ BlogEntry.table = sqlalchemy.Table('entries', metadata,
 BlogEntry.mapper = sqlalchemy.orm.mapper(BlogEntry, BlogEntry.table)
 BlogEntry.query = session.query(BlogEntry)
 
-if __name__ == "__main__":
-	# create sql tables
-	metadata.create_all(engine)
-	#tests
-	print BlogEntry.query
+# seems like it doesn't hurt to try to create sql tables, even if they exists.
+metadata.create_all(engine)
