@@ -24,6 +24,20 @@ sin = b / c
  b = sin * c
 
 """
+
+def multmat2(A,B):
+    "A*B"
+    if len(A) != len(B): raise Exception("error")  # this check is not enough!
+    n = range(len(A))
+    C = []
+    for i in n:
+        C.append([0]*len(A))  # add a row to C
+        for j in n:
+            a = A[i]    # get row i from A
+            b = [row[j] for row in B] # get col j from B
+            C[i][j] = sum([x*y for x,y in zip(a,b)])
+    return C
+
 def unit_vector(src, dst, unit=1):
 	"""returns "normalized vector" directed from src to dst"""
 	x, y = dst[0] - src[0], dst[1] - src[1]
