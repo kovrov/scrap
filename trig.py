@@ -1,43 +1,37 @@
 import math
 """
-angle = math.atan2(self.plane.rect.centery - gun[1], self.plane.rect.centerx - gun[0])
-self.fpdy = self.speed * math.sin(angle)
-self.fpdx = self.speed * math.cos(angle)
-
-
- 0 1 2 3 4 5 6 7 8
+7
+6
+5    .[2,5]  *[6,5]
+4
+3
+2    *[2,2]  .[6,2]
+1    
+0    
+ 0 1 2 3 4 5 6 7
 0    
 1    
-2    .[2,2]  .[6,2]
+2    *[2,2]  .[6,2]
 3
 4
 5    .[2,5]  *[6,5]
+6
+7
 
-src = [2, 2]
-dst = [2, 5] # right
-dst = [2, 5] # down
-dst = [2, 5] # up
-
-math.degrees(math.atan2(dst[1] - src[1], dst[0] - src[0])) # angle
-math.cos(math.atan2(dst[1] - src[1], dst[0] - src[0])) * speed # x
-math.sin(math.atan2(dst[1] - src[1], dst[0] - src[0])) * speed # y
-
-
-
-math.degrees(math.atan2(1, 1)) # a 45
-math.degrees(math.atan2(1, 0)) # a 90
-math.degrees(math.atan2(0, 1)) # a 0
-math.cos(math.atan2(1, 1)) # x 45
-math.cos(math.atan2(1, 0)) # x 90
-math.cos(math.atan2(0, 1)) # x 0
-
-3 = 6 / 2
 cos = a / c
  a = cos * c
 sin = b / c
  b = sin * c
 
 """
+def unit_vector(src, dst, unit=1):
+	"""returns "normalized vector" directed from src to dst"""
+	x, y = dst[0] - src[0], dst[1] - src[1]
+	#x, y = dst[0] - src[0], src[1] - dst[1]
+	#vlen = math.sqrt(x**2 + y**2)
+	ang = math.atan2(y, x)
+	return (math.cos(ang) * unit, math.sin(ang) * unit)
+
 def test(a,b, name):
 	c = math.sqrt(a**2 + b**2)
 	ang = math.atan2(b, a)
@@ -69,3 +63,10 @@ test(5.0, 5.0, "45")
 test(0.0, 5.0, "up")
 test(3.0, 4.0, "3/4")
 test(4.0, 3.0, "3/4")
+
+print "\n"
+print unit_vector((2,2), (5,6))
+print unit_vector((1,0), (-2,-4))
+print "\n"
+print unit_vector((2,2), (6,5))
+print unit_vector((6,5), (2,2))
