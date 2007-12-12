@@ -1,0 +1,13 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\.rst]
+@="reStructuredText"
+
+[HKEY_CLASSES_ROOT\reStructuredText\DefaultIcon]
+@="shell32.dll,70"
+
+[HKEY_CLASSES_ROOT\reStructuredText\shell\Edit\command]
+@="c:\\soft\\editplus\\editplus.exe \"%1\""
+
+[HKEY_CLASSES_ROOT\reStructuredText\shell\rst2html\command]
+@="c:\\soft\\python\\pythonw.exe c:\\soft\\python\\scripts\\rst2html.py \"%1\""
