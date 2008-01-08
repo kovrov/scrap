@@ -1,0 +1,39 @@
+/* the search for best way to blit an image to screen */
+
+void blitBitmapOnScreen(bitmap)
+{
+	glRasterPos2d(0, 0);
+	glDrawPixels(width[i],height[i],GL_RGBA,GL_UNSIGNED_BYTE,data[i]);
+	glBitmap(bitmap.width, bitmap.height,
+	         0, 0,  // xorig, yorig,
+	         0, 0,  // xmove, ymove,
+	         bitmap.buffer);
+}
+
+void blitTextureOnScreen(texture)
+{
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	// why need to reset projection matrix?
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	// why need to reset model-view matix?
+	glLoadIdentity();
+	glBindTexture(... your texture here ...);
+	glBegin(GL_QUADS);
+		glTexCoords2i(0, 0); glVertex2i(-1, -1);
+		glTexCoords2i(1, 0); glVertex2i( 1, -1);
+		glTexCoords2i(1, 1); glVertex2i( 1,  1);
+		glTexCoords2i(0, 1); glVertex2i(-1,  1);
+	glEnd();
+	glPopMatrix();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+
+	// why need to switch to model-view matix?
+	glMatrixMode(GL_MODELVIEW);
+}
+
