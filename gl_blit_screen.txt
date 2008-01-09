@@ -16,11 +16,13 @@ void blitTextureOnScreen(texture)
 	glPushMatrix();
 	// why need to reset projection matrix?
 	glLoadIdentity();
+	gluOrtho2D(0, windowWidth, 0, windowHeight);
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	// why need to reset model-view matix?
 	glLoadIdentity();
+	glTranslatef(0.375, 0.375, 0.);  // wtf?
 	glBindTexture(... your texture here ...);
 	glBegin(GL_QUADS);
 		glTexCoords2i(0, 0); glVertex2i(-1, -1);
@@ -36,4 +38,3 @@ void blitTextureOnScreen(texture)
 	// why need to switch to model-view matix?
 	glMatrixMode(GL_MODELVIEW);
 }
-
