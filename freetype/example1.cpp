@@ -64,6 +64,7 @@ HDC g_memdc = NULL;
 HGDIOBJ g_prevobj = NULL;
 HBITMAP g_hbitmap = NULL;
 Bitmap g_bitmap;
+const int FONTSIZE = 24;
 
 int OnCreate(HWND hWnd)
 {
@@ -89,7 +90,7 @@ int OnCreate(HWND hWnd)
 	WORD& dpi = dev_mode.dmLogPixels;
 
 	// set font size in points, using current DPI
-	error = FT_Set_Char_Size(g_font_face, 24*64,0, dpi,0);
+	error = FT_Set_Char_Size(g_font_face, FONTSIZE*64,0, dpi,0);
 	if (error) return -1;
 
 	g_memdc = ::CreateCompatibleDC(GetDC(hWnd));
@@ -113,17 +114,18 @@ void OnDestroy()
 void OnDrawWindow(HDC hdc)
 {
 	FT_Error error;
-	//for (unsigned int i = 0; i < g_text.len; i++)
-	int i = 1;
+	int pen_x = 0;
+	for (unsigned int i = 0; i < g_text.len; i++)
+	//int i = 0;
 	{
 		FT_UInt glyph_index = FT_Get_Char_Index(g_font_face, g_text.ptr[i]); 
 		assert (glyph_index);
 		error = FT_Load_Glyph(g_font_face,     // handle to face object
-							  glyph_index,     // glyph index
-							  FT_LOAD_RENDER); // load flags
+		                      glyph_index,     // glyph index
+		                      FT_LOAD_RENDER); // load flags
 		assert (!error);
 		//error = FT_Render_Glyph(g_font_face->glyph,     // glyph slot
-		//						FT_RENDER_MODE_NORMAL); // render mode
+		//                        FT_RENDER_MODE_NORMAL); // render mode
 		//assert (!error);
 
 		int& glyph_height    = g_font_face->glyph->bitmap.rows;
@@ -131,18 +133,23 @@ void OnDrawWindow(HDC hdc)
 		int& glyph_bearing_x = g_font_face->glyph->bitmap_left;
 		int& glyph_bearing_y = g_font_face->glyph->bitmap_top;
 		int  glyph_advance   = g_font_face->glyph->advance.x / 64;
-		int face_ascender  = g_font_face->ascender / 64;
+		int  hori_advance    = g_font_face->glyph->metrics.horiAdvance / 64;
+		int  vert_advance    = g_font_face->glyph->metrics.vertAdvance / 64;
+		int face_ascender  = g_font_face->ascender  / 64;
 		int face_descender = g_font_face->descender / 64;
-		int face_height    = g_font_face->height / 64;
+		int face_height    = g_font_face->height    / 64;
 
+		memset(g_bitmap.ptr, 0, g_bitmap.len);
 		for (int y = 0; y < glyph_height; y++)
 		{
-			memcpy(g_bitmap.ptr + (g_bitmap.height - 1 - y) * g_bitmap.width,
-			//memcpy(g_bitmap.ptr + (24 - 1 - y) * 24,
-			       g_font_face->glyph->bitmap.buffer + y * glyph_width,
+			int src_row_start = y * glyph_width;
+			int dst_row_start = (y + (vert_advance - glyph_bearing_y)) * g_bitmap.width;
+			memcpy(g_bitmap.ptr + dst_row_start + glyph_bearing_x,
+			       g_font_face->glyph->bitmap.buffer + src_row_start,
 			       glyph_width);
 		}
-		::BitBlt(hdc, 0, 0, glyph_advance, face_height, g_memdc, 0, 0, SRCCOPY);
+		::BitBlt(hdc, pen_x, 0, glyph_advance, face_height, g_memdc, 0, 0, SRCCOPY);
+		pen_x += glyph_advance;
 	}
 }
 
