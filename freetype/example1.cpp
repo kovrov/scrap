@@ -27,7 +27,7 @@ HBITMAP CreateGrayscaleDIB(Bitmap* bits)
 
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = bits->width;
-	bmi.bmiHeader.biHeight = bits->height;
+	bmi.bmiHeader.biHeight = -bits->height;  // bitmap will be "top-down"
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biBitCount = 8;
 	bmi.bmiHeader.biCompression = BI_RGB;
