@@ -21,9 +21,11 @@ def draw_task(texture_id, size, pos):
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
 
 	while True:
-		yield
+		view_yaw, view_pitch = yield
 		glPushMatrix()
 		glTranslatef(*pos)
+		glRotatef(-view_yaw, 0.0, 1.0, 0.0);
+		glRotatef(-view_pitch, 1.0, 0.0, 0.0);
 		for p in particles:
 			glColor4f(p['r'], p['g'], p['b'], p['life'])
 

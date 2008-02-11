@@ -18,14 +18,3 @@ def rotateVectorY(vect, angle):
 	x = vect[2] * math.sin(angle) + vect[0] * math.cos(angle)
 	z = vect[2] * math.cos(angle) - vect[0] * math.sin(angle)
 	return (x, vect[1], z)
-
-if __name__ == "__main__":
-	vect = (0.0, 0.0, 1.0)
-	print "vect", vect
-	print " 45", rotateVectorY(vect, 45.0)
-	print " 90", rotateVectorY(vect, 90.0)
-	print "135", rotateVectorY(vect, 135.0)
-	print "225", rotateVectorY(vect, 225.0)
-	print "270", rotateVectorY(vect, 270.0)
-	print "315", rotateVectorY(vect, 315.0)
-

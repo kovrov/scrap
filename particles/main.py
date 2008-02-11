@@ -56,7 +56,7 @@ def main():
 	cam = camera.draw_task()
 	left_cube = draw_cube(5.0, (-5.0, 0.0, 0.0))
 	right_cube = draw_cube(5.0, ( 5.0, 0.0, 0.0))
-	left_quads = draw_particles_quads(texture.id, 1.0, (-5.0, 0.0, 0.0)) # left
+	left_quads = draw_particles_quads(texture.id, 1.0, (-5.0, 0.0, 0.0)); left_quads.next()
 	right_points = draw_particles_points(texture.id, 1.0, (5.0, 0.0, 0.0)) # right
 
 	while not win.has_exit:
@@ -68,7 +68,7 @@ def main():
 			right_cube.next()
 			left_cube.next()
 			right_points.next()
-			left_quads.next()
+			left_quads.send((camera.yaw, camera.pitch))
 			win.flip()
 	print "fps:  %d" % clock.get_fps()
 

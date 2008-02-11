@@ -2,9 +2,14 @@ from pyglet.gl import *
 from utils import normalizeVector, addVectors, rotateVectorY
 import math
 
+# invariants
 position  = (0.0, 0.0,  0.0)
 direction = (0.0, 0.0, -1.0)
+
+# pre cached properties
 look_at   = (0.0, 0.0, -1.0)
+yaw = 0.0
+pitch = 0.0
 
 def draw_task():
 	while True:
@@ -12,23 +17,20 @@ def draw_task():
 		glLoadIdentity()
 		gluLookAt(position[0], position[1], position[2],  # eye
 		          look_at[0], look_at[1], look_at[2],  # center
-		          0.0, 1.0, 0.0) # up
-		#glRotatef(-RotatedX , 1.0, 0.0, 0.0);
-		#glRotatef(-RotatedY , 0.0, 1.0, 0.0);
-		#glRotatef(-RotatedZ , 0.0, 0.0, 1.0);
-		#glTranslatef(-position[0], -position[1], -position[2])
+		          0.0, 1.0, 0.0) # up vector
 
 def rotate_horizontal(degrees):  # left/right
-	global direction, look_at
+	global direction, look_at, yaw
 	direction = rotateVectorY(direction, math.radians(-degrees))
 	look_at = addVectors(position, direction)
+	yaw += degrees  # temp hack!
 
 def rotate_vertical(degrees):  # up/down
 	pass
 
 def move(amount, vect):
 	global position, look_at
-	# move vector's angle
+	# movement vector's angle
 	dot = sum(x * y for x, y in zip((0.0, 0.0, -1.0), vect))  # dot product
 	move_angle = math.acos(dot)
 	# translation vector is final direction of movement
