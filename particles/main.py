@@ -2,8 +2,10 @@ from pyglet.gl import *
 from pyglet import image
 from pyglet import window
 from pyglet.window import key
+from pyglet.window import mouse
 import pyglet.clock
 import random
+import math
 
 from particles_points import draw_task as draw_particles_points
 from particles_quads import draw_task as draw_particles_quads
@@ -12,6 +14,9 @@ import camera
 
 def main():
 	win = window.Window(resizable=True, visible=False, vsync=False)
+	win.paused = False
+	win.rotate = False
+
 	@win.event
 	def on_resize(width, height):
 		glMatrixMode(GL_PROJECTION)
@@ -20,23 +25,31 @@ def main():
 		glMatrixMode(GL_MODELVIEW)
 		glViewport(0, 0, width, height)
 
-	win.paused = False
+
 	@win.event
 	def on_key_press(sym, mod):
 		if sym == key.ESCAPE:
 			win.has_exit = True
 		if sym == key.SPACE:
 			win.paused = not win.paused
-		if sym == key.E:
-			camera.move(5, (0.0, 0.0, -1.0))
-		if sym == key.D:
-			camera.move(5, (0.0, 0.0, 1.0))
-		if sym == key.F:
-			#camera.move(5, (1.0, 0.0, 0.0))
-			camera.rotate_horizontal(15)
-		if sym == key.S:
-			#camera.move(5, (-1.0, 0.0, 0.0))
-			camera.rotate_horizontal(-15)
+
+	@win.event
+	def on_mouse_press(x, y, buttons, modifiers):
+		if buttons & mouse.LEFT:
+			win.set_exclusive_mouse(True)
+			win.rotate = True
+
+	@win.event
+	def on_mouse_release(x, y, button, modifiers):
+		win.set_exclusive_mouse(False)
+		win.rotate = False
+
+	@win.event
+	def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
+		if win.rotate:
+			camera.rotate_horizontal(dx * 0.5)
+			camera.rotate_vertical(dy * 0.5)
+
 	# init
 	glShadeModel(GL_SMOOTH)
 	glClearColor(0.0, 0.5, 0., 0.0)
@@ -59,9 +72,21 @@ def main():
 	left_quads = draw_particles_quads(texture.id, 1.0, (-5.0, 0.0, 0.0)); left_quads.next()
 	right_points = draw_particles_points(texture.id, 1.0, (5.0, 0.0, 0.0)) # right
 
+	keys = key.KeyStateHandler()
+	win.push_handlers(keys)
+
 	while not win.has_exit:
 		win.dispatch_events()
 		if not win.paused:
+			# update
+			x = z = 0
+			if keys[key.E]: z += 1
+			if keys[key.D]: z -= 1
+			if keys[key.F]: x += 1
+			if keys[key.S]: x -= 1
+			if x or z:
+				camera.move(0.1, math.degrees(math.atan2(x, z)))
+			# draw
 			dt = clock.tick()
 			glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 			cam.next()

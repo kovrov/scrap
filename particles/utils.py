@@ -18,3 +18,10 @@ def rotateVectorY(vect, angle):
 	x = vect[2] * math.sin(angle) + vect[0] * math.cos(angle)
 	z = vect[2] * math.cos(angle) - vect[0] * math.sin(angle)
 	return (x, vect[1], z)
+
+# see "Angle Between 3D vectors" (http://www.mcanv.com/qa_ab3dv.html)
+def vectorsToAngle(v1, v2):
+	len1 = math.sqrt(v1[0]**2 + v1[1]**2 + v1[2]**2)
+	len2 = math.sqrt(v2[0]**2 + v2[1]**2 + v2[2]**2)
+	dot_product  = v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]
+	return math.acos(dot_product / (len1 * len2))

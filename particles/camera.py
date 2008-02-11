@@ -1,5 +1,5 @@
 from pyglet.gl import *
-from utils import normalizeVector, addVectors, rotateVectorY
+from utils import addVectors, rotateVectorY
 import math
 
 # invariants
@@ -28,13 +28,10 @@ def rotate_horizontal(degrees):  # left/right
 def rotate_vertical(degrees):  # up/down
 	pass
 
-def move(amount, vect):
+def move(amount, angle):
 	global position, look_at
-	# movement vector's angle
-	dot = sum(x * y for x, y in zip((0.0, 0.0, -1.0), vect))  # dot product
-	move_angle = math.acos(dot)
 	# translation vector is final direction of movement
-	translation_vect = rotateVectorY(direction, move_angle)
+	translation_vect = rotateVectorY(direction, math.radians(-angle))
 	position = (position[0] + translation_vect[0] * amount,
 	            position[1] + translation_vect[1] * amount,
 	            position[2] + translation_vect[2] * amount)
