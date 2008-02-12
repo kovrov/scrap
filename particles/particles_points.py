@@ -1,5 +1,14 @@
 from pyglet.gl import *
 import random
+import math
+
+import render_context
+point_k = 0.0
+def updateRC():
+	global point_k
+	point_k = 0.05 # render_context.height, g_maxSize
+render_context.onChange.append(updateRC)
+
 
 g_slowdown = 2.0
 
@@ -8,10 +17,8 @@ maxSize = c_float(0.0)
 glGetFloatv(GL_POINT_SIZE_MAX, pointer(maxSize))
 print "GL_POINT_SIZE_MAX", maxSize.value # 256.0
 g_maxSize = maxSize.value
-g_maxSize = 10.0
-a = 1
-b = 0.0#1.0/g_maxSize**2
-c = 0.01#1.0/g_maxSize
+
+
 
 def draw_task(texture_id, size, pos):
 
@@ -31,15 +38,15 @@ def draw_task(texture_id, size, pos):
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
 	# This is how will our point sprite's size will be modified by 
 	# distance from the viewer
-	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, (c_float*3)(a,b,c))
+	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, (c_float*3)(1.0, 0.0, point_k))
 	glPointSize(g_maxSize)
 	# The alpha of a point is calculated to allow the fading of points instead
 	# of shrinking them past a defined threshold size. The threshold is defined
 	# by GL_POINT_FADE_THRESHOLD_SIZE_ARB and is not clamped to the minimum and
 	# maximum point sizes.
-	glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 60.0)
-	glPointParameterf(GL_POINT_SIZE_MIN, 1.0)
-	glPointParameterf(GL_POINT_SIZE_MAX, g_maxSize)
+	#glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 60.0)
+	#glPointParameterf(GL_POINT_SIZE_MIN, 1.0)
+	#glPointParameterf(GL_POINT_SIZE_MAX, g_maxSize)
 
 	while True:
 		yield

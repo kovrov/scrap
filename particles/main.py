@@ -7,6 +7,8 @@ import pyglet.clock
 import random
 import math
 
+import render_context
+
 from particles_points import draw_task as draw_particles_points
 from particles_quads import draw_task as draw_particles_quads
 from cube import draw_task as draw_cube
@@ -24,7 +26,9 @@ def main():
 		gluPerspective(90.0, float(width) / float(height), 0.0, 256.0)  # fov, ratio, near, far
 		glMatrixMode(GL_MODELVIEW)
 		glViewport(0, 0, width, height)
-
+		render_context.width = width
+		render_context.height = height
+		render_context.update()
 
 	@win.event
 	def on_key_press(sym, mod):
@@ -47,8 +51,8 @@ def main():
 	@win.event
 	def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
 		if win.rotate:
-			camera.rotate_horizontal(dx * 0.5)
-			camera.rotate_vertical(dy * 0.5)
+			camera.rotate_horizontal(dx * 0.2)
+			camera.rotate_vertical(dy * 0.2)
 
 	# init
 	glShadeModel(GL_SMOOTH)
