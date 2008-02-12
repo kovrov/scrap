@@ -1,23 +1,18 @@
+# http://www.opengl.org/registry/specs/ARB/point_parameters.txt
+from pyglet.gl import gl_info
+assert gl_info.have_extension("GL_ARB_point_parameters"), "ARB_point_parameters not available"
+
 from pyglet.gl import *
 import random
 import math
-
-import render_context
-point_k = 0.0
-def updateRC():
-	global point_k
-	point_k = 0.05 # render_context.height, g_maxSize
-render_context.onChange.append(updateRC)
-
 
 g_slowdown = 2.0
 
 # Query for the max point size supported by the hardware
 maxSize = c_float(0.0)
-glGetFloatv(GL_POINT_SIZE_MAX, pointer(maxSize))
-print "GL_POINT_SIZE_MAX", maxSize.value # 256.0
-g_maxSize = maxSize.value
-
+maxSize = GLfloat(0.0)
+glGetFloatv(GL_POINT_SIZE_MAX_ARB, maxSize)
+print "GL_POINT_SIZE_MAX_ARB", maxSize.value # 256.0
 
 
 def draw_task(texture_id, size, pos):
@@ -36,20 +31,33 @@ def draw_task(texture_id, size, pos):
 	glDisable(GL_TEXTURE_2D)
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-	# This is how will our point sprite's size will be modified by 
-	# distance from the viewer
-	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, (c_float*3)(1.0, 0.0, point_k))
-	glPointSize(g_maxSize)
-	# The alpha of a point is calculated to allow the fading of points instead
-	# of shrinking them past a defined threshold size. The threshold is defined
-	# by GL_POINT_FADE_THRESHOLD_SIZE_ARB and is not clamped to the minimum and
-	# maximum point sizes.
-	#glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 60.0)
-	#glPointParameterf(GL_POINT_SIZE_MIN, 1.0)
-	#glPointParameterf(GL_POINT_SIZE_MAX, g_maxSize)
 
 	while True:
 		yield
+		# http://www.gamedev.net/community/forums/topic.asp?topic_id=427773
+
+		mat = (GLfloat*16)()
+		glGetFloatv(GL_MODELVIEW_MATRIX, mat)
+
+		viewport = (GLint*4)()
+		glGetIntegerv (GL_VIEWPORT, viewport)
+
+		H = viewport[2]
+		h = 2.0 / mat[0]
+		D0 = math.sqrt(2.0) * H / h
+		k = 1.0 / (1.0 + 2 * math.sqrt(1 / mat[0]))
+		c = math.sqrt(1 / D0) * k
+
+		# set point sprite parameters
+		tmp = (GLfloat*3)(0.0, 0.0, c)
+		glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, tmp)
+		glPointParameterfARB(GL_POINT_SIZE_MAX_ARB, maxSize)
+		glPointParameterfARB(GL_POINT_SIZE_MIN_ARB, 1.0)
+		#glPointParameterfARB(GL_POINT_SPRITE_COORD_ORIGIN_ARB, GL_LOWER_LEFT)
+		#glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)
+				
+		# draw the point sprites 
+
 		glPushMatrix()
 		glTranslatef(*pos)
 		glBegin(GL_POINTS)
