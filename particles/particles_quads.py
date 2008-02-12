@@ -16,12 +16,13 @@ def draw_task(texture_id, size, pos):
 			'xg': 0.0, 'yg': -0.8, 'zg': 0.0,
 					} for i in xrange(50)]
 	glDisable(GL_DEPTH_TEST)  # TODO: see if this integrates well with rest of render...
-	glDisable(GL_TEXTURE_2D)
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
 
 	while True:
 		view_yaw, view_pitch = yield
+		glEnable(GL_TEXTURE_2D)
+		glBindTexture(GL_TEXTURE_2D, texture_id)
 		glPushMatrix()
 		glTranslatef(*pos)
 		glRotatef(-view_yaw, 0.0, 1.0, 0.0);
@@ -29,19 +30,14 @@ def draw_task(texture_id, size, pos):
 		for p in particles:
 			glColor4f(p['r'], p['g'], p['b'], p['life'])
 
-			#glTexCoord2d(1,1); glVertex2f(p['x'] + size, p['y'] + size)  # Top Right
-			#glTexCoord2d(1,0); glVertex2f(p['x'] + size, p['y'] - size)  # Bottom Right
-			#glTexCoord2d(0,0); glVertex2f(p['x'] - size, p['y'] - size)  # Bottom Left
-			#glTexCoord2d(0,1); glVertex2f(p['x'] - size, p['y'] + size)  # Top Left
-
 			glPushMatrix()
 			glTranslatef(p['x'], p['y'], p['z'])
 			glBegin(GL_QUADS)
 
-			glVertex2f(-size,  size)
-			glVertex2f(-size, -size)
-			glVertex2f( size, -size)
-			glVertex2f( size,  size)
+			glTexCoord2d(0,1); glVertex2f(-size,  size)
+			glTexCoord2d(0,0); glVertex2f(-size, -size)
+			glTexCoord2d(1,0); glVertex2f( size, -size)
+			glTexCoord2d(0,0); glVertex2f( size,  size)
 
 			glEnd()
 			glPopMatrix()
@@ -63,4 +59,5 @@ def draw_task(texture_id, size, pos):
 				p['yi'] = random.uniform(-32.0, 32.0)
 				p['zi'] = random.uniform(-32.0, 32.0)
 		glPopMatrix()
+		glDisable(GL_TEXTURE_2D)
 	glEnable(GL_BLEND)
