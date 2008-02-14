@@ -21,7 +21,7 @@ def draw_task(texture_id, size, pos):
 
 	while True:
 		view_yaw, view_pitch = yield
-		glEnable(GL_TEXTURE_2D)
+		#glEnable(GL_TEXTURE_2D)
 		glBindTexture(GL_TEXTURE_2D, texture_id)
 		glPushMatrix()
 		glTranslatef(*pos)
@@ -59,5 +59,5 @@ def draw_task(texture_id, size, pos):
 				p['yi'] = random.uniform(-32.0, 32.0)
 				p['zi'] = random.uniform(-32.0, 32.0)
 		glPopMatrix()
-		glDisable(GL_TEXTURE_2D)
+		#glDisable(GL_TEXTURE_2D)
 	glEnable(GL_BLEND)

@@ -31,30 +31,21 @@ def draw_task(texture_id, size, pos):
 	glDisable(GL_TEXTURE_2D)
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+	mat = (GLfloat*16)()
+	viewport = (GLint*4)()
 
 	while True:
 		yield
-		# http://www.gamedev.net/community/forums/topic.asp?topic_id=427773
-
-		mat = (GLfloat*16)()
-		glGetFloatv(GL_MODELVIEW_MATRIX, mat)
-
-		viewport = (GLint*4)()
 		glGetIntegerv (GL_VIEWPORT, viewport)
-
-		H = viewport[2]
-		h = 2.0 / mat[0]
-		D0 = math.sqrt(2.0) * H / h
-		k = 1.0 / (1.0 + 2 * math.sqrt(1 / mat[0]))
-		c = math.sqrt(1 / D0) * k
+		attenuation = (GLfloat*3)(0.0,  0.0, 2.0/(viewport[3]**2))
 
 		# set point sprite parameters
-		tmp = (GLfloat*3)(0.0, 0.0, c)
-		glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, tmp)
+		glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, attenuation)
 		glPointParameterfARB(GL_POINT_SIZE_MAX_ARB, maxSize)
-		glPointParameterfARB(GL_POINT_SIZE_MIN_ARB, 1.0)
+		glPointParameterfARB(GL_POINT_SIZE_MIN_ARB, 0.0)
 		#glPointParameterfARB(GL_POINT_SPRITE_COORD_ORIGIN_ARB, GL_LOWER_LEFT)
 		#glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)
+		glPointSize(1.0)
 				
 		# draw the point sprites 
 
