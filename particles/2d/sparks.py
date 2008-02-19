@@ -28,7 +28,8 @@ def draw_task(pos):
 		glPushMatrix()
 		glTranslatef(*pos)
 
-		glPointSize(3.0)
+		glPointSize(5.0)
+		glEnable(GL_POINT_SMOOTH)
 		glBegin(GL_POINTS)
 		done = True
 		for p in particles:
@@ -44,4 +45,5 @@ def draw_task(pos):
 				# task control
 
 		glEnd()
+		glDisable(GL_POINT_SMOOTH)
 		glPopMatrix()
