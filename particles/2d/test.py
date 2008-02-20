@@ -7,6 +7,7 @@ from pyglet import font
 from pyglet import image
 
 import sparks
+import player
 
 g_tasks = []
 
@@ -23,7 +24,10 @@ def main():
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-	test_texture = image.load('test.png').texture
+	test_texture = image.load('test.png').get_texture()
+
+	test_texture.anchor_x = test_texture.width / 2
+	test_texture.anchor_y = test_texture.height / 2
 
 	def on_key_press(symbol, modifiers):
 		if symbol == key.SPACE:
@@ -32,6 +36,7 @@ def main():
 		print "fps_text", fps_text
 
 	def on_mouse_press(x, y, button, modifiers):
+		ship.move(x, y)
 		# background flash
 		flash = flash_task(0.5); flash.next()
 		g_tasks.append(flash)
@@ -40,6 +45,9 @@ def main():
 		g_tasks.append(task)
 
 	win.set_handlers(on_key_press, on_mouse_press)
+
+	ship = player.Ship(g_tasks)
+	ship.pos = win.width / 2, win.height / 2
 
 	fps_text = font.Text(font.load('Verdana'), y=10)
 
@@ -51,7 +59,7 @@ def main():
 		win.clear()
 
 		glColor4f(1.0, 1.0, 1.0, 1.0)
-		test_texture.blit((win.width - test_texture.width) / 2, (win.height - test_texture.height) / 2)
+		test_texture.blit(*ship.pos)
 
 		for task in g_tasks[:]:
 			try: task.send(frame_time)

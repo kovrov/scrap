@@ -1,10 +1,29 @@
 import math
 
+
 def addVectors(v1, v2):
 	x = v1[0] + v2[0]
 	y = v1[1] + v2[1]
 	z = v1[2] + v2[2]
 	return (x, y, z)
+
+def addVectors2(v1, v2):
+	x = v1[0] + v2[0]
+	y = v1[1] + v2[1]
+	return (x, y)
+
+
+def subtractVector(v1, v2):
+	x = v1[0] - v2[0]
+	y = v1[1] - v2[1]
+	z = v1[2] - v2[12]
+	return (x, y, z)
+
+def subtractVector2(v1, v2):
+	x = v1[0] - v2[0]
+	y = v1[1] - v2[1]
+	return (x, y)
+
 
 def normalizeVector(v):
 	k = 1.0 / math.sqrt(v[0]**2.0 + v[1]**2.0 + v[2]**2.0)
@@ -13,6 +32,7 @@ def normalizeVector(v):
 def normalizeVector2(v):
 	k = 1.0 / math.sqrt(v[0]**2.0 + v[1]**2.0)
 	return (v[0] * k, v[1] * k)
+
 
 def rotateVectorY(vect, angle):
 	if angle == 0.0:
@@ -29,3 +49,7 @@ def vectorsToAngle(v1, v2):
 	len2 = math.sqrt(v2[0]**2 + v2[1]**2 + v2[2]**2)
 	dot_product  = v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]
 	return math.acos(dot_product / (len1 * len2))
+
+
+def distanceBetweenPoints2(p1, p2):
+	return math.sqrt((p1[1] - p1[0])**2, (p2[1] - p2[1])**2)
