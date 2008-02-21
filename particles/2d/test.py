@@ -38,6 +38,9 @@ def update_projection(win, zoom, pan):
 
 def main():
 	win = window.Window(resizable=True, vsync=False)
+	win.zoom = 0
+	win.pan = (0.0, 0,0)
+
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -55,6 +58,7 @@ def main():
 		if symbol == key.SPACE:
 			print "on_key_press", (symbol, modifiers)
 			return True
+		# set pan
 		if symbol == key.UP:
 			update_projection(win, win.zoom, (win.pan[0], win.pan[1] + win.height / 10.0))
 			return True
@@ -67,6 +71,10 @@ def main():
 		if symbol == key.RIGHT:
 			update_projection(win, win.zoom, (win.pan[0] + win.width / 10.0, win.pan[1]))
 			return True
+
+	def on_mouse_scroll(x, y, scroll_x, scroll_y):
+		# set zoom
+		update_projection(win, win.zoom - scroll_y, win.pan)
 
 	def on_mouse_press(x, y, button, modifiers):
 		scale = 1.0 + win.zoom / 10.0
@@ -81,11 +89,6 @@ def main():
 		# sparks test
 		task = sparks.draw_task((real_x, real_y, 0.0)); task.next()
 		g_tasks.append(task)
-
-	win.zoom = 0
-	win.pan = (0.0, 0,0)
-	def on_mouse_scroll(x, y, scroll_x, scroll_y):
-		update_projection(win, win.zoom + (-scroll_y), win.pan)
 
 	win.set_handlers(on_key_press, on_mouse_press, on_mouse_scroll, on_resize)
 
