@@ -6,6 +6,8 @@ from pyglet.window import mouse
 from pyglet import font
 from pyglet import image
 
+import math
+
 import sparks
 import player
 
@@ -33,11 +35,14 @@ def update_projection(win, zoom, pan):
 	bottom = win.pan[1] + (-win.height / 2.0) * scale
 	top    = win.pan[1] + ( win.height - win.height / 2.0) * scale
 
+	if win.zoom == 0:
+		left, right, bottom, top = math.floor(left), math.floor(right), math.floor(bottom), math.floor(top)
+
 	glOrtho(left, right, bottom, top, -1, 1)
 	glMatrixMode(gl.GL_MODELVIEW)
 
 def main():
-	win = window.Window(resizable=True, vsync=False)
+	win = window.Window(resizable=True) #vsync=False
 	win.zoom = 0
 	win.pan = (0.0, 0,0)
 
@@ -55,22 +60,7 @@ def main():
 		return True
 
 	def on_key_press(symbol, modifiers):
-		if symbol == key.SPACE:
-			print "on_key_press", (symbol, modifiers)
-			return True
-		# set pan
-		if symbol == key.UP:
-			update_projection(win, win.zoom, (win.pan[0], win.pan[1] + win.height / 10.0))
-			return True
-		if symbol == key.DOWN:
-			update_projection(win, win.zoom, (win.pan[0], win.pan[1] - win.height / 10.0))
-			return True
-		if symbol == key.LEFT:
-			update_projection(win, win.zoom, (win.pan[0] - win.width / 10.0, win.pan[1]))
-			return True
-		if symbol == key.RIGHT:
-			update_projection(win, win.zoom, (win.pan[0] + win.width / 10.0, win.pan[1]))
-			return True
+		pass
 
 	def on_mouse_scroll(x, y, scroll_x, scroll_y):
 		# set zoom
@@ -91,6 +81,8 @@ def main():
 		g_tasks.append(task)
 
 	win.set_handlers(on_key_press, on_mouse_press, on_mouse_scroll, on_resize)
+	keys = key.KeyStateHandler()
+	win.push_handlers(keys)
 
 	ship = player.Ship(g_tasks)
 	ship.pos = (0, 0)
@@ -101,6 +93,18 @@ def main():
 	while not win.has_exit:
 		win.dispatch_events()
 		frame_time = clock.tick()
+
+		x = y = 0
+		if keys[key.UP]:    y += 1
+		if keys[key.DOWN]:  y -= 1
+		if keys[key.LEFT]:  x -= 1
+		if keys[key.RIGHT]: x += 1
+		if x or y:
+			scale = 1.0 + win.zoom / 10.0
+			speed = win.height / 5.0 * scale
+			x *= speed * frame_time
+			y *= speed * frame_time
+			update_projection(win, win.zoom, (win.pan[0] + x, win.pan[1] + y))
 
 		win.clear()
 
