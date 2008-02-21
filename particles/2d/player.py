@@ -17,7 +17,10 @@ class Ship(object):
 
 	def move_task(self, pos):
 		vect = normalizeVector2(subtractVector2(pos, self.pos))
-		while self.pos != pos:
+		x_cmp = (lambda: self.pos[0] > pos[0]) if self.pos[0] > pos[0] else (lambda: self.pos[0] < pos[0])
+		y_cmp = (lambda: self.pos[1] > pos[1]) if self.pos[1] > pos[1] else (lambda: self.pos[1] < pos[1])
+		#while self.pos != pos:
+		while x_cmp() or y_cmp():
 			time = yield
 			if time > 0.0:
 				self.pos = (self.pos[0] + vect[0] * SPEED * time,
