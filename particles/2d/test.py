@@ -83,7 +83,7 @@ def main():
 		g_tasks.append(task)
 
 	win.zoom = 0
-	win.pan = (win.width - win.width / 2.0, win.height - win.height / 2.0)
+	win.pan = (0.0, 0,0)
 	def on_mouse_scroll(x, y, scroll_x, scroll_y):
 		update_projection(win, win.zoom + (-scroll_y), win.pan)
 
