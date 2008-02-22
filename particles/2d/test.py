@@ -10,6 +10,7 @@ import math
 
 import sparks
 import player
+import ui
 
 g_tasks = []
 
@@ -117,6 +118,7 @@ def main():
 
 		#fps_text.text = "fps: %d" % clock.get_fps()
 		#fps_text.draw()
+		ui.draw(win.width, win.height)
 
 		win.flip()
 
