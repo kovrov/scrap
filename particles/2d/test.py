@@ -89,8 +89,10 @@ def main():
 	ship.pos = (0, 0)
 
 	fps_text = font.Text(font.load('Verdana'), y=10)
+	button = ui.Button(None, (10, 10), "Press Me")
 
 	#clock.set_fps_limit(3)
+	glClearColor(0.5, 0.5, 0.5, 1.0)
 	while not win.has_exit:
 		win.dispatch_events()
 		frame_time = clock.tick()
@@ -118,7 +120,7 @@ def main():
 
 		#fps_text.text = "fps: %d" % clock.get_fps()
 		#fps_text.draw()
-		ui.draw(win.width, win.height)
+		ui.draw(win.width, win.height, frame_time)
 
 		win.flip()
 
