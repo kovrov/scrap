@@ -6,7 +6,16 @@ from math import sin, cos
 import utils
 
 
-def draw_task(pos):
+def flash_task(seconds):
+	k = 1.0 / seconds
+	t = 0.0
+	while t < seconds:
+		t += yield
+		glClearColor(1 - k * t, 1 - k * t, 1 - k * t, 1.0)
+	glClearColor(0.0, 0.0, 0.0, 1.0)
+
+
+def sparks_task(pos):
 	particles = tuple({
 			'life': 1.0,
 			'decay': random.uniform(0.5, 0.8),

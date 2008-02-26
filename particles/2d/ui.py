@@ -17,7 +17,7 @@ from pyglet.gl import *
 from pyglet.image import create, SolidColorImagePattern
 from pyglet import font
 
-ft = font.load('Arial', 14)
+ft = font.load('Verdana', 14)
 image = create(128, 32, SolidColorImagePattern((0x00, 0x00, 0x00, 0x7F)))
 texture = image.get_texture()
 
