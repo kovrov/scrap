@@ -27,6 +27,13 @@ theme = {'border_width': 2,
 
 g_tasks = []
 
+visible_objects = []
+
+def on_mouse_press(x, y, button, modifiers):
+	for o in visible_objects:
+		if o.hitTest((x, y)):
+			return o.press(button, modifiers)
+
 def append(task):
 	task.next()  # init
 	g_tasks.append(task)
@@ -58,29 +65,37 @@ class Button:
 	def __init__(self, callback, pos, text, size=None, anchor=(0,0)):
 		self.callback = callback
 		self.pos = pos
-		self.text = text
+		self.text = font.Text(ft, text, valign=font.Text.BOTTOM)
 		self.size = size
 		self.anchor = anchor
 		self.task = self.draw()
 		self.padding = 2
 		append(self.task)
+		visible_objects.append(self)
 
 	def __del__(self):
 		if self.task:
 			self.task.close()
 	
-	def testHit(self):
-		pass
+	def hitTest(self, point):
+		border = theme['border_width']
+		x, y = self.pos[0], self.pos[1]
+		w = self.text.width  + self.padding * 2 + border * 2
+		h = self.text.height + self.padding * 2 + border * 2
+		if x < point[0] and point[0] < x + w and y < point[1] and point[1] < y + h:
+			return True
+	def press(self, button, modifiers):
+		self.callback()
+		return True
 
 	def draw(self):
-		text = font.Text(ft, self.text, valign=font.Text.BOTTOM)
 		while True:
 			yield
 			border = theme['border_width']
 			glDisable(GL_TEXTURE_2D)
 			x, y = self.pos[0], self.pos[1]
-			w = text.width  + self.padding * 2 + border * 2
-			h = text.height + self.padding * 2 + border * 2
+			w = self.text.width  + self.padding * 2 + border * 2
+			h = self.text.height + self.padding * 2 + border * 2
 			# back
 			glColor4f(*theme['background'])
 			glBegin(GL_QUADS)
@@ -100,6 +115,6 @@ class Button:
 			glVertex2d(x,     y + h)
 			glEnd()
 			# contents
-			text.x = x + self.padding + border
-			text.y = y + self.padding + border
-			text.draw()
+			self.text.x = x + self.padding + border
+			self.text.y = y + self.padding + border
+			self.text.draw()
