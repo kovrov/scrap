@@ -16,9 +16,6 @@ g_tasks = []
 
 def main():
 	win = window.Window(resizable=True) #vsync=False
-	view.window = win
-	win.zoom = 0
-	win.origin = (0.0, 0,0)
 
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -30,15 +27,14 @@ def main():
 
 	def on_resize(width, height):
 		glViewport(0, 0, width, height)
-		view.update_projection(win.zoom, win.origin)
+		view.resize(width, height)
 		return True
 
 	def on_key_press(symbol, modifiers):
 		pass
 
 	def on_mouse_scroll(x, y, scroll_x, scroll_y):
-		#view.zoom(-scroll_y)
-		view.update_projection(win.zoom - scroll_y, win.origin)
+		view.zoom(-scroll_y)
 
 	def on_mouse_press(x, y, button, modifiers):
 		if ui.on_mouse_press(x, y, button, modifiers):
