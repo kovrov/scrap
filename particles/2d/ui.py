@@ -21,9 +21,10 @@ ft = font.load('Verdana', 14)
 image = create(128, 32, SolidColorImagePattern((0x00, 0x00, 0x00, 0x7F)))
 texture = image.get_texture()
 
-theme = {'border_width': 2,
-         'border_color': (1.0, 1.0, 1.0, 0.2),
-         'background': (0.0, 0.0, 0.0, 0.5)}
+theme = {'text_color':       (0.0, 1.0, 1.0, 1.0),
+         'border_width':      2,
+         'border_color':     (0.0, 1.0, 1.0, 0.2),
+         'background_color': (0.0, 0.0, 0.0, 0.6)}
 
 g_tasks = []
 
@@ -65,7 +66,7 @@ class Button:
 	def __init__(self, callback, pos, text, size=None, anchor=(0,0)):
 		self.callback = callback
 		self.pos = pos
-		self.text = font.Text(ft, text, valign=font.Text.BOTTOM)
+		self.text = font.Text(ft, text, valign=font.Text.BOTTOM, color=theme['text_color'])
 		self.size = size
 		self.anchor = anchor
 		self.task = self.draw()
@@ -97,7 +98,7 @@ class Button:
 			w = self.text.width  + self.padding * 2 + border * 2
 			h = self.text.height + self.padding * 2 + border * 2
 			# back
-			glColor4f(*theme['background'])
+			glColor4f(*theme['background_color'])
 			glBegin(GL_QUADS)
 			glVertex2d(x + border / 2.0,     y + border / 2.0)
 			glVertex2d(x - border / 2.0 + w, y + border / 2.0)
