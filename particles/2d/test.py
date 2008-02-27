@@ -18,7 +18,7 @@ def main():
 	win = window.Window(resizable=True) #vsync=False
 	view.window = win
 	win.zoom = 0
-	win.pan = (0.0, 0,0)
+	win.origin = (0.0, 0,0)
 
 	glEnable(GL_BLEND)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -30,21 +30,20 @@ def main():
 
 	def on_resize(width, height):
 		glViewport(0, 0, width, height)
-		view.update_projection(win.zoom, win.pan)
+		view.update_projection(win.zoom, win.origin)
 		return True
 
 	def on_key_press(symbol, modifiers):
 		pass
 
 	def on_mouse_scroll(x, y, scroll_x, scroll_y):
-		view.update_projection(win.zoom - scroll_y, win.pan)
+		#view.zoom(-scroll_y)
+		view.update_projection(win.zoom - scroll_y, win.origin)
 
 	def on_mouse_press(x, y, button, modifiers):
 		if ui.on_mouse_press(x, y, button, modifiers):
 			return True
-		scale = 1.0 + win.zoom / 10.0
-		real_x = win.pan[0] + (x - win.width  / 2.0) * scale
-		real_y = win.pan[1] + (y - win.height / 2.0) * scale
+		real_x, real_y = view.screen2world(x, y)
 		ship.move(real_x, real_y)
 		# background flash
 		flash = fx.flash_task(0.5); flash.next()
