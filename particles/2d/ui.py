@@ -13,15 +13,14 @@ check box
 
 main_menu = ['play', 'help', 'opions', 'exit']
 
+import pyglet
 from pyglet.gl import *
 from pyglet.image import create, SolidColorImagePattern
-from pyglet import font
 
-ft = font.load('Verdana', 14)
 image = create(128, 32, SolidColorImagePattern((0x00, 0x00, 0x00, 0x7F)))
 texture = image.get_texture()
 
-theme = {'text_color':       (0.0, 1.0, 1.0, 1.0),
+theme = {'text_color':       (0x00, 0xFF, 0xFF, 0xFF),
          'border_width':      2,
          'border_color':     (0.0, 1.0, 1.0, 0.2),
          'background_color': (0.0, 0.0, 0.0, 0.6)}
@@ -47,7 +46,7 @@ def draw(w, h, frame_time):
 	glPushMatrix()
 	glLoadIdentity()
 	glOrtho(0, w, 0, h, -1, 1)
-	glMatrixMode(GL_MODELVIEW);
+	glMatrixMode(GL_MODELVIEW)
 	glPushMatrix()
 	glLoadIdentity()
 
@@ -66,7 +65,9 @@ class Button:
 	def __init__(self, callback, pos, text, size=None, anchor=(0,0)):
 		self.callback = callback
 		self.pos = pos
-		self.text = font.Text(ft, text, valign=font.Text.BOTTOM, color=theme['text_color'])
+		self.text = pyglet.text.Label(text, valign='bottom',
+		                              font_name='Verdana', font_size=14,
+		                              color=theme['text_color'])
 		self.size = size
 		self.anchor = anchor
 		self.task = self.draw()
@@ -81,8 +82,8 @@ class Button:
 	def hitTest(self, point):
 		border = theme['border_width']
 		x, y = self.pos[0], self.pos[1]
-		w = self.text.width  + self.padding * 2 + border * 2
-		h = self.text.height + self.padding * 2 + border * 2
+		w = self.text.content_width  + self.padding * 2 + border * 2
+		h = self.text.content_height + self.padding * 2 + border * 2
 		if x < point[0] and point[0] < x + w and y < point[1] and point[1] < y + h:
 			return True
 	def press(self, button, modifiers):
@@ -95,8 +96,8 @@ class Button:
 			border = theme['border_width']
 			glDisable(GL_TEXTURE_2D)
 			x, y = self.pos[0], self.pos[1]
-			w = self.text.width  + self.padding * 2 + border * 2
-			h = self.text.height + self.padding * 2 + border * 2
+			w = self.text.content_width  + self.padding * 2 + border * 2
+			h = self.text.content_height + self.padding * 2 + border * 2
 			# back
 			glColor4f(*theme['background_color'])
 			glBegin(GL_QUADS)

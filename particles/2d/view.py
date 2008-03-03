@@ -1,6 +1,5 @@
 import math
 from pyglet.gl import *
-from pyglet.window import key
 
 # state variables. module-level private.
 width = 0
@@ -8,36 +7,12 @@ height = 0
 origin = (0.0, 0,0)
 g_zoom = 0
 
-# default key mapping
-keys = {'scroll_up':    key.UP,
-        'scroll_down':  key.DOWN,
-        'scroll_left':  key.LEFT,
-        'scroll_right': key.RIGHT,
-        'zoom_in':      key.PLUS,
-        'zoom_out':     key.MINUS}
 
 def screen2world(x, y):
 	scale = 1.0 + g_zoom / 10.0
 	real_x = origin[0] + (x - width  / 2.0) * scale
 	real_y = origin[1] + (y - height / 2.0) * scale
 	return (real_x, real_y)
-
-
-def key_handler(pressed, frame_time):
-	global origin
-	# world scrolling
-	x = y = 0
-	if pressed[keys['scroll_up']]:    y += 1
-	if pressed[keys['scroll_down']]:  y -= 1
-	if pressed[keys['scroll_left']]:  x -= 1
-	if pressed[keys['scroll_right']]: x += 1
-	if x or y:
-		scale = 1.0 + g_zoom / 10.0
-		speed = height / 2.0 * scale
-		x *= speed * frame_time
-		y *= speed * frame_time
-		origin = (origin[0] + x, origin[1] + y)
-		update_projection()
 
 
 def zoom(z):
@@ -65,3 +40,6 @@ def update_projection():
 		left, right, bottom, top = math.floor(left), math.floor(right), math.floor(bottom), math.floor(top)
 	glOrtho(left, right, bottom, top, -1, 1)
 	glMatrixMode(GL_MODELVIEW)
+
+def pan():
+	pass
