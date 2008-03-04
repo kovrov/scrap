@@ -2,20 +2,14 @@
 import math
 # framework
 import pyglet
-from pyglet.window import key
 from pyglet.gl import *
 # project
 from utils import normalizeVector2, addVectors2, subtractVector2, distanceBetweenPoints2
 import tasks
 
-# default key mapping
-keys = {'move_up':       key.E,
-        'move_down':     key.D,
-        'move_left':     key.S,
-        'move_right':    key.F}
-
 
 SPEED = 64.0 # px/sec
+
 
 class Ship(object):
 	def __init__(self):
