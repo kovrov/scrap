@@ -1,0 +1,21 @@
+[normal]
+update (time-based, scheduled)
+  game objects (tasks)
+render (time-based, evey frame)
+  scene objects
+    geomerty (ordered)
+      opaque
+      alpha-blended (sorted)
+    effects (tasks)
+  ui (sorted tasks)
+
+
+[lazy]
+update (time-based)
+  any tasks (game objects, special effects, ui objects)
+render
+  scene objects (ordered)
+    opaque geomerty
+    alpha-blended geometry (sorted)
+    special effects
+  ui (sorted)

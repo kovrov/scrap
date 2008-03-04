@@ -1,12 +1,18 @@
+import pyglet
 from pyglet.window import key
 
 import tasks
 import view
 import player
 import fx
+import scene
+import ui
+
+button = ui.Button(lambda: pyglet.app.event_loop.exit(), (10, 10), "Quit")
 
 ship = player.Ship()
 ship.pos = (0, 0)
+scene.models.append(ship)
 
 key_state = key.KeyStateHandler()
 
@@ -52,12 +58,15 @@ def on_mouse_press(x, y, button, modifiers):
 	tasks.append(fx.sparks_task((real_x, real_y, 0.0)))
 
 def update_ship_movement():
-	if key_state[keys['view_up']]:    y += 1
-	if key_state[keys['view_down']]:  y -= 1
-	if key_state[keys['view_left']]:  x -= 1
-	if key_state[keys['view_right']]: x += 1
+	x = y = 0
+	if key_state[keys['move_up']]:    y += 1
+	if key_state[keys['move_down']]:  y -= 1
+	if key_state[keys['move_left']]:  x -= 1
+	if key_state[keys['move_right']]: x += 1
 	if x or y:
-		ship.move(x, y)
+		ship.move((x, y))
+	else:
+		ship.move(None)
 
 def update_view_panning():
 	x = y = 0
@@ -66,4 +75,6 @@ def update_view_panning():
 	if key_state[keys['scroll_left']]:  x -= 1
 	if key_state[keys['scroll_right']]: x += 1
 	if x or y:
-		view.pan(x, y)
+		view.pan((x, y))
+	else:
+		view.pan(None)

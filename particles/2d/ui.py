@@ -38,7 +38,7 @@ def append(task):
 	task.next()  # init
 	g_tasks.append(task)
 
-def draw(w, h, frame_time):
+def draw(w, h, frame_time=0):
 	# init
 	glPushAttrib(GL_DEPTH_BUFFER_BIT|GL_TRANSFORM_BIT)  # GL_DEPTH_TEST, GL_MATRIX_MODE
 	glDisable(GL_DEPTH_TEST)
