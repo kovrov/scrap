@@ -6,6 +6,9 @@ from pyglet.gl import *
 # project
 from utils import normalizeVector2, addVectors2, subtractVector2, distanceBetweenPoints2
 import tasks
+# temp, TODO: remove
+import fx
+import scene
 
 
 SPEED = 64.0 # px/sec
@@ -42,12 +45,15 @@ class Ship(object):
 			y_cmp = lambda: self.pos[1] < pos[1]
 			y_rnd = math.floor
 		# move until stop condition occures
+		ruller = fx.Ruler(self.pos, pos)
+		scene.models.append(ruller)
 		while x_cmp() or y_cmp():
 			time = yield
 			if time > 0.0:
 				self.pos = (self.pos[0] + vect[0] * SPEED * time,
 				            self.pos[1] + vect[1] * SPEED * time)
-		#
+				ruller.begin = self.pos
+		scene.models.remove(ruller)
 		self.pos = (x_rnd(self.pos[0]), y_rnd(self.pos[1]))
 
 	def move(self, vect):

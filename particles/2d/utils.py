@@ -26,11 +26,11 @@ def subtractVector2(v1, v2):
 
 
 def normalizeVector(v):
-	k = 1.0 / math.sqrt(v[0]**2.0 + v[1]**2.0 + v[2]**2.0)
+	k = 1.0 / math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
 	return (v[0] * k, v[1] * k, v[2] * k)
 
 def normalizeVector2(v):
-	k = 1.0 / math.sqrt(v[0]**2.0 + v[1]**2.0)
+	k = 1.0 / math.hypot(*v)
 	return (v[0] * k, v[1] * k)
 
 
@@ -52,4 +52,13 @@ def vectorsToAngle(v1, v2):
 
 
 def distanceBetweenPoints2(p1, p2):
-	return math.sqrt((p1[1] - p1[0])**2, (p2[1] - p2[1])**2)
+	"""Return the distance between two 2D points.
+	>>> distanceBetweenPoints2((-1.0, 1.0), (1.0, 1.0))
+	2.0
+	"""
+	return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

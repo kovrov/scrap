@@ -21,12 +21,16 @@ keys = {'scroll_up':    key.UP,
         'scroll_down':  key.DOWN,
         'scroll_left':  key.LEFT,
         'scroll_right': key.RIGHT,
-        'zoom_in':      key.PLUS,
+        'zoom_in':      key.EQUAL, #PLUS
         'zoom_out':     key.MINUS,
         'move_up':      key.E,
         'move_down':    key.D,
         'move_left':    key.S,
         'move_right':   key.F}
+"""
+NUM_SUBTRACT
+NUM_ADD
+"""
 
 def on_key_press(symbol, modifiers):
 	if symbol in (keys['move_up'], keys['move_down'], keys['move_left'], keys['move_right']):
@@ -37,6 +41,7 @@ def on_key_press(symbol, modifiers):
 		return view.zoom(1)
 	if symbol == keys['zoom_out']:
 		return view.zoom(-1)
+	print "on_key_press", symbol
 
 def on_key_release(symbol, modifiers):
 	if symbol in (keys['move_up'], keys['move_down'], keys['move_left'], keys['move_right']):
@@ -55,7 +60,9 @@ def on_mouse_press(x, y, button, modifiers):
 	# background flash
 	tasks.append(fx.flash_task(0.5))
 	# sparks test
-	tasks.append(fx.sparks_task((real_x, real_y, 0.0)))
+	sparks = fx.Sparks((real_x, real_y, 0.0))
+	scene.models.append(sparks)
+	tasks.append(sparks.update_task())
 
 def update_ship_movement():
 	x = y = 0

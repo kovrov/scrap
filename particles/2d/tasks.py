@@ -6,6 +6,7 @@ g_reset_time = False
 def append(task):
 	global g_reset_time
 	if not g_tasks:
+		print "[tasks begin]"
 		pyglet.clock.schedule(update)
 		g_reset_time = False
 	task.next()  # init generator
@@ -22,4 +23,5 @@ def update(frame_time):
 		except StopIteration:
 			g_tasks.remove(task)
 			if not g_tasks:
+				print "[tasks end]"
 				pyglet.clock.unschedule(update)
