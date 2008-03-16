@@ -1,6 +1,10 @@
 """
 Peter Angstadt
 http://pete.nextraztus.com/
+
+It seems Opengl ES uses fixed-point numbers, see:
+http://docs.python.org/lib/decimal-faq.html
+http://pypi.python.org/pypi/Simple%20Python%20Fixed-Point%20Module
 """
 if __name__ == '__main__':
 	import pyglet
