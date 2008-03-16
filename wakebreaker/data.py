@@ -2613,7 +2613,7 @@ def loadisland3():
 
 def loadCheckpoint():
 	return {
-		'texture': pyglet.image.load('checkpointon.png').get_texture(),
+		'texture': None,
 		'vertices': (
 			(-485, -103, 92680),
 			(76679, -74240, 341),

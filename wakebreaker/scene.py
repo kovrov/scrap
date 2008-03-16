@@ -1,4 +1,7 @@
+import random
+
 import renderer
+import data
 #include "island1.h"
 #include "island2.h"
 #include "ModelManager.h"
@@ -7,7 +10,6 @@ import renderer
 #include "boat1.h"
 #include "checkpoint.h"
 
-import data
 
 BOAT1, BOAT2 = xrange(2)
 
@@ -55,11 +57,7 @@ class ModelManager:
 
 
 	def getRandomSeascapeModel(self):
-		# Generate a random number
-		if rand() % 2:
-			return self.getIsland1()
-		else:
-			return self.getIsland2()
+		return random.choice((self.getIsland1, self.getIsland2))()
 
 
 	def getCheckPoint(self):

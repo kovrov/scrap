@@ -1,9 +1,9 @@
 import math
 import random
 
-from copy import copy
-from util import Vector3
+import pyglet
 
+from util import Vector3
 import renderer
 import scene
 import fx
@@ -188,7 +188,6 @@ class Racer:
 
 
 
-
 class RaceCourse:
 	# 1. Generates a random race course within the donut described by min and max radius
 	# 2. Adds racers to the race course and sets up the race course
@@ -228,10 +227,8 @@ class RaceCourse:
 			racer.nextCPPos.set(self.checkPoints[0].position)
 		self.racers[0].rotate(90.0)
 		# load the textures for the checkpoints
-		self.cpOnTex = Texture()
-		self.cpOnTex.load(CHECKPOINTON)
-		self.cpOffTex = Texture()
-		self.cpOffTex.load(CHECKPOINTOFF)
+		self.cpOnTex = pyglet.image.load('checkpointon.png').get_texture()
+		self.cpOffTex = pyglet.image.load('checkpointoff.png').get_texture()
 		self.playerNextCP = 0
 
 
@@ -281,3 +278,126 @@ class RaceCourse:
 				if i == 0:
 					self.playerNextCP = CP
 		return 1
+
+
+
+class Seascape:
+	def __init__(self):
+		self.sea = None  # the water quad (RenderInstance)
+		self.models = None  # the islands (RenderInstance)
+		# used in water animation
+		self.texTranslate = 0
+		self.waterMoved = False
+
+	# sets everything up
+	def generate(self, mm):
+		self.waterMoved = True
+		self.models = [renderer.RenderInstance() for i in xrange(15)]
+		for model in self.models:
+			# Get a random island model
+			model.renderData = mm.getRandomSeascapeModel()
+			# generate a random x and z
+			model.position.set(random.uniform(0.0, WORLD_WIDTH), 0.0, random.uniform(0.0, WORLD_HEIGHT))
+			# generate a random rotation
+			model.rotation.set(-90.0, random.uniform(0.0, 360.0), 0.0)
+		# Set up the sea floor
+		tempVerts = (
+			(-2,                      0.0, -2.0),
+			(-2,                      0.0, WORLD_HEIGHT / 2.0 + 2.0),
+			(WORLD_WIDTH / 2.0 + 2.0, 0.0, -2.0),
+			(WORLD_WIDTH / 2.0 + 2.0, 0.0, WORLD_HEIGHT / 2.0 + 2.0))
+		# set up texture coords
+		texCoords = ((0, 0), (15, 0), (0, 15), (15, 15))
+		# set up indices
+		indices = (0, 1, 2, 2, 1, 3)
+		# fill in the correct numbers
+		rtemp = RenderData()
+		rtemp.vertices = tempVerts
+		rtemp.numVertices = 4
+		rtemp.texCoords = texCoords
+		rtemp.numTexCoords = 4
+		rtemp.indices = indices
+		rtemp.numIndices = 6
+		# load the texture
+		tex = Texture()
+		tex.load(WATER)
+		rtemp.texture = tex
+		# set up the renderInstance
+		self.sea = RenderInstance()
+		self.sea.position.set(0.0, 0.0, 0.0)
+		self.sea.renderData(rtemp)
+
+	# checks if anything collided with the islands
+	def collided(self, pos, radius):
+		for model in self.models:
+			# if the distance between the two points is more than the two radii, no collision
+			# calculate the distance squared
+			dist = (model.position.x - pos.x) * (model.position.x - pos.x) + (model.position.z - pos.z) * (model.position.z - pos.z)
+			radii = (radius + 1.5) * (radius + 1.5)
+			if dist < radii:
+				return True
+		return False
+
+	# renders the seascape
+	def render(self, renderer):
+		# render all the models first
+		for model in self.models:
+			renderer.render(model)
+			# draw reflection
+			model.scale(2.0, -2.0, 2.0) #(2*65536, -2*65536, 2*65536)
+			renderer.render(model)
+			model.scale(2.0,  2.0, 2.0) #(2*65536,  2*65536, 2*65536)
+		# make sure the m_texTranslate never goes out of bounds
+		if self.waterMoved:
+			self.texTranslate -= 0.005
+		else:
+			self.texTranslate += 0.005
+		if self.texTranslate > 983040:  # WTF?
+			self.waterMoved = True
+		if self.texTranslate < -983040:  # WTF?
+			self.waterMoved = False
+		# Now render the water plane
+		# We render it 4 times, so that it forms a giant block
+		glPushMatrix()
+		# set up blending
+		glEnable(GL_BLEND)
+		glColor4f(1.0, 1.0, 1.0, 0.6)  # 65536x is 1.0f?
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+		RenderWater(renderer)
+		glTranslatex(0, 0, ITOX(WORLD_HEIGHT / 2 +4))
+		RenderWater(renderer)
+		glTranslatex(ITOX(WORLD_HEIGHT / 2 + 4),0,0)
+		RenderWater(renderer)
+		glTranslatex(0, 0, -ITOX(WORLD_HEIGHT / 2 + 4))
+		RenderWater(renderer)
+		# turn of blending and restore the original color
+		glDisable(GL_BLEND)
+		glColor4f(1.0, 1.0, 1.0, 1.0)  # 65536x is 1.0f?
+		glPopMatrix()
+
+	# Renders the water
+	def renderWater(self, renderer):
+		glMatrixMode(GL_TEXTURE)
+		# shift the texture coords to simulate motion
+		glTranslatef(self.texTranslate, self.texTranslate, 0.0)
+		glRotatex(35.0, 0.0, 0.0, 1.0)
+		glColor4f(1.0, 1.0, 1.0, 0.6)  # 65536x is 1.0f?
+		# render the first sea quad
+		renderer.render(self.sea)
+		# reset the texture matrix
+		glLoadIdentity()
+		# now scale and move the tex coords
+		glScalef(0.7, 0.7, 0.7)
+		glTranslatef(-self.texTranslate, 0.0, 0.0)
+		# change the transparency
+		glColor4f(1.0, 1.0, 1.0, 0.35)  # 65536x is 1.0f?
+		# render another water quad just slightly above the previous one
+		glMatrixMode(GL_MODELVIEW)
+		self.sea.translate(0.0 ,6553, 0.0)  # WTF?
+		renderer.render(self.sea)
+		self.sea.translate(0,-6553,0)  # WTF?
+		glMatrixMode(GL_TEXTURE)
+		# reset the texture matrix again
+		glLoadIdentity()
+		# change back to modelview
+		glMatrixMode(GL_MODELVIEW)

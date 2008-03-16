@@ -71,12 +71,12 @@ class Game:
 		self.raceCourse = models.RaceCourse(Vector3(models.WORLD_WIDTH / 2.0, 0.0, models.WORLD_HEIGHT / 2.0),
 		                                    58, 60, self.racers, self.modelManager)
 		# set up the environment
-		self.seascape = Seascape()
+		self.seascape = models.Seascape()
 		self.seascape.generate(self.modelManager)
 		# put the camera at an initial positiong
-		eye = Vector3(-ITOX(0),ITOX(15),FTOX(-59.0))
-		center = Vector3(ITOX(WORLD_WIDTH / 2),0,ITOX(WORLD_HEIGHT / 2))
-		up = Vector3(ITOX(0),ITOX(1),ITOX(0))
+		eye = Vector3(-0.0, 15.0, -59.0)
+		center = Vector3(WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0)
+		up = Vector3(0.0, 1.0, 0.0)
 		self.camera.lookAt(eye, center, up)
 		# Load textures:
 		self.splash = Texture()
@@ -108,10 +108,10 @@ class Game:
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
 		# set up the camera to follow the player
-		eye = Vector3(self.racers[0].Position().x - (MULX(ITOX(25), MULX(self.racers[0].dir.x,FTOX(0.7))  )),
-					ITOX(7),
-					self.racers[0].Position().z - (MULX(ITOX(25),-MULX(self.racers[0].dir.z,FTOX(0.7)) )))
-		up = Vector3(ITOX(0),ITOX(1),ITOX(0))
+		eye = Vector3(self.racers[0].Position().x - (MULX(25.0, MULX(self.racers[0].dir.x, 0.7))),
+					7.0,
+					self.racers[0].Position().z - (MULX(25.0,-MULX(self.racers[0].dir.z, 0.7))))
+		up = Vector3(0.0, 1.0, 0.0)
 		self.camera.LookAt(eye,self.racers[0].Position(),up)
 		self.camera.Update()
 		# process input
@@ -120,9 +120,9 @@ class Game:
 		if self.keysDown[G_DOWN] == True:
 			self.racers[0].IncreaseSpeed(-6553)		
 		if self.keysDown[G_RIGHT] == True:
-			self.racers[0].rotate(-ITOX(5))
+			self.racers[0].rotate(-5.0)
 		if self.keysDown[G_LEFT] == True:
-			self.racers[0].rotate(ITOX(5))
+			self.racers[0].rotate(5.0)
 		if self.keysDown[G_DEVICE1]:
 			self.renderer.EnableFog()
 		if self.keysDown[G_DEVICE2]:
@@ -131,10 +131,10 @@ class Game:
 		self.raceCourse.update()
 		self.racers[0].update()
 		self.racers[1].updateAI(self.racers[0])
-		if self.seascape.Collided(self.racers[0].ri.position(),ITOX(1)):
-			self.racers[0].IncreaseSpeed(-ITOX(1))
-		if self.seascape.Collided(self.racers[1].ri.position(),ITOX(1)):
-			self.racers[1].IncreaseSpeed(-ITOX(1))
+		if self.seascape.Collided(self.racers[0].ri.position(), 1.0):
+			self.racers[0].IncreaseSpeed(-1)
+		if self.seascape.Collided(self.racers[1].ri.position(), 1.0):
+			self.racers[1].IncreaseSpeed(-1.0)
 		if self.racers[0].IsFinished():
 			self.hasWon = True
 			self.playing = False
