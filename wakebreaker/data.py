@@ -154,157 +154,157 @@ def loadBoat1():
 			(-103943, -122369, 86625),
 			(-88992, -254739, 69046),
 			(-44496, -130135, 140616)),
-		'indices':
-			model->m_indices[0] = 0;
-			model->m_indices[1] = 1;
-			model->m_indices[2] = 2;
-			model->m_indices[3] = 3;
-			model->m_indices[4] = 4;
-			model->m_indices[5] = 5;
-			model->m_indices[6] = 6;
-			model->m_indices[7] = 7;
-			model->m_indices[8] = 8;
-			model->m_indices[9] = 9;
-			model->m_indices[10] = 10;
-			model->m_indices[11] = 11;
-			model->m_indices[12] = 12;
-			model->m_indices[13] = 13;
-			model->m_indices[14] = 14;
-			model->m_indices[15] = 15;
-			model->m_indices[16] = 16;
-			model->m_indices[17] = 17;
-			model->m_indices[18] = 18;
-			model->m_indices[19] = 19;
-			model->m_indices[20] = 20;
-			model->m_indices[21] = 21;
-			model->m_indices[22] = 22;
-			model->m_indices[23] = 23;
-			model->m_indices[24] = 24;
-			model->m_indices[25] = 25;
-			model->m_indices[26] = 26;
-			model->m_indices[27] = 27;
-			model->m_indices[28] = 28;
-			model->m_indices[29] = 29;
-			model->m_indices[30] = 30;
-			model->m_indices[31] = 31;
-			model->m_indices[32] = 32;
-			model->m_indices[33] = 33;
-			model->m_indices[34] = 34;
-			model->m_indices[35] = 35;
-			model->m_indices[36] = 36;
-			model->m_indices[37] = 37;
-			model->m_indices[38] = 38;
-			model->m_indices[39] = 39;
-			model->m_indices[40] = 40;
-			model->m_indices[41] = 41;
-			model->m_indices[42] = 42;
-			model->m_indices[43] = 43;
-			model->m_indices[44] = 44;
-			model->m_indices[45] = 45;
-			model->m_indices[46] = 46;
-			model->m_indices[47] = 47;
-			model->m_indices[48] = 48;
-			model->m_indices[49] = 49;
-			model->m_indices[50] = 50;
-			model->m_indices[51] = 51;
-			model->m_indices[52] = 52;
-			model->m_indices[53] = 53;
-			model->m_indices[54] = 54;
-			model->m_indices[55] = 55;
-			model->m_indices[56] = 56;
-			model->m_indices[57] = 57;
-			model->m_indices[58] = 58;
-			model->m_indices[59] = 59;
-			model->m_indices[60] = 60;
-			model->m_indices[61] = 61;
-			model->m_indices[62] = 62;
-			model->m_indices[63] = 63;
-			model->m_indices[64] = 64;
-			model->m_indices[65] = 65;
-			model->m_indices[66] = 66;
-			model->m_indices[67] = 67;
-			model->m_indices[68] = 68;
-			model->m_indices[69] = 69;
-			model->m_indices[70] = 70;
-			model->m_indices[71] = 71;
-			model->m_indices[72] = 72;
-			model->m_indices[73] = 73;
-			model->m_indices[74] = 74;
-			model->m_indices[75] = 75;
-			model->m_indices[76] = 76;
-			model->m_indices[77] = 77;
-			model->m_indices[78] = 78;
-			model->m_indices[79] = 79;
-			model->m_indices[80] = 80;
-			model->m_indices[81] = 81;
-			model->m_indices[82] = 82;
-			model->m_indices[83] = 83;
-			model->m_indices[84] = 84;
-			model->m_indices[85] = 85;
-			model->m_indices[86] = 86;
-			model->m_indices[87] = 87;
-			model->m_indices[88] = 88;
-			model->m_indices[89] = 89;
-			model->m_indices[90] = 90;
-			model->m_indices[91] = 91;
-			model->m_indices[92] = 92;
-			model->m_indices[93] = 93;
-			model->m_indices[94] = 94;
-			model->m_indices[95] = 95;
-			model->m_indices[96] = 96;
-			model->m_indices[97] = 97;
-			model->m_indices[98] = 98;
-			model->m_indices[99] = 99;
-			model->m_indices[100] = 100;
-			model->m_indices[101] = 101;
-			model->m_indices[102] = 102;
-			model->m_indices[103] = 103;
-			model->m_indices[104] = 104;
-			model->m_indices[105] = 105;
-			model->m_indices[106] = 106;
-			model->m_indices[107] = 107;
-			model->m_indices[108] = 108;
-			model->m_indices[109] = 109;
-			model->m_indices[110] = 110;
-			model->m_indices[111] = 111;
-			model->m_indices[112] = 112;
-			model->m_indices[113] = 113;
-			model->m_indices[114] = 114;
-			model->m_indices[115] = 115;
-			model->m_indices[116] = 116;
-			model->m_indices[117] = 117;
-			model->m_indices[118] = 118;
-			model->m_indices[119] = 119;
-			model->m_indices[120] = 120;
-			model->m_indices[121] = 121;
-			model->m_indices[122] = 122;
-			model->m_indices[123] = 123;
-			model->m_indices[124] = 124;
-			model->m_indices[125] = 125;
-			model->m_indices[126] = 126;
-			model->m_indices[127] = 127;
-			model->m_indices[128] = 128;
-			model->m_indices[129] = 129;
-			model->m_indices[130] = 130;
-			model->m_indices[131] = 131;
-			model->m_indices[132] = 132;
-			model->m_indices[133] = 133;
-			model->m_indices[134] = 134;
-			model->m_indices[135] = 135;
-			model->m_indices[136] = 136;
-			model->m_indices[137] = 137;
-			model->m_indices[138] = 138;
-			model->m_indices[139] = 139;
-			model->m_indices[140] = 140;
-			model->m_indices[141] = 141;
-			model->m_indices[142] = 142;
-			model->m_indices[143] = 143;
-			model->m_indices[144] = 144;
-			model->m_indices[145] = 145;
-			model->m_indices[146] = 146;
-			model->m_indices[147] = 147;
-			model->m_indices[148] = 148;
-			model->m_indices[149] = 149),
+		'indices': (
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			30,
+			31,
+			32,
+			33,
+			34,
+			35,
+			36,
+			37,
+			38,
+			39,
+			40,
+			41,
+			42,
+			43,
+			44,
+			45,
+			46,
+			47,
+			48,
+			49,
+			50,
+			51,
+			52,
+			53,
+			54,
+			55,
+			56,
+			57,
+			58,
+			59,
+			60,
+			61,
+			62,
+			63,
+			64,
+			65,
+			66,
+			67,
+			68,
+			69,
+			70,
+			71,
+			72,
+			73,
+			74,
+			75,
+			76,
+			77,
+			78,
+			79,
+			80,
+			81,
+			82,
+			83,
+			84,
+			85,
+			86,
+			87,
+			88,
+			89,
+			90,
+			91,
+			92,
+			93,
+			94,
+			95,
+			96,
+			97,
+			98,
+			99,
+			100,
+			101,
+			102,
+			103,
+			104,
+			105,
+			106,
+			107,
+			108,
+			109,
+			110,
+			111,
+			112,
+			113,
+			114,
+			115,
+			116,
+			117,
+			118,
+			119,
+			120,
+			121,
+			122,
+			123,
+			124,
+			125,
+			126,
+			127,
+			128,
+			129,
+			130,
+			131,
+			132,
+			133,
+			134,
+			135,
+			136,
+			137,
+			138,
+			139,
+			140,
+			141,
+			142,
+			143,
+			144,
+			145,
+			146,
+			147,
+			148,
+			149),
 		'uvmap': (
 			(2497, -17111),
 			(41228, -17153),
@@ -1237,199 +1237,199 @@ def loadIsland2():
 			(-21553, -25487, 493),
 			(21443, -25487, 493),
 			(-9285, -23818, 31426)),
-		'indices':
-			model->m_indices[0] = 0;
-			model->m_indices[1] = 1;
-			model->m_indices[2] = 2;
-			model->m_indices[3] = 3;
-			model->m_indices[4] = 4;
-			model->m_indices[5] = 5;
-			model->m_indices[6] = 6;
-			model->m_indices[7] = 7;
-			model->m_indices[8] = 8;
-			model->m_indices[9] = 9;
-			model->m_indices[10] = 10;
-			model->m_indices[11] = 11;
-			model->m_indices[12] = 12;
-			model->m_indices[13] = 13;
-			model->m_indices[14] = 14;
-			model->m_indices[15] = 15;
-			model->m_indices[16] = 16;
-			model->m_indices[17] = 17;
-			model->m_indices[18] = 18;
-			model->m_indices[19] = 19;
-			model->m_indices[20] = 20;
-			model->m_indices[21] = 21;
-			model->m_indices[22] = 22;
-			model->m_indices[23] = 23;
-			model->m_indices[24] = 24;
-			model->m_indices[25] = 25;
-			model->m_indices[26] = 26;
-			model->m_indices[27] = 27;
-			model->m_indices[28] = 28;
-			model->m_indices[29] = 29;
-			model->m_indices[30] = 30;
-			model->m_indices[31] = 31;
-			model->m_indices[32] = 32;
-			model->m_indices[33] = 33;
-			model->m_indices[34] = 34;
-			model->m_indices[35] = 35;
-			model->m_indices[36] = 36;
-			model->m_indices[37] = 37;
-			model->m_indices[38] = 38;
-			model->m_indices[39] = 39;
-			model->m_indices[40] = 40;
-			model->m_indices[41] = 41;
-			model->m_indices[42] = 42;
-			model->m_indices[43] = 43;
-			model->m_indices[44] = 44;
-			model->m_indices[45] = 45;
-			model->m_indices[46] = 46;
-			model->m_indices[47] = 47;
-			model->m_indices[48] = 48;
-			model->m_indices[49] = 49;
-			model->m_indices[50] = 50;
-			model->m_indices[51] = 51;
-			model->m_indices[52] = 52;
-			model->m_indices[53] = 53;
-			model->m_indices[54] = 54;
-			model->m_indices[55] = 55;
-			model->m_indices[56] = 56;
-			model->m_indices[57] = 57;
-			model->m_indices[58] = 58;
-			model->m_indices[59] = 59;
-			model->m_indices[60] = 60;
-			model->m_indices[61] = 61;
-			model->m_indices[62] = 62;
-			model->m_indices[63] = 63;
-			model->m_indices[64] = 64;
-			model->m_indices[65] = 65;
-			model->m_indices[66] = 66;
-			model->m_indices[67] = 67;
-			model->m_indices[68] = 68;
-			model->m_indices[69] = 69;
-			model->m_indices[70] = 70;
-			model->m_indices[71] = 71;
-			model->m_indices[72] = 72;
-			model->m_indices[73] = 73;
-			model->m_indices[74] = 74;
-			model->m_indices[75] = 75;
-			model->m_indices[76] = 76;
-			model->m_indices[77] = 77;
-			model->m_indices[78] = 78;
-			model->m_indices[79] = 79;
-			model->m_indices[80] = 80;
-			model->m_indices[81] = 81;
-			model->m_indices[82] = 82;
-			model->m_indices[83] = 83;
-			model->m_indices[84] = 84;
-			model->m_indices[85] = 85;
-			model->m_indices[86] = 86;
-			model->m_indices[87] = 87;
-			model->m_indices[88] = 88;
-			model->m_indices[89] = 89;
-			model->m_indices[90] = 90;
-			model->m_indices[91] = 91;
-			model->m_indices[92] = 92;
-			model->m_indices[93] = 93;
-			model->m_indices[94] = 94;
-			model->m_indices[95] = 95;
-			model->m_indices[96] = 96;
-			model->m_indices[97] = 97;
-			model->m_indices[98] = 98;
-			model->m_indices[99] = 99;
-			model->m_indices[100] = 100;
-			model->m_indices[101] = 101;
-			model->m_indices[102] = 102;
-			model->m_indices[103] = 103;
-			model->m_indices[104] = 104;
-			model->m_indices[105] = 105;
-			model->m_indices[106] = 106;
-			model->m_indices[107] = 107;
-			model->m_indices[108] = 108;
-			model->m_indices[109] = 109;
-			model->m_indices[110] = 110;
-			model->m_indices[111] = 111;
-			model->m_indices[112] = 112;
-			model->m_indices[113] = 113;
-			model->m_indices[114] = 114;
-			model->m_indices[115] = 115;
-			model->m_indices[116] = 116;
-			model->m_indices[117] = 117;
-			model->m_indices[118] = 118;
-			model->m_indices[119] = 119;
-			model->m_indices[120] = 120;
-			model->m_indices[121] = 121;
-			model->m_indices[122] = 122;
-			model->m_indices[123] = 123;
-			model->m_indices[124] = 124;
-			model->m_indices[125] = 125;
-			model->m_indices[126] = 126;
-			model->m_indices[127] = 127;
-			model->m_indices[128] = 128;
-			model->m_indices[129] = 129;
-			model->m_indices[130] = 130;
-			model->m_indices[131] = 131;
-			model->m_indices[132] = 132;
-			model->m_indices[133] = 133;
-			model->m_indices[134] = 134;
-			model->m_indices[135] = 135;
-			model->m_indices[136] = 136;
-			model->m_indices[137] = 137;
-			model->m_indices[138] = 138;
-			model->m_indices[139] = 139;
-			model->m_indices[140] = 140;
-			model->m_indices[141] = 141;
-			model->m_indices[142] = 142;
-			model->m_indices[143] = 143;
-			model->m_indices[144] = 144;
-			model->m_indices[145] = 145;
-			model->m_indices[146] = 146;
-			model->m_indices[147] = 147;
-			model->m_indices[148] = 148;
-			model->m_indices[149] = 149;
-			model->m_indices[150] = 150;
-			model->m_indices[151] = 151;
-			model->m_indices[152] = 152;
-			model->m_indices[153] = 153;
-			model->m_indices[154] = 154;
-			model->m_indices[155] = 155;
-			model->m_indices[156] = 156;
-			model->m_indices[157] = 157;
-			model->m_indices[158] = 158;
-			model->m_indices[159] = 159;
-			model->m_indices[160] = 160;
-			model->m_indices[161] = 161;
-			model->m_indices[162] = 162;
-			model->m_indices[163] = 163;
-			model->m_indices[164] = 164;
-			model->m_indices[165] = 165;
-			model->m_indices[166] = 166;
-			model->m_indices[167] = 167;
-			model->m_indices[168] = 168;
-			model->m_indices[169] = 169;
-			model->m_indices[170] = 170;
-			model->m_indices[171] = 171;
-			model->m_indices[172] = 172;
-			model->m_indices[173] = 173;
-			model->m_indices[174] = 174;
-			model->m_indices[175] = 175;
-			model->m_indices[176] = 176;
-			model->m_indices[177] = 177;
-			model->m_indices[178] = 178;
-			model->m_indices[179] = 179;
-			model->m_indices[180] = 180;
-			model->m_indices[181] = 181;
-			model->m_indices[182] = 182;
-			model->m_indices[183] = 183;
-			model->m_indices[184] = 184;
-			model->m_indices[185] = 185;
-			model->m_indices[186] = 186;
-			model->m_indices[187] = 187;
-			model->m_indices[188] = 188;
-			model->m_indices[189] = 189;
-			model->m_indices[190] = 190;
-			model->m_indices[191] = 191;
+		'indices': (
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			30,
+			31,
+			32,
+			33,
+			34,
+			35,
+			36,
+			37,
+			38,
+			39,
+			40,
+			41,
+			42,
+			43,
+			44,
+			45,
+			46,
+			47,
+			48,
+			49,
+			50,
+			51,
+			52,
+			53,
+			54,
+			55,
+			56,
+			57,
+			58,
+			59,
+			60,
+			61,
+			62,
+			63,
+			64,
+			65,
+			66,
+			67,
+			68,
+			69,
+			70,
+			71,
+			72,
+			73,
+			74,
+			75,
+			76,
+			77,
+			78,
+			79,
+			80,
+			81,
+			82,
+			83,
+			84,
+			85,
+			86,
+			87,
+			88,
+			89,
+			90,
+			91,
+			92,
+			93,
+			94,
+			95,
+			96,
+			97,
+			98,
+			99,
+			100,
+			101,
+			102,
+			103,
+			104,
+			105,
+			106,
+			107,
+			108,
+			109,
+			110,
+			111,
+			112,
+			113,
+			114,
+			115,
+			116,
+			117,
+			118,
+			119,
+			120,
+			121,
+			122,
+			123,
+			124,
+			125,
+			126,
+			127,
+			128,
+			129,
+			130,
+			131,
+			132,
+			133,
+			134,
+			135,
+			136,
+			137,
+			138,
+			139,
+			140,
+			141,
+			142,
+			143,
+			144,
+			145,
+			146,
+			147,
+			148,
+			149,
+			150,
+			151,
+			152,
+			153,
+			154,
+			155,
+			156,
+			157,
+			158,
+			159,
+			160,
+			161,
+			162,
+			163,
+			164,
+			165,
+			166,
+			167,
+			168,
+			169,
+			170,
+			171,
+			172,
+			173,
+			174,
+			175,
+			176,
+			177,
+			178,
+			179,
+			180,
+			181,
+			182,
+			183,
+			184,
+			185,
+			186,
+			187,
+			188,
+			189,
+			190,
+			191),
 		'uvmap': (
 			(25145, 0),
 			(18405, -13330),
@@ -1826,205 +1826,205 @@ def loadisland1():
 			(45835, -23316, 63848),
 			(31249, -12556, 87655),
 			(30018, -56841, 64919)),
-		'indices':
-			model->m_indices[0] = 0;
-			model->m_indices[1] = 1;
-			model->m_indices[2] = 2;
-			model->m_indices[3] = 3;
-			model->m_indices[4] = 4;
-			model->m_indices[5] = 5;
-			model->m_indices[6] = 6;
-			model->m_indices[7] = 7;
-			model->m_indices[8] = 8;
-			model->m_indices[9] = 9;
-			model->m_indices[10] = 10;
-			model->m_indices[11] = 11;
-			model->m_indices[12] = 12;
-			model->m_indices[13] = 13;
-			model->m_indices[14] = 14;
-			model->m_indices[15] = 15;
-			model->m_indices[16] = 16;
-			model->m_indices[17] = 17;
-			model->m_indices[18] = 18;
-			model->m_indices[19] = 19;
-			model->m_indices[20] = 20;
-			model->m_indices[21] = 21;
-			model->m_indices[22] = 22;
-			model->m_indices[23] = 23;
-			model->m_indices[24] = 24;
-			model->m_indices[25] = 25;
-			model->m_indices[26] = 26;
-			model->m_indices[27] = 27;
-			model->m_indices[28] = 28;
-			model->m_indices[29] = 29;
-			model->m_indices[30] = 30;
-			model->m_indices[31] = 31;
-			model->m_indices[32] = 32;
-			model->m_indices[33] = 33;
-			model->m_indices[34] = 34;
-			model->m_indices[35] = 35;
-			model->m_indices[36] = 36;
-			model->m_indices[37] = 37;
-			model->m_indices[38] = 38;
-			model->m_indices[39] = 39;
-			model->m_indices[40] = 40;
-			model->m_indices[41] = 41;
-			model->m_indices[42] = 42;
-			model->m_indices[43] = 43;
-			model->m_indices[44] = 44;
-			model->m_indices[45] = 45;
-			model->m_indices[46] = 46;
-			model->m_indices[47] = 47;
-			model->m_indices[48] = 48;
-			model->m_indices[49] = 49;
-			model->m_indices[50] = 50;
-			model->m_indices[51] = 51;
-			model->m_indices[52] = 52;
-			model->m_indices[53] = 53;
-			model->m_indices[54] = 54;
-			model->m_indices[55] = 55;
-			model->m_indices[56] = 56;
-			model->m_indices[57] = 57;
-			model->m_indices[58] = 58;
-			model->m_indices[59] = 59;
-			model->m_indices[60] = 60;
-			model->m_indices[61] = 61;
-			model->m_indices[62] = 62;
-			model->m_indices[63] = 63;
-			model->m_indices[64] = 64;
-			model->m_indices[65] = 65;
-			model->m_indices[66] = 66;
-			model->m_indices[67] = 67;
-			model->m_indices[68] = 68;
-			model->m_indices[69] = 69;
-			model->m_indices[70] = 70;
-			model->m_indices[71] = 71;
-			model->m_indices[72] = 72;
-			model->m_indices[73] = 73;
-			model->m_indices[74] = 74;
-			model->m_indices[75] = 75;
-			model->m_indices[76] = 76;
-			model->m_indices[77] = 77;
-			model->m_indices[78] = 78;
-			model->m_indices[79] = 79;
-			model->m_indices[80] = 80;
-			model->m_indices[81] = 81;
-			model->m_indices[82] = 82;
-			model->m_indices[83] = 83;
-			model->m_indices[84] = 84;
-			model->m_indices[85] = 85;
-			model->m_indices[86] = 86;
-			model->m_indices[87] = 87;
-			model->m_indices[88] = 88;
-			model->m_indices[89] = 89;
-			model->m_indices[90] = 90;
-			model->m_indices[91] = 91;
-			model->m_indices[92] = 92;
-			model->m_indices[93] = 93;
-			model->m_indices[94] = 94;
-			model->m_indices[95] = 95;
-			model->m_indices[96] = 96;
-			model->m_indices[97] = 97;
-			model->m_indices[98] = 98;
-			model->m_indices[99] = 99;
-			model->m_indices[100] = 100;
-			model->m_indices[101] = 101;
-			model->m_indices[102] = 102;
-			model->m_indices[103] = 103;
-			model->m_indices[104] = 104;
-			model->m_indices[105] = 105;
-			model->m_indices[106] = 106;
-			model->m_indices[107] = 107;
-			model->m_indices[108] = 108;
-			model->m_indices[109] = 109;
-			model->m_indices[110] = 110;
-			model->m_indices[111] = 111;
-			model->m_indices[112] = 112;
-			model->m_indices[113] = 113;
-			model->m_indices[114] = 114;
-			model->m_indices[115] = 115;
-			model->m_indices[116] = 116;
-			model->m_indices[117] = 117;
-			model->m_indices[118] = 118;
-			model->m_indices[119] = 119;
-			model->m_indices[120] = 120;
-			model->m_indices[121] = 121;
-			model->m_indices[122] = 122;
-			model->m_indices[123] = 123;
-			model->m_indices[124] = 124;
-			model->m_indices[125] = 125;
-			model->m_indices[126] = 126;
-			model->m_indices[127] = 127;
-			model->m_indices[128] = 128;
-			model->m_indices[129] = 129;
-			model->m_indices[130] = 130;
-			model->m_indices[131] = 131;
-			model->m_indices[132] = 132;
-			model->m_indices[133] = 133;
-			model->m_indices[134] = 134;
-			model->m_indices[135] = 135;
-			model->m_indices[136] = 136;
-			model->m_indices[137] = 137;
-			model->m_indices[138] = 138;
-			model->m_indices[139] = 139;
-			model->m_indices[140] = 140;
-			model->m_indices[141] = 141;
-			model->m_indices[142] = 142;
-			model->m_indices[143] = 143;
-			model->m_indices[144] = 144;
-			model->m_indices[145] = 145;
-			model->m_indices[146] = 146;
-			model->m_indices[147] = 147;
-			model->m_indices[148] = 148;
-			model->m_indices[149] = 149;
-			model->m_indices[150] = 150;
-			model->m_indices[151] = 151;
-			model->m_indices[152] = 152;
-			model->m_indices[153] = 153;
-			model->m_indices[154] = 154;
-			model->m_indices[155] = 155;
-			model->m_indices[156] = 156;
-			model->m_indices[157] = 157;
-			model->m_indices[158] = 158;
-			model->m_indices[159] = 159;
-			model->m_indices[160] = 160;
-			model->m_indices[161] = 161;
-			model->m_indices[162] = 162;
-			model->m_indices[163] = 163;
-			model->m_indices[164] = 164;
-			model->m_indices[165] = 165;
-			model->m_indices[166] = 166;
-			model->m_indices[167] = 167;
-			model->m_indices[168] = 168;
-			model->m_indices[169] = 169;
-			model->m_indices[170] = 170;
-			model->m_indices[171] = 171;
-			model->m_indices[172] = 172;
-			model->m_indices[173] = 173;
-			model->m_indices[174] = 174;
-			model->m_indices[175] = 175;
-			model->m_indices[176] = 176;
-			model->m_indices[177] = 177;
-			model->m_indices[178] = 178;
-			model->m_indices[179] = 179;
-			model->m_indices[180] = 180;
-			model->m_indices[181] = 181;
-			model->m_indices[182] = 182;
-			model->m_indices[183] = 183;
-			model->m_indices[184] = 184;
-			model->m_indices[185] = 185;
-			model->m_indices[186] = 186;
-			model->m_indices[187] = 187;
-			model->m_indices[188] = 188;
-			model->m_indices[189] = 189;
-			model->m_indices[190] = 190;
-			model->m_indices[191] = 191;
-			model->m_indices[192] = 192;
-			model->m_indices[193] = 193;
-			model->m_indices[194] = 194;
-			model->m_indices[195] = 195;
-			model->m_indices[196] = 196;
-			model->m_indices[197] = 197;
+		'indices': (
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			30,
+			31,
+			32,
+			33,
+			34,
+			35,
+			36,
+			37,
+			38,
+			39,
+			40,
+			41,
+			42,
+			43,
+			44,
+			45,
+			46,
+			47,
+			48,
+			49,
+			50,
+			51,
+			52,
+			53,
+			54,
+			55,
+			56,
+			57,
+			58,
+			59,
+			60,
+			61,
+			62,
+			63,
+			64,
+			65,
+			66,
+			67,
+			68,
+			69,
+			70,
+			71,
+			72,
+			73,
+			74,
+			75,
+			76,
+			77,
+			78,
+			79,
+			80,
+			81,
+			82,
+			83,
+			84,
+			85,
+			86,
+			87,
+			88,
+			89,
+			90,
+			91,
+			92,
+			93,
+			94,
+			95,
+			96,
+			97,
+			98,
+			99,
+			100,
+			101,
+			102,
+			103,
+			104,
+			105,
+			106,
+			107,
+			108,
+			109,
+			110,
+			111,
+			112,
+			113,
+			114,
+			115,
+			116,
+			117,
+			118,
+			119,
+			120,
+			121,
+			122,
+			123,
+			124,
+			125,
+			126,
+			127,
+			128,
+			129,
+			130,
+			131,
+			132,
+			133,
+			134,
+			135,
+			136,
+			137,
+			138,
+			139,
+			140,
+			141,
+			142,
+			143,
+			144,
+			145,
+			146,
+			147,
+			148,
+			149,
+			150,
+			151,
+			152,
+			153,
+			154,
+			155,
+			156,
+			157,
+			158,
+			159,
+			160,
+			161,
+			162,
+			163,
+			164,
+			165,
+			166,
+			167,
+			168,
+			169,
+			170,
+			171,
+			172,
+			173,
+			174,
+			175,
+			176,
+			177,
+			178,
+			179,
+			180,
+			181,
+			182,
+			183,
+			184,
+			185,
+			186,
+			187,
+			188,
+			189,
+			190,
+			191,
+			192,
+			193,
+			194,
+			195,
+			196,
+			197),
 		'uvmap': (
 			(62611, -45209),
 			(44213, -40940),
@@ -2355,133 +2355,133 @@ def loadisland3():
 			(-59104, -154465, 326630),
 			(141644, -63317, 281344),
 			(-5555, -84945, 378820)),
-		'indices':
-			model->m_indices[0] = 0;
-			model->m_indices[1] = 1;
-			model->m_indices[2] = 2;
-			model->m_indices[3] = 3;
-			model->m_indices[4] = 4;
-			model->m_indices[5] = 5;
-			model->m_indices[6] = 6;
-			model->m_indices[7] = 7;
-			model->m_indices[8] = 8;
-			model->m_indices[9] = 9;
-			model->m_indices[10] = 10;
-			model->m_indices[11] = 11;
-			model->m_indices[12] = 12;
-			model->m_indices[13] = 13;
-			model->m_indices[14] = 14;
-			model->m_indices[15] = 15;
-			model->m_indices[16] = 16;
-			model->m_indices[17] = 17;
-			model->m_indices[18] = 18;
-			model->m_indices[19] = 19;
-			model->m_indices[20] = 20;
-			model->m_indices[21] = 21;
-			model->m_indices[22] = 22;
-			model->m_indices[23] = 23;
-			model->m_indices[24] = 24;
-			model->m_indices[25] = 25;
-			model->m_indices[26] = 26;
-			model->m_indices[27] = 27;
-			model->m_indices[28] = 28;
-			model->m_indices[29] = 29;
-			model->m_indices[30] = 30;
-			model->m_indices[31] = 31;
-			model->m_indices[32] = 32;
-			model->m_indices[33] = 33;
-			model->m_indices[34] = 34;
-			model->m_indices[35] = 35;
-			model->m_indices[36] = 36;
-			model->m_indices[37] = 37;
-			model->m_indices[38] = 38;
-			model->m_indices[39] = 39;
-			model->m_indices[40] = 40;
-			model->m_indices[41] = 41;
-			model->m_indices[42] = 42;
-			model->m_indices[43] = 43;
-			model->m_indices[44] = 44;
-			model->m_indices[45] = 45;
-			model->m_indices[46] = 46;
-			model->m_indices[47] = 47;
-			model->m_indices[48] = 48;
-			model->m_indices[49] = 49;
-			model->m_indices[50] = 50;
-			model->m_indices[51] = 51;
-			model->m_indices[52] = 52;
-			model->m_indices[53] = 53;
-			model->m_indices[54] = 54;
-			model->m_indices[55] = 55;
-			model->m_indices[56] = 56;
-			model->m_indices[57] = 57;
-			model->m_indices[58] = 58;
-			model->m_indices[59] = 59;
-			model->m_indices[60] = 60;
-			model->m_indices[61] = 61;
-			model->m_indices[62] = 62;
-			model->m_indices[63] = 63;
-			model->m_indices[64] = 64;
-			model->m_indices[65] = 65;
-			model->m_indices[66] = 66;
-			model->m_indices[67] = 67;
-			model->m_indices[68] = 68;
-			model->m_indices[69] = 69;
-			model->m_indices[70] = 70;
-			model->m_indices[71] = 71;
-			model->m_indices[72] = 72;
-			model->m_indices[73] = 73;
-			model->m_indices[74] = 74;
-			model->m_indices[75] = 75;
-			model->m_indices[76] = 76;
-			model->m_indices[77] = 77;
-			model->m_indices[78] = 78;
-			model->m_indices[79] = 79;
-			model->m_indices[80] = 80;
-			model->m_indices[81] = 81;
-			model->m_indices[82] = 82;
-			model->m_indices[83] = 83;
-			model->m_indices[84] = 84;
-			model->m_indices[85] = 85;
-			model->m_indices[86] = 86;
-			model->m_indices[87] = 87;
-			model->m_indices[88] = 88;
-			model->m_indices[89] = 89;
-			model->m_indices[90] = 90;
-			model->m_indices[91] = 91;
-			model->m_indices[92] = 92;
-			model->m_indices[93] = 93;
-			model->m_indices[94] = 94;
-			model->m_indices[95] = 95;
-			model->m_indices[96] = 96;
-			model->m_indices[97] = 97;
-			model->m_indices[98] = 98;
-			model->m_indices[99] = 99;
-			model->m_indices[100] = 100;
-			model->m_indices[101] = 101;
-			model->m_indices[102] = 102;
-			model->m_indices[103] = 103;
-			model->m_indices[104] = 104;
-			model->m_indices[105] = 105;
-			model->m_indices[106] = 106;
-			model->m_indices[107] = 107;
-			model->m_indices[108] = 108;
-			model->m_indices[109] = 109;
-			model->m_indices[110] = 110;
-			model->m_indices[111] = 111;
-			model->m_indices[112] = 112;
-			model->m_indices[113] = 113;
-			model->m_indices[114] = 114;
-			model->m_indices[115] = 115;
-			model->m_indices[116] = 116;
-			model->m_indices[117] = 117;
-			model->m_indices[118] = 118;
-			model->m_indices[119] = 119;
-			model->m_indices[120] = 120;
-			model->m_indices[121] = 121;
-			model->m_indices[122] = 122;
-			model->m_indices[123] = 123;
-			model->m_indices[124] = 124;
-			model->m_indices[125] = 125;
+		'indices': (
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+			24,
+			25,
+			26,
+			27,
+			28,
+			29,
+			30,
+			31,
+			32,
+			33,
+			34,
+			35,
+			36,
+			37,
+			38,
+			39,
+			40,
+			41,
+			42,
+			43,
+			44,
+			45,
+			46,
+			47,
+			48,
+			49,
+			50,
+			51,
+			52,
+			53,
+			54,
+			55,
+			56,
+			57,
+			58,
+			59,
+			60,
+			61,
+			62,
+			63,
+			64,
+			65,
+			66,
+			67,
+			68,
+			69,
+			70,
+			71,
+			72,
+			73,
+			74,
+			75,
+			76,
+			77,
+			78,
+			79,
+			80,
+			81,
+			82,
+			83,
+			84,
+			85,
+			86,
+			87,
+			88,
+			89,
+			90,
+			91,
+			92,
+			93,
+			94,
+			95,
+			96,
+			97,
+			98,
+			99,
+			100,
+			101,
+			102,
+			103,
+			104,
+			105,
+			106,
+			107,
+			108,
+			109,
+			110,
+			111,
+			112,
+			113,
+			114,
+			115,
+			116,
+			117,
+			118,
+			119,
+			120,
+			121,
+			122,
+			123,
+			124,
+			125),
 		'uvmap': (
 			(26070, -17777),
 			(49305, -3599),
@@ -2609,3 +2609,83 @@ def loadisland3():
 			(43932, -58281),
 			(562, -48778),
 			(32787, -65536))}
+
+
+def loadCheckpoint():
+	return {
+		'texture': pyglet.image.load('checkpointon.png').get_texture(),
+		'vertices': (
+			(-485, -103, 92680),
+			(76679, -74240, 341),
+			(76799, 74007, 462),
+			(76799, 74007, 462),
+			(76679, -74240, 341),
+			(485, 103, -92680),
+			(-485, -103, 92680),
+			(-76799, -74007, -462),
+			(76679, -74240, 341),
+			(485, 103, -92680),
+			(-76679, 74240, -341),
+			(76799, 74007, 462),
+			(-76799, -74007, -462),
+			(-76679, 74240, -341),
+			(485, 103, -92680),
+			(-485, -103, 92680),
+			(-76679, 74240, -341),
+			(-76799, -74007, -462),
+			(485, 103, -92680),
+			(76679, -74240, 341),
+			(-76799, -74007, -462),
+			(-485, -103, 92680),
+			(76799, 74007, 462),
+			(-76679, 74240, -341)),
+		'indices': (
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23),
+		'uvmap': (
+			(1024, -62976),
+			(62976, -63488),
+			(31232, -31232),
+			(31232, -31232),
+			(62976, -63488),
+			(63488, -1536),
+			(1024, -62976),
+			(33280, -33280),
+			(62976, -63488),
+			(63488, -1536),
+			(1536, -1024),
+			(31232, -31232),
+			(33280, -33280),
+			(1536, -1024),
+			(63488, -1536),
+			(1024, -62976),
+			(1536, -1024),
+			(33280, -33280),
+			(63488, -1536),
+			(62976, -63488),
+			(33280, -33280),
+			(1024, -62976),
+			(31232, -31232),
+			(1536, -1024))}

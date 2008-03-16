@@ -11,13 +11,6 @@ import data
 
 BOAT1, BOAT2 = xrange(2)
 
-class Info:
-	def __init__(self):
-		self.mm = None  # ModelManager
-		self.math = None  # Math
-
-
-
 class ModelManager:
 	def __init__(self):
 		self.boat1 = None
@@ -71,5 +64,6 @@ class ModelManager:
 
 	def getCheckPoint(self):
 		if not self.checkPoint:
-			self.checkPoint = getcheckpoint() #WTF?
+			d = data.loadCheckpoint()
+			self.checkPoint = renderer.RenderData(d['vertices'], d['indices'], d['uvmap'], d['texture'])
 		return self.checkPoint

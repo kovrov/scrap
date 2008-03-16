@@ -32,11 +32,15 @@ class Vector3(object):
 			raise ValueError("wrong arguments")
 
 	#---------------------------------------------------------------
-	def set(self, x, y, z):  # operator =
-		v = self.__v
-		v[0] = float(x)
-		v[1] = float(y)
-		v[2] = float(z)
+	def set(self, *args):  # operator =
+		if len(args) == 3:
+			x, y, z = args
+			v = self.__v
+			v[0] = float(x)
+			v[1] = float(y)
+			v[2] = float(z)
+		else:  # len(args) == 1:
+			self.__v = args[0][:]
 		return self
 
 	#--------------------------------------------------------

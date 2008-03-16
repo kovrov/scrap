@@ -1,10 +1,11 @@
-import math
 
 #include "Base.h"
 #include "Texture.h"
 #include "Seascape.h"
 
-import race
+from util import Vector3
+
+import models
 import renderer
 import camera
 import scene
@@ -15,9 +16,7 @@ class Game:
 	def __init__(self):
 		self.renderer = renderer.Renderer()
 		self.camera = camera.Camera()
-		self.math = None # Math() #WTF?
 		self.modelManager = scene.ModelManager()
-		self.info = None  # a helper structure containing the modelmanager and math class
 		self.currentScrren = None  # The current screen texture.
 		self.splash = None  # The opening screen texture.
 		self.victory = None  # The victory screen texture.
@@ -62,25 +61,15 @@ class Game:
 		#srand((unsigned)time(None))
 		self.width = w
 		self.height = h
-		# set up a convient info structure to pass to 
-		# functions which require the math and modelmanager
-		self.info = scene.Info()
-		self.info.math = self.math
-		self.info.mm = self.modelManager
 		# Create and initialize the OpenGL ES renderer
 		self.renderer.initialize(self.width, self.height)
 		# Set up the player
-		self.racers = (race.Racer(), race.Racer())
-		self.racers[0].initialize(self.info, scene.BOAT2)
-		self.racers[1].initialize(self.info, scene.BOAT1)
+		self.racers = (models.Racer(), models.Racer())
+		self.racers[0].initialize(self.modelManager, scene.BOAT2)
+		self.racers[1].initialize(self.modelManager, scene.BOAT1)
 		# Generate the race course first
-		self.raceCourse = race.RaceCourse()
-		self.raceCourse.generate(Vector3(ITOX(WORLD_WIDTH / 2),0,ITOX(WORLD_HEIGHT / 2)),
-								58,
-								60,
-								self.info)
-		# Then add racers to it
-		self.raceCourse.initialize(self.racers, 2)
+		self.raceCourse = models.RaceCourse(Vector3(models.WORLD_WIDTH / 2.0, 0.0, models.WORLD_HEIGHT / 2.0),
+		                                    58, 60, self.racers, self.modelManager)
 		# set up the environment
 		self.seascape = Seascape()
 		self.seascape.generate(self.modelManager)
@@ -140,8 +129,8 @@ class Game:
 			self.renderer.DisableFog()
 		# update all major game related classes
 		self.raceCourse.update()
-		self.racers[0].update(self.math)
-		self.racers[1].updateAI(self.math, self.racers[0])
+		self.racers[0].update()
+		self.racers[1].updateAI(self.racers[0])
 		if self.seascape.Collided(self.racers[0].ri.position(),ITOX(1)):
 			self.racers[0].IncreaseSpeed(-ITOX(1))
 		if self.seascape.Collided(self.racers[1].ri.position(),ITOX(1)):

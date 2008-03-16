@@ -47,23 +47,23 @@ class Renderer:
 
 	# Renders a renderInstance tot he screen
 	def render(self, data):
-		if data.renderData() != self.currData:
-			if data.renderData().texCoords:
-				glTexCoordPointer(2,GL_FIXED,0, data.renderData().texCoords[0])
-			glVertexPointer(3, GL_FIXED, 0, data.renderData().vertices[0].v)
-			if data.renderData().colorData:
-				glColorPointer(4, GL_UNSIGNED_BYTE, 0, data.renderData().colorData[0].v)	# Set the color data source
-			self.currData = data.renderData()
-		if data.renderData().texture and self.currTexture != data.renderData().texture.id():
-			data.renderData().texture.Bind()
-			self.currTexture = data.renderData().texture.id()
+		if data.renderData != self.currData:
+			if data.renderData.texCoords:
+				glTexCoordPointer(2,GL_FIXED,0, data.renderData.texCoords[0])
+			glVertexPointer(3, GL_FIXED, 0, data.renderData.vertices[0].v)
+			if data.renderData.colorData:
+				glColorPointer(4, GL_UNSIGNED_BYTE, 0, data.renderData.colorData[0].v)	# Set the color data source
+			self.currData = data.renderData
+		if data.renderData.texture and self.currTexture != data.renderData.texture.id():
+			data.renderData.texture.Bind()
+			self.currTexture = data.renderData.texture.id()
 		glPushMatrix()
 		glTranslatex(data.position().x,data.position().y,data.position().z)
 		glScalex(data.scale().x,data.scale().y,data.scale().z)
 		glRotatex(data.rotation().y,0,1,0)
 		glRotatex(data.rotation().x,1,0,0)
 		glRotatex(data.rotation().z,0,0,1)
-		glDrawElements(GL_TRIANGLES, data.renderData().numIndices, data.renderData().indexDataType, data.renderData().indices)# Draw the triangle
+		glDrawElements(GL_TRIANGLES, data.renderData.numIndices, data.renderData.indexDataType, data.renderData.indices)# Draw the triangle
 		glPopMatrix()
 
 
