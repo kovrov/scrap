@@ -49,7 +49,7 @@ class Racer:
 	def boundsCheck(self):
 		# check the player against each part fo the world,
 		# slow him down if he hit
-		pos = self.ri.position() #COPY
+		pos = self.ri.position.copy()
 		if pos.x > WORLD_WIDTH:
 			pos.x = WORLD_WIDTH
 			self.speed = self.speed * 0.5
@@ -71,7 +71,7 @@ class Racer:
 			self.up = False
 		if pos.y < -0.05:
 			self.up = True
-		self.ri.position(pos)
+		self.ri.position.set(pos)
 
 	# -----------------------------------------
 	def initialize(self, model_manager, model):
@@ -113,15 +113,14 @@ class Racer:
 	def update(self):
 		if self.hasRotated:
 			# rotate the ship if needed
-			rot = self.ri.rotation() #COPY
-			rad = DEG2RADX * rot.y
+			rad = DEG2RADX * self.ri.rotation.y
 			self.dir.x = math.cos(rad)
 			self.dir.z = math.sin(rad)
 			self.hasRotated = False
 		# move him in
-		self.ri.Translate(self.speed * self.dir.x, 0, -self.dir.z * self.speed)
+		self.ri.translate((self.speed * self.dir.x, 0, -self.dir.z * self.speed))
 		# Bounds check him against the world
-		BoundsCheck()
+		self.boundsCheck()
 		# slow him down
 		if self.speed - 966 > 0:
 			self.speed -= 966
@@ -137,15 +136,15 @@ class Racer:
 	def updateAI(self, player):
 		# we hit an island, this on most cases, corrects the problem
 		if self.speed < 20000:
-			IncreaseSpeed(1553)
+			self.increaseSpeed(1553)
 			# go around it
 			self.dir.x = math.cos(90.0 * DEG2RADX)
 			self.dir.z = math.sin(90.0 * DEG2RADX)
 			self.hasRotated = False
 			# move him in
-			self.ri.Translate(self.speed * self.dir.x, 0, -self.dir.z * self.speed)
+			self.ri.translate((self.speed * self.dir.x, 0, -self.dir.z * self.speed))
 		else:
-			IncreaseSpeed(1553)		
+			self.increaseSpeed(1553)		
 			# build a normalized direction vector
 			self.desiredDir = self.ri.position() - self.nextCPPos
 			self.desiredDir.y = 0
@@ -166,13 +165,13 @@ class Racer:
 			# move the boat		
 			self.ri.Translate(finalX, 0, finalZ)
 		# keep him in the water
-		BoundsCheck()
+		self.boundsCheck()
 		# move the spray trail with him
 		self.updateSpray()
 
 	def updateSpray(self):
 		# keep it the spray trail right with the boat
-		self.spray.Move(self.ri.position())
+		self.spray.move(self.ri.position)
 		# also keep it spraying in the right direction
 		newDir = self.dir #COPY
 		if self.speed > 0:
@@ -183,9 +182,19 @@ class Racer:
 			newDir.x = 0
 			newDir.y = 0
 			newDir.z = 0
-		self.spray.Redirect(newDir)
-		self.spray.Update()
+		self.spray.redirect(newDir)
+		self.spray.update()
 
+	def increaseSpeed(self, s):
+		if self.speed + s < MAX_SPEED:
+			self.speed += s
+
+	# Renders the ship
+	def render(self, renderer):
+		# draw the ship
+		renderer.render(self.ri)
+		# draw the spray trail
+		self.spray.render()
 
 
 class RaceCourse:
@@ -254,28 +263,28 @@ class RaceCourse:
 	# if race is still in progress
 	def update(self):
 		# loop through each racer
-		for i in xrange(self.numRacers):
+		for racer in self.racers:
 			# see if he has collided with the next checkpoint
-			nextCP = self.checkPoints[self.racers[i].nextCheckPoint()].position() #COPY
-			pos = self.racers[i].ri.position() #COPY
-			dist = MULX( (nextCP.x - pos.x), (nextCP.x - pos.x) ) + MULX( (nextCP.z - pos.z), (nextCP.z - pos.z) )
+			nextCP = self.checkPoints[racer.nextCheckPoint].position
+			pos = racer.ri.position #COPY
+			dist = (nextCP.x - pos.x) * (nextCP.x - pos.x) + (nextCP.z - pos.z) * (nextCP.z - pos.z)
 			radii = 3.0 * 3.0
 			if dist < radii:
 				# the player has reached the next checkpoint
 				# assign him to the next checkpoint
-				CP = self.racers[i].nextCheckPoint() + 1
+				CP = racer.nextCheckPoint + 1
 				# he has reached the last checkpoint
 				if CP == MAX_CHECKPOINTS:
 					# increment his lap count
-					self.racers[i].CurrLap(self.racers[i].CurrLap()+1)
-					if self.racers[i].CurrLap() == 3:
+					racer.CurrLap(racer.CurrLap()+1)
+					if racer.CurrLap() == 3:
 						# we have a winner
-						self.racers[i].SetFinished(True)
+						racer.SetFinished(True)
 					CP = 0
 				# assign him his new checkpoint
-				self.racers[i].nextCheckPoint(CP)
-				self.racers[i].NextCPPos(self.checkPoints[CP].position())
-				if i == 0:
+				racer.nextCheckPoint = CP
+				racer.nextCPPos.set(self.checkPoints[CP].position)
+				if self.racers[0] is racer:
 					self.playerNextCP = CP
 		return 1
 

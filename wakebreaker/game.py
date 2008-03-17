@@ -1,4 +1,5 @@
 import pyglet
+from pyglet.gl import *
 
 from util import Vector3
 
@@ -99,12 +100,12 @@ class Game:
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
 		# set up the camera to follow the player
-		eye = Vector3(self.racers[0].Position().x - (MULX(25.0, MULX(self.racers[0].dir.x, 0.7))),
+		eye = Vector3(self.racers[0].ri.position.x - 25.0 * self.racers[0].dir.x * 0.7,
 					7.0,
-					self.racers[0].Position().z - (MULX(25.0,-MULX(self.racers[0].dir.z, 0.7))))
+					self.racers[0].ri.position.z - 25.0 * self.racers[0].dir.z * -0.7)
 		up = Vector3(0.0, 1.0, 0.0)
-		self.camera.LookAt(eye,self.racers[0].Position(),up)
-		self.camera.Update()
+		self.camera.lookAt(eye, self.racers[0].ri.position, up)
+		self.camera.update()
 		# process input
 		if self.keysDown[G_UP] == True:
 			self.racers[0].IncreaseSpeed(6553)		
@@ -122,14 +123,14 @@ class Game:
 		self.raceCourse.update()
 		self.racers[0].update()
 		self.racers[1].updateAI(self.racers[0])
-		if self.seascape.Collided(self.racers[0].ri.position(), 1.0):
+		if self.seascape.collided(self.racers[0].ri.position, 1.0):
 			self.racers[0].IncreaseSpeed(-1)
-		if self.seascape.Collided(self.racers[1].ri.position(), 1.0):
-			self.racers[1].IncreaseSpeed(-1.0)
-		if self.racers[0].IsFinished():
+		if self.seascape.collided(self.racers[1].ri.position, 1.0):
+			self.racers[1].increaseSpeed(-1.0)
+		if self.racers[0].finished:
 			self.hasWon = True
 			self.playing = False
-		if self.racers[1].IsFinished():
+		if self.racers[1].finished:
 			self.hasWon = False
 			self.playing = False
 		# render everything

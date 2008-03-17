@@ -49,8 +49,8 @@ class Renderer:
 	def render(self, data):
 		if data.renderData != self.currData:
 			if data.renderData.texCoords:
-				glTexCoordPointer(2,GL_FIXED,0, data.renderData.texCoords[0])
-			glVertexPointer(3, GL_FIXED, 0, data.renderData.vertices[0].v)
+				glTexCoordPointer(2, GL_FLOAT, 0, data.renderData.texCoords[0])
+			glVertexPointer(3, GL_FLOAT, 0, data.renderData.vertices[0].v)
 			if data.renderData.colorData:
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, data.renderData.colorData[0].v)	# Set the color data source
 			self.currData = data.renderData
@@ -72,26 +72,29 @@ class Renderer:
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glPushMatrix()
 		glLoadIdentity()
-		glTranslatex(0,  FTOX(-0.25), ITOX(-5))
-		FaceData = [
-				-FTOX(3), -ITOX(2), ITOX(0),    # First vertex position
-				 FTOX(3), -ITOX(2), ITOX(0),    # Second vertex position
-				-FTOX(3),  ITOX(2), ITOX(0),    # Third vertex position
-				 FTOX(3),  ITOX(2), ITOX(0),    # First vertex position
-				 FTOX(3), -ITOX(2), ITOX(0),    # Second vertex position
-				-FTOX(3),  ITOX(2), ITOX(0)]    # Third vertex position
-		TexCoordData = [
-				 FTOX(0.0), FTOX(0.0),
-				 FTOX(1.0), FTOX(0.0),
-				 FTOX(0.0), FTOX(1.0),
-				 FTOX(1.0), FTOX(1.0),
-				 FTOX(1.0), FTOX(0.0),
-				 FTOX(0.0), FTOX(1.0)]
-		tex.bind()
-		IndexData = [0, 1, 2, 5, 4, 3]
-		glVertexPointer(3, GL_FIXED, 0, FaceData)  # Set the vertex (position) data source
-		glTexCoordPointer(2, GL_FIXED, 0, TexCoordData)  # Set the vertex (position) data source
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, IndexData)  # Draw the triangle
+		glTranslatef(0.0, -0.25, -5.0)
+		glBindTexture(GL_TEXTURE_2D, tex.target)
+		face_data = [
+				-3.0, -2.0, 0.0,    # First vertex position
+				 3.0, -2.0, 0.0,    # Second vertex position
+				-3.0,  2.0, 0.0,    # Third vertex position
+				 3.0,  2.0, 0.0,    # First vertex position
+				 3.0, -2.0, 0.0,    # Second vertex position
+				-3.0,  2.0, 0.0]    # Third vertex position
+		face_data_gl = (GLfloat * len(face_data))(*face_data)
+		glVertexPointer(3, GL_FLOAT, 0, face_data_gl)  # Set the vertex (position) data source
+		tex_coord_data = [
+				 0.0, 0.0,
+				 1.0, 0.0,
+				 0.0, 1.0,
+				 1.0, 1.0,
+				 1.0, 0.0,
+				 0.0, 1.0]
+		tex_coord_data_gl = (GLfloat * len(tex_coord_data))(*tex_coord_data)
+		glTexCoordPointer(2, GL_FLOAT, 0, tex_coord_data_gl)  # Set the vertex (position) data source
+		index_data = [0, 1, 2, 5, 4, 3]
+		index_data_gl = (GLfloat * len(index_data))(*index_data)
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, index_data_gl)  # Draw the triangle
 		glPopMatrix()	
 
 

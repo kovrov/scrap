@@ -11,8 +11,8 @@ class ParticleSystem:
 		# build the new array of particles
 		self.__particles = [Particle() for i in xrange(numParticles)]
 		# initialize all the particles
-		for i in xrange(numParticles):
-			self.resetParticle(i)
+		for p in self.__particles:
+			self.resetParticle(p)
 
 	# moves the emission point
 	def move(self, newEmitPoint):
@@ -24,20 +24,19 @@ class ParticleSystem:
 	
 	#-----------------------------------
 	# Resets the particle at index
-	def resetParticle(self, index):
-		p = self.__particles[index]
+	def resetParticle(self, particle):
 		# set the position
-		p.pos = self.__emitPoint
+		particle.pos = self.__emitPoint
 		# reset the life
-		p.life = self.__maxLife + random.randint(-5, 5)
+		particle.life = self.__maxLife + random.randint(-5, 5)
 		# Add some variety to the velocities
 		factorX = random.uniform(0, 10) / 1.5
 		factorY = random.uniform(0, 10) / 2.0
 		factorZ = random.uniform(0, 10) / 1.5
 		# Assign them in, alter the direction by the factor
-		p.velocity.x = factorX * self.__dir.x
-		p.velocity.y = factorY * self.__dir.y
-		p.velocity.z = factorZ * self.__dir.z
+		particle.velocity.x = factorX * self.__dir.x
+		particle.velocity.y = factorY * self.__dir.y
+		particle.velocity.z = factorZ * self.__dir.z
 
 	#-------------------------------
 	# Draws the beast
@@ -49,7 +48,7 @@ class ParticleSystem:
 		glPointSizef(8.0)
 		coefficients = (0.0, 0.05, 0.005)
 		glPointParameterxv(GL_POINT_DISTANCE_ATTENUATION, coefficients)
-		glVertexPointer(3, GL_FIXED, sizeof(Particle), self.__particles[0].pos.v)
+		glVertexPointer(3, GL_FLOAT, sizeof(Particle), self.__particles[0].pos.v)
 		# Draw
 		glDrawArrays(GL_POINTS, 0, self.__numParticles)
 		glEnable(GL_TEXTURE_2D)
@@ -62,15 +61,15 @@ class ParticleSystem:
 		# loop through all the particles
 		for p in self.__particles:
 			# decrease life
-			p[i].life -= 1
+			p.life -= 1
 			# check for death
-			if p[i].life < 0:
+			if p.life < 0:
 				# revive!
-				self.resetParticle(i)
+				self.resetParticle(p)
 			# move the particle
-			p[i].pos.x += p[i].velocity.x
-			p[i].pos.y += p[i].velocity.y
-			p[i].pos.z += p[i].velocity.z
+			p.pos.x += p.velocity.x
+			p.pos.y += p.velocity.y
+			p.pos.z += p.velocity.z
 
 
 class Particle:
