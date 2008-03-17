@@ -26,19 +26,15 @@ class ModelManager:
 
 	def getIsland1(self):
 		if not self.island1:
-			tex = Texture()
-			tex.load(ISLAND1)
-			self.island1 = Getisland1()
-			self.island1.texture = tex
+			d = data.loadIsland1()
+			self.island1 = renderer.RenderData(d['vertices'], d['indices'], d['uvmap'], d['texture'])
 		return self.island1
 
 
 	def getIsland2(self):
 		if not self.island2:
-			tex = Texture()
-			tex.load(ISLAND2)
-			self.island2 = Getisland2()
-			self.island2.texture = tex
+			d = data.loadIsland2()
+			self.island2 = renderer.RenderData(d['vertices'], d['indices'], d['uvmap'], d['texture'])
 		return self.island2;
 
 

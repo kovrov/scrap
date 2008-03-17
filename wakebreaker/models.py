@@ -300,32 +300,19 @@ class Seascape:
 			model.position.set(random.uniform(0.0, WORLD_WIDTH), 0.0, random.uniform(0.0, WORLD_HEIGHT))
 			# generate a random rotation
 			model.rotation.set(-90.0, random.uniform(0.0, 360.0), 0.0)
+		# set up the renderInstance
+		self.sea = renderer.RenderInstance()
+		self.sea.position.set(0.0, 0.0, 0.0)
 		# Set up the sea floor
-		tempVerts = (
+		vertices = (
 			(-2,                      0.0, -2.0),
 			(-2,                      0.0, WORLD_HEIGHT / 2.0 + 2.0),
 			(WORLD_WIDTH / 2.0 + 2.0, 0.0, -2.0),
 			(WORLD_WIDTH / 2.0 + 2.0, 0.0, WORLD_HEIGHT / 2.0 + 2.0))
-		# set up texture coords
-		texCoords = ((0, 0), (15, 0), (0, 15), (15, 15))
-		# set up indices
 		indices = (0, 1, 2, 2, 1, 3)
-		# fill in the correct numbers
-		rtemp = RenderData()
-		rtemp.vertices = tempVerts
-		rtemp.numVertices = 4
-		rtemp.texCoords = texCoords
-		rtemp.numTexCoords = 4
-		rtemp.indices = indices
-		rtemp.numIndices = 6
-		# load the texture
-		tex = Texture()
-		tex.load(WATER)
-		rtemp.texture = tex
-		# set up the renderInstance
-		self.sea = RenderInstance()
-		self.sea.position.set(0.0, 0.0, 0.0)
-		self.sea.renderData(rtemp)
+		uvmap = ((0, 0), (15, 0), (0, 15), (15, 15))
+		texture = pyglet.image.load('watertex.png').get_texture()
+		self.sea.renderData = renderer.RenderData(vertices, indices, uvmap, texture)
 
 	# checks if anything collided with the islands
 	def collided(self, pos, radius):

@@ -1,7 +1,4 @@
-
-#include "Base.h"
-#include "Texture.h"
-#include "Seascape.h"
+import pyglet
 
 from util import Vector3
 
@@ -10,7 +7,9 @@ import renderer
 import camera
 import scene
 
+
 G_UP, G_DOWN, G_RIGHT, G_LEFT, G_OK, G_DEVICE1, G_DEVICE2 = xrange(7)
+
 
 class Game:
 	def __init__(self):
@@ -34,8 +33,6 @@ class Game:
 
 
 	def menu(self):
-		# swap it all to the screen
-		self.renderer.SwapBuffers()
 		if self.playing:
 			self.tick(0)
 		else:
@@ -45,14 +42,14 @@ class Game:
 			else:
 				self.currentScrren = self.defeat
 			# If we should display the opening splash screen:
-			if (self.racers[0].CurrLap() == 0) and (self.racers[0].NextCheckPoint() == 0):
+			if self.racers[0].currLap == 0 and self.racers[0].nextCheckPoint == 0:
 				# Yaki - start playing automatically:
 				self.playing = True
 				self.currentScrren = self.splash
 				for i in xrange(5): #FIXME:
 					if self.keysDown[i]:
 						self.playing = True
-			self.renderer.Draw2DQuad(self.currentScrren)
+			self.renderer.draw2DQuad(self.currentScrren)
 
 
 	def create(self, w, h, hWnd):
@@ -75,19 +72,13 @@ class Game:
 		self.seascape.generate(self.modelManager)
 		# put the camera at an initial positiong
 		eye = Vector3(-0.0, 15.0, -59.0)
-		center = Vector3(WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0)
+		center = Vector3(models.WORLD_WIDTH / 2.0, 0.0, models.WORLD_HEIGHT / 2.0)
 		up = Vector3(0.0, 1.0, 0.0)
 		self.camera.lookAt(eye, center, up)
 		# Load textures:
-		self.splash = Texture()
-		if self.splash:
-			self.splash.load(SPLASH)
-		self.victory = Texture()
-		if self.victory:
-			self.victory.load(VICTORY)
-		self.defeat = Texture()
-		if self.defeat:
-			self.defeat.load(DEFEAT)
+		self.splash = pyglet.image.load('splash.png').get_texture()
+		self.victory = pyglet.image.load('victory.png').get_texture()
+		self.defeat = pyglet.image.load('defeat.png').get_texture()
 		self.currentScrren = None
 		return True
 
