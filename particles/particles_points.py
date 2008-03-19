@@ -23,7 +23,7 @@ def draw_task(texture_id, size, pos):
 			'r': 1.0, 'g': 1.0, 'b': 1.0,
 			'x': 0.0, 'y': 0.0, 'z': 0.0,
 			'xi': float(random.randint(-250, 250)),
-			'yi': float(random.randint(-250, 250)),
+			'yi': 0.0,#float(random.randint(-250, 250)),
 			'zi': float(random.randint(-250, 250)),
 			'xg': 0.0, 'yg': -0.8, 'zg': 0.0,
 					} for i in xrange(50)]
@@ -66,13 +66,16 @@ def draw_task(texture_id, size, pos):
 			p['yi'] += p['yg']
 			p['zi'] += p['zg']
 
-			if p['life'] < 0.0:
+			if p['life'] > 0.0:
+				alive = True
+			else:
 				p['life'] = 1.0
 				p['fade'] = random.uniform(0.1, 0.004)
 				p['x'] = 0.0; p['y'] = 0.0; p['z'] = 0.0
-				p['xi'] = random.uniform(-32.0, 32.0)
-				p['yi'] = random.uniform(-32.0, 32.0)
-				p['zi'] = random.uniform(-32.0, 32.0)
+				p['xi'] = random.uniform(-64.0, 64.0)
+				p['yi'] = 0.0#random.uniform(-32.0, 32.0)
+				p['zi'] = random.uniform(-64.0, 64.0)
+		#if not alive:
 		glEnd()
 		glPopMatrix()
 	glEnable(GL_BLEND)

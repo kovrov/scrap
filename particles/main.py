@@ -69,7 +69,7 @@ def main():
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-	camera.position = [0.0, 0.0, 10.0]
+	camera.position = [0.0, 0.0, 20.0]
 	cam = camera.draw_task()
 	left_cube = draw_cube(5.0, (-5.0, 0.0, 0.0))
 	right_cube = draw_cube(5.0, ( 5.0, 0.0, 0.0))
