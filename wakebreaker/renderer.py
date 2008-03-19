@@ -45,25 +45,29 @@ class Renderer:
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY)
 
 
-	# Renders a renderInstance tot he screen
+	# Renders a renderInstance to the screen
 	def render(self, data):
-		if data.renderData != self.currData:
+		if data.renderData is not self.currData:
 			if data.renderData.texCoords:
-				glTexCoordPointer(2, GL_FLOAT, 0, data.renderData.texCoords[0])
-			glVertexPointer(3, GL_FLOAT, 0, data.renderData.vertices[0].v)
+				tex_coords_gl = (GLfloat * len(data.renderData.texCoords))(*data.renderData.texCoords[0]) #[0]?
+				glTexCoordPointer(2, GL_FLOAT, 0, tex_coords_gl)
+			vertices_gl = (GLfloat * len(data.renderData.vertices[0][0]))(*data.renderData.vertices[0][0])
+			glVertexPointer(3, GL_FLOAT, 0, vertices_gl)
 			if data.renderData.colorData:
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, data.renderData.colorData[0].v)	# Set the color data source
 			self.currData = data.renderData
-		if data.renderData.texture and self.currTexture != data.renderData.texture.id():
+		if data.renderData.texture and self.currTexture != data.renderData.texture.id:
 			data.renderData.texture.Bind()
-			self.currTexture = data.renderData.texture.id()
+			self.currTexture = data.renderData.texture.id
 		glPushMatrix()
-		glTranslatex(data.position().x,data.position().y,data.position().z)
-		glScalex(data.scale().x,data.scale().y,data.scale().z)
-		glRotatex(data.rotation().y,0,1,0)
-		glRotatex(data.rotation().x,1,0,0)
-		glRotatex(data.rotation().z,0,0,1)
-		glDrawElements(GL_TRIANGLES, data.renderData.numIndices, data.renderData.indexDataType, data.renderData.indices)# Draw the triangle
+		glTranslatex(data.position.x, data.position.y, data.position.z)
+		glScalex(data.scale.x, data.scale.y, data.scale.z)
+		glRotatex(data.rotation.y, 0, 1, 0)
+		glRotatex(data.rotation.x, 1, 0, 0)
+		glRotatex(data.rotation.z, 0, 0, 1)
+		indices_len = len(data.renderData.indices)
+		indices_gl = (GLfloat * indices_len)(*data.renderData.indices)
+		glDrawElements(GL_TRIANGLES, indices_len, data.renderData.indexDataType, indices_gl)  # Draw the triangle
 		glPopMatrix()
 
 
