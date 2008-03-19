@@ -28,6 +28,7 @@ HBITMAP CreateGrayscaleDIB(Bitmap* bits)
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = bits->width;
 	bmi.bmiHeader.biHeight = -bits->height;  // bitmap will be "top-down"
+	//bmi.bmiHeader.biHeight = bits->height;  // bitmap will be "bottom-up"
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biBitCount = 8;
 	bmi.bmiHeader.biCompression = BI_RGB;
@@ -128,6 +129,7 @@ void OnDrawWindow(HDC hdc)
 		//                        FT_RENDER_MODE_NORMAL); // render mode
 		//assert (!error);
 
+		int& glyph_pitch     = g_font_face->glyph->bitmap.pitch;
 		int& glyph_height    = g_font_face->glyph->bitmap.rows;
 		int& glyph_width     = g_font_face->glyph->bitmap.width;
 		int& glyph_bearing_x = g_font_face->glyph->bitmap_left;
@@ -142,11 +144,11 @@ void OnDrawWindow(HDC hdc)
 		memset(g_bitmap.ptr, 0, g_bitmap.len);
 		for (int y = 0; y < glyph_height; y++)
 		{
-			int src_row_start = y * glyph_width;
+			int src_row_start = y * glyph_pitch;
 			int dst_row_start = (y + (vert_advance - glyph_bearing_y)) * g_bitmap.width;
 			memcpy(g_bitmap.ptr + dst_row_start + glyph_bearing_x,
 			       g_font_face->glyph->bitmap.buffer + src_row_start,
-			       glyph_width);
+			       glyph_pitch);
 		}
 		::BitBlt(hdc, pen_x, 0, glyph_advance, face_height, g_memdc, 0, 0, SRCCOPY);
 		pen_x += glyph_advance;
