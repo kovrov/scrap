@@ -44,6 +44,18 @@ class Vector3(object):
 		return self
 
 	#--------------------------------------------------------
+	def __add__(self, other):  # operator +=
+		"""
+		>>> Vector3(1, 2, 3) + Vector3(-4, 5, 6) + (7, 8, -9)
+		Vector3(4.0, 15.0, 0.0)
+		"""
+		x, y, z = self.__v
+		ox, oy, oz = other
+		v = self.__new__(self.__class__, object)
+		v.__v = [x + ox, y + oy, z + oz]
+		return v
+
+	#--------------------------------------------------------
 	def __iadd__(self, other):  # operator +=
 		x, y, z = other
 		v = self.__v
@@ -99,6 +111,10 @@ class Vector3(object):
 
 	#------------------------------------------------------
 	def __mul__(self, other):  # operator *
+		"""
+		>>> Vector3(1,2,3) * [1, 2.5, 3] * 2
+		Vector3(2.0, 10.0, 18.0)
+		"""
 		x, y, z = self.__v
 		v = self.__new__(self.__class__, object)
 		if hasattr(other, "__getitem__"):
@@ -122,10 +138,12 @@ class Vector3(object):
 		v.__v = self.__v[:]
 		return v
 
+	#------------------------------------------------------
+	def __repr__(self):
+		return "Vector3(%s, %s, %s)" % tuple(self.__v)
+
+
 
 if __name__ == '__main__':
-	v = Vector3(1,2,3)
-	v += v
-	print v, (v.x, v.y, v.z)
-	v = v * v
-	print v, (v.x, v.y, v.z)
+	import doctest
+	doctest.testmod()

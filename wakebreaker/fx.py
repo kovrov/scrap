@@ -1,4 +1,5 @@
 import random
+from pyglet.gl import *
 from util import Vector3
 
 class ParticleSystem:
@@ -45,10 +46,10 @@ class ParticleSystem:
 		# Turn of texturing, it would be too expensive
 		glDisable(GL_TEXTURE_2D)
 		# Attenuate the particle size based on distance
-		glPointSizef(8.0)
-		coefficients = (0.0, 0.05, 0.005)
-		glPointParameterxv(GL_POINT_DISTANCE_ATTENUATION, coefficients)
-		glVertexPointer(3, GL_FLOAT, sizeof(Particle), self.__particles[0].pos.v)
+		glPointSize(8.0)
+		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, (GLfloat*3)(0.0, 0.05, 0.005))
+		(GLfloat * len(self.__particles))(*self.__particles)
+		glVertexPointer(3, GL_FLOAT, sizeof(Particle), particles_gl)
 		# Draw
 		glDrawArrays(GL_POINTS, 0, self.__numParticles)
 		glEnable(GL_TEXTURE_2D)

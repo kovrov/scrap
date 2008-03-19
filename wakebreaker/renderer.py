@@ -49,24 +49,25 @@ class Renderer:
 	def render(self, data):
 		if data.renderData is not self.currData:
 			if data.renderData.texCoords:
-				tex_coords_gl = (GLfloat * len(data.renderData.texCoords))(*data.renderData.texCoords[0]) #[0]?
+				tex_coords_gl = (GLfloat * len(data.renderData.texCoords))(*data.renderData.texCoords)
 				glTexCoordPointer(2, GL_FLOAT, 0, tex_coords_gl)
-			vertices_gl = (GLfloat * len(data.renderData.vertices[0][0]))(*data.renderData.vertices[0][0])
+			vertices_gl = (GLfloat * len(data.renderData.vertices))(*data.renderData.vertices)
 			glVertexPointer(3, GL_FLOAT, 0, vertices_gl)
 			if data.renderData.colorData:
-				glColorPointer(4, GL_UNSIGNED_BYTE, 0, data.renderData.colorData[0].v)	# Set the color data source
+				color_data_gl = (GLfloat * len(data.renderData.colorData))(*data.renderData.colorData)
+				glColorPointer(4, GL_UNSIGNED_BYTE, 0, color_data_gl)  # Set the color data source
 			self.currData = data.renderData
 		if data.renderData.texture and self.currTexture != data.renderData.texture.id:
-			data.renderData.texture.Bind()
-			self.currTexture = data.renderData.texture.id
+			glBindTexture(GL_TEXTURE_2D, data.renderData.texture.target)
+			self.currTexture = data.renderData.texture.target
 		glPushMatrix()
-		glTranslatex(data.position.x, data.position.y, data.position.z)
-		glScalex(data.scale.x, data.scale.y, data.scale.z)
-		glRotatex(data.rotation.y, 0, 1, 0)
-		glRotatex(data.rotation.x, 1, 0, 0)
-		glRotatex(data.rotation.z, 0, 0, 1)
+		glTranslatef(data.position.x, data.position.y, data.position.z)
+		glScalef(data.scale.x, data.scale.y, data.scale.z)
+		glRotatef(data.rotation.y, 0.0, 1.0, 0.0)
+		glRotatef(data.rotation.x, 1.0, 0.0, 0.0)
+		glRotatef(data.rotation.z, 0.0, 0.0, 1.0)
 		indices_len = len(data.renderData.indices)
-		indices_gl = (GLfloat * indices_len)(*data.renderData.indices)
+		indices_gl = (GLuint* indices_len)(*data.renderData.indices)
 		glDrawElements(GL_TRIANGLES, indices_len, data.renderData.indexDataType, indices_gl)  # Draw the triangle
 		glPopMatrix()
 
@@ -154,9 +155,9 @@ class RenderInstance:
 
 class RenderData:
 	def __init__(self, vertices, indices, uvmap, texture):
-		self.indices = indices  # uint16*
-		self.vertices = vertices  # Vector3*
-		self.texCoords = uvmap
+		self.indices =   indices  # uint16*
+		self.vertices =  sum(vertices[1:], vertices[0])  # Vector3*
+		self.texCoords = sum(uvmap[1:], uvmap[0])
 		self.texture = texture
 		self.colorData = None  # Color4*
 		self.indexDataType = GL_UNSIGNED_SHORT
