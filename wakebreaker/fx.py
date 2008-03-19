@@ -29,15 +29,12 @@ class ParticleSystem:
 		# set the position
 		particle.pos = self.__emitPoint
 		# reset the life
-		particle.life = self.__maxLife + random.randint(-5, 5)
+		particle.life = self.__maxLife + random.uniform(-5.0, 5.0)
 		# Add some variety to the velocities
-		factorX = random.uniform(0, 10) / 1.5
-		factorY = random.uniform(0, 10) / 2.0
-		factorZ = random.uniform(0, 10) / 1.5
 		# Assign them in, alter the direction by the factor
-		particle.velocity.x = factorX * self.__dir.x
-		particle.velocity.y = factorY * self.__dir.y
-		particle.velocity.z = factorZ * self.__dir.z
+		particle.velocity.x = random.uniform(0.0, 6.5) * self.__dir.x
+		particle.velocity.y = random.uniform(0.0, 5.0) * self.__dir.y
+		particle.velocity.z = random.uniform(0.0, 6.5) * self.__dir.z
 
 	#-------------------------------
 	# Draws the beast
@@ -48,7 +45,7 @@ class ParticleSystem:
 		# Attenuate the particle size based on distance
 		glPointSize(8.0)
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, (GLfloat*3)(0.0, 0.05, 0.005))
-		(GLfloat * len(self.__particles))(*self.__particles)
+		particles_gl = (GLfloat * len(self.__particles))(*self.__particles)
 		glVertexPointer(3, GL_FLOAT, sizeof(Particle), particles_gl)
 		# Draw
 		glDrawArrays(GL_POINTS, 0, self.__numParticles)
