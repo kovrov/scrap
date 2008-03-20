@@ -75,3 +75,25 @@ class Particle:
 		self.pos = Vector3()
 		self.velocity = Vector3()
 		self.life = 0.0
+
+
+if __name__ == '__main__':
+	import ctypes
+
+	class POS(ctypes.Structure):
+		_fields_ = [("x", GLfloat), ("y", GLfloat), ("z", GLfloat)]
+
+	class Vector3(ctypes.Union):
+		_fields_ = [("__pos", POS), ("vect", GLfloat*3)]
+		_anonymous_ = ("__pos",)
+
+		def __init__(self, *args):
+			print type(self.vect)
+			self.vect = args
+			print type(self.vect)
+
+
+	v = Vector3(1,2,3)
+	#v2 = Vector3(v)
+	v.x = 1.5
+	print v.vect
