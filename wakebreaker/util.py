@@ -101,33 +101,43 @@ class Vector3(ctypes.Union):
 		"""
 		if hasattr(other, "__iter__"):
 			x, y, z = other
-		else:  # if hasattr(other, "__float__"):
+		else:
 			x = y = z = other
 		self.x *= x
 		self.y *= y
 		self.z *= z
 		return self
 
-	#---
 	def __idiv__(self, other):  # operator /=
-		v = self.vect
+		"""
+		>>> v = Vector3(1, 2, 3)
+		>>> v /= 2
+		>>> print v
+		Vector3(0.5, 1.0, 1.5)
+		>>> v /= Vector3(-1, -2, -3)
+		>>> print v
+		Vector3(-0.5, -0.5, -0.5)
+		"""
 		if hasattr(other, "__iter__"):
 			x, y, z = other
-			v[0] /= ox
-			v[1] /= oy
-			v[2] /= oz
-		else:  # if hasattr(other, "__float__"):
-			v[0] /= other
-			v[1] /= other
-			v[2] /= other
+		else:
+			x = y = z = other
+		self.x /= x
+		self.y /= y
+		self.z /= z
 		return self
 
-	#---
 	def __sub__(self, other):  # operator -
-		x, y, z = self.vect
-		ox, oy, oz = other
+		"""
+		>>> Vector3(1,2,3) - [1, 2.5, -3] - 3
+		Vector3(-3.0, -3.5, 3.0)
+		"""
+		if hasattr(other, "__iter__"):
+			x, y, z = other
+		else:
+			x = y = z = other
 		v = self.__new__(self.__class__, object)
-		v.vect = x - ox, y - oy, z - oz
+		v.vect = self.x - x, self.y - y, self.z - z
 		return v
 
 	def __mul__(self, other):  # operator *
@@ -135,32 +145,25 @@ class Vector3(ctypes.Union):
 		>>> Vector3(1,2,3) * [1, 2.5, 3] * 2
 		Vector3(2.0, 10.0, 18.0)
 		"""
-		x, y, z = self.vect
-		v = self.__new__(self.__class__, object)
 		if hasattr(other, "__iter__"):
-			ox, oy, oz = other
-			v.vect = x * ox, y * oy, z * oz
-		else:  # if hasattr(other, "__float__"):
-			v.vect = x * other, y * other, z * other
+			x, y, z = other
+		else:
+			x = y = z = other
+		v = self.__new__(self.__class__, object)
+		v.vect = self.x * x, self.y * y, self.z * z
 		return v
 
-	#---
 	def cross(self, other):  # Cross product
 		"""
 		Cross product of two vectors:
-		>>> v = Vector3(1,2,3)
-		>>> v.cross(Vector3(4,5,6))
+		>>> Vector3(1,2,3).cross(Vector3(4,5,6))
 		Vector3(-3.0, 6.0, -3.0)
-		>>> v.cross((4,5,6))
-		Vector3(-3.0, 6.0, -3.0)
-		>>> v.cross([4,5,6])
-		Vector3(-3.0, 6.0, -3.0)
+		>>> Vector3(3,0,0).cross([0,2,0])
+		Vector3(0.0, 0.0, 6.0)
 		"""
-		x, y, z = self.vect
-		bx, by, bz = other
 		v = self.__new__(self.__class__, object)
-		v.vect = y*bz - by*z, z*bx - bz*x, x*by - bx*y
-		#        y*oz - z*oy, x*oz - z*oz, x*oy - y*oz
+		ox, oy, oz = other
+		v.vect = self.y*oz - self.z*oy, self.z*ox - self.x*oz, self.x*oy - self.y*ox
 		return v
 
 	def copy(self):
