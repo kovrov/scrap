@@ -15,9 +15,9 @@ class Camera:
 
 	# fills the eye, center, up vectors for use when the camera updates
 	def lookAt(self, pos, center, up):
-		self.eye.set(pos)
-		self.center.set(center)
-		self.up.set(up)
+		self.eye[:] = pos
+		self.center[:] = center
+		self.up[:] = up
 	
 	# this is an implementation of the gluLookAt() function
 	def update(self):

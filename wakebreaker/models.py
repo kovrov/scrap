@@ -71,7 +71,7 @@ class Racer:
 			self.up = False
 		if pos.y < -0.05:
 			self.up = True
-		self.ri.position.set(pos)
+		self.ri.position[:] = pos
 
 	# -----------------------------------------
 	def initialize(self, model_manager, model):
@@ -84,10 +84,10 @@ class Racer:
 		else: # model == BOAT2:
 			self.ri.renderData = model_manager.getBoat2()
 		# rotate so he's always right side up
-		self.ri.rotation.set(-90.0, 0.0, 90.0)
-		self.ri.scale.set(0.5, 0.5, 0.5)
+		self.ri.rotation[:] = -90.0, 0.0, 90.0
+		self.ri.scale[:] = 0.5, 0.5, 0.5
 		# set up the position
-		self.ri.position.set(WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0)
+		self.ri.position[:] = WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0
 		# update his rotation and direction
 		rot = self.ri.rotation.copy() #COPY
 		rad = DEG2RADX * rot.y
@@ -101,7 +101,7 @@ class Racer:
 	# --------------------------
 	# Rotates this object
 	def rotate(self, r):
-		self.ri.rotation.set(self.ri.rotation)
+		self.ri.rotation[:] = self.ri.rotation
 		self.hasRotated = True
 		# this makes sure the rotation doesn't exceed 360 degrees
 		# the 23527424 is 360 in fixed point (hehe, micro optimization)
@@ -217,10 +217,10 @@ class RaceCourse:
 			randZ = random.uniform(minRadius, maxRadius)
 			z = z * randZ + center.z
 			# assign them in
-			cp.position.set(x, 1.0, z)
+			cp.position[:] = x, 1.0, z
 			cp.renderData = model_manager.getCheckPoint()
-			cp.scale.set(1.0, 1.0, 1.0)
-			cp.rotation.set(-90.0, 0.0, 0.0)
+			cp.scale[:] = 1.0, 1.0, 1.0
+			cp.rotation[:] = -90.0, 0.0, 0.0
 			# advance the angle
 			angle -= interval
 		#------------------------
@@ -232,8 +232,8 @@ class RaceCourse:
 			# set everyone at the starting checkpoint
 			racer.nextCheckPoint = 0
 			racer.CurrLap = 0
-			racer.ri.position.set(self.checkPoints[0].position)
-			racer.nextCPPos.set(self.checkPoints[0].position)
+			racer.ri.position[:] = self.checkPoints[0].position
+			racer.nextCPPos[:] = self.checkPoints[0].position
 		self.racers[0].rotate(90.0)
 		# load the textures for the checkpoints
 		self.cpOnTex = pyglet.image.load('checkpointon.png').get_texture()
@@ -283,7 +283,7 @@ class RaceCourse:
 					CP = 0
 				# assign him his new checkpoint
 				racer.nextCheckPoint = CP
-				racer.nextCPPos.set(self.checkPoints[CP].position)
+				racer.nextCPPos[:] = self.checkPoints[CP].position
 				if self.racers[0] is racer:
 					self.playerNextCP = CP
 		return 1
@@ -306,12 +306,12 @@ class Seascape:
 			# Get a random island model
 			model.renderData = mm.getRandomSeascapeModel()
 			# generate a random x and z
-			model.position.set(random.uniform(0.0, WORLD_WIDTH), 0.0, random.uniform(0.0, WORLD_HEIGHT))
+			model.position[:] = random.uniform(0.0, WORLD_WIDTH), 0.0, random.uniform(0.0, WORLD_HEIGHT)
 			# generate a random rotation
-			model.rotation.set(-90.0, random.uniform(0.0, 360.0), 0.0)
+			model.rotation[:] = -90.0, random.uniform(0.0, 360.0), 0.0
 		# set up the renderInstance
 		self.sea = renderer.RenderInstance()
-		self.sea.position.set(0.0, 0.0, 0.0)
+		self.sea.position[:] = 0.0, 0.0, 0.0
 		# Set up the sea floor
 		vertices = (
 			(-2,                      0.0, -2.0),

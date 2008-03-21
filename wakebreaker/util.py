@@ -11,10 +11,10 @@ class Vector3(ctypes.Union):
 	"""
 	Vector3 exposes data via 'x', 'y', 'z' and 'vect' properties.
 	>>> v = Vector3()
-	>>> v.x = 1.5
-	>>> v.y = -2
-	>>> v.vect[:]
-	[1.5, -2.0, 0.0]
+	>>> v.vect = 1.5, -2
+	>>> v.z = v.x**2
+	>>> print v.x, v.y, v.z
+	1.5 -2.0 2.25
 	"""
 	_fields_ = [("__pos", POINT3), ("vect", GLfloat*3)]
 	_anonymous_ = ("__pos",)
@@ -36,20 +36,23 @@ class Vector3(ctypes.Union):
 			self.vect = args
 
 	def __iter__(self):
+		"""
+		>>> for i in Vector3(1, 0.5): print i,
+		1.0 0.5 0.0
+		"""
 		return iter(self.vect)
 
-	def set(self, *args):  # operator =
+	def __setitem__(self, key, value):  # operator =
 		"""
 		>>> v = Vector3()
-		>>> v.set(1, 2, 3)
+		>>> v[:] = 1,2,3
+		>>> print v
 		Vector3(1.0, 2.0, 3.0)
-		>>> v.set([4, 5, 6])
-		Vector3(4.0, 5.0, 6.0)
 		"""
-		if len(args) == 1:
-			self.vect = tuple(args[0])
+		if type(key) is int:
+			self.vect[key] = value
 		else:
-			self.vect = args
+			self.vect = tuple(value)
 		return self
 
 	def __add__(self, other):  # operator +=
@@ -57,10 +60,12 @@ class Vector3(ctypes.Union):
 		>>> Vector3(1, 2, 3) + Vector3(-4, 5, 6) + (7, 8, -9)
 		Vector3(4.0, 15.0, 0.0)
 		"""
-		x, y, z = self.vect
-		ox, oy, oz = other
+		if hasattr(other, "__iter__"):
+			x, y, z = tuple(other)
+		else:
+			x = y = z = other
 		v = self.__new__(self.__class__, object)
-		v.vect = x + ox, y + oy, z + oz
+		v.vect = self.x + x, self.y + y, self.z + z
 		return v
 
 	def __iadd__(self, other):  # operator +=
@@ -70,7 +75,10 @@ class Vector3(ctypes.Union):
 		>>> v
 		Vector3(5.0, 7.0, -3.0)
 		"""
-		x, y, z = other
+		if hasattr(other, "__iter__"):
+			x, y, z = tuple(other)
+		else:
+			x = y = z = other
 		self.x += x
 		self.y += y
 		self.z += z
@@ -83,7 +91,10 @@ class Vector3(ctypes.Union):
 		>>> v
 		Vector3(-2.0, 0.0, 2.0)
 		"""
-		x, y, z = other
+		if hasattr(other, "__iter__"):
+			x, y, z = tuple(other)
+		else:
+			x = y = z = other
 		self.x -= x
 		self.y -= y
 		self.z -= z
@@ -100,7 +111,7 @@ class Vector3(ctypes.Union):
 		Vector3(-2.0, -8.0, -18.0)
 		"""
 		if hasattr(other, "__iter__"):
-			x, y, z = other
+			x, y, z = tuple(other)
 		else:
 			x = y = z = other
 		self.x *= x
@@ -119,7 +130,7 @@ class Vector3(ctypes.Union):
 		Vector3(-0.5, -0.5, -0.5)
 		"""
 		if hasattr(other, "__iter__"):
-			x, y, z = other
+			x, y, z = tuple(other)
 		else:
 			x = y = z = other
 		self.x /= x
@@ -133,7 +144,7 @@ class Vector3(ctypes.Union):
 		Vector3(-3.0, -3.5, 3.0)
 		"""
 		if hasattr(other, "__iter__"):
-			x, y, z = other
+			x, y, z = tuple(other)
 		else:
 			x = y = z = other
 		v = self.__new__(self.__class__, object)
@@ -146,7 +157,7 @@ class Vector3(ctypes.Union):
 		Vector3(2.0, 10.0, 18.0)
 		"""
 		if hasattr(other, "__iter__"):
-			x, y, z = other
+			x, y, z = tuple(other)
 		else:
 			x = y = z = other
 		v = self.__new__(self.__class__, object)
@@ -162,8 +173,8 @@ class Vector3(ctypes.Union):
 		Vector3(0.0, 0.0, 6.0)
 		"""
 		v = self.__new__(self.__class__, object)
-		ox, oy, oz = other
-		v.vect = self.y*oz - self.z*oy, self.z*ox - self.x*oz, self.x*oy - self.y*ox
+		x, y, z = tuple(other)
+		v.vect = self.y*z - self.z*y, self.z*x - self.x*z, self.x*y - self.y*x
 		return v
 
 	def copy(self):

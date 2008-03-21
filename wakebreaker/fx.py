@@ -17,11 +17,11 @@ class ParticleSystem:
 
 	# moves the emission point
 	def move(self, newEmitPoint):
-		self.__emitPoint.set(newEmitPoint)
+		self.__emitPoint[:] = newEmitPoint
 
 	# Changes the particle system's direction
 	def redirect(self, dir):
-		self.__dir.set(dir)
+		self.__dir[:] = dir
 	
 	#-----------------------------------
 	# Resets the particle at index
