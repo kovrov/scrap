@@ -10,56 +10,54 @@ if __name__ == '__main__':
 	import pyglet
 	from pyglet.window import key
 
-	from game import Game
+	import game
 
 	WINDOW_WIDTH  = 320
 	WINDOW_HEIGHT = 240
 
 	win = pyglet.window.Window(caption="Wake Breaker")
-	game = Game()
+	g = game.Game()
 
 	@win.event
 	def on_key_press(symbol, modifiers):
 		if symbol == key.LEFT:
-			game.KeyDown(G_LEFT)
+			g.keyDown(game.G_LEFT)
 		if symbol == key.UP:         
-			game.KeyDown(G_UP)
+			g.keyDown(game.G_UP)
 		if symbol == key.RIGHT:
-			game.KeyDown(G_RIGHT)
+			g.keyDown(game.G_RIGHT)
 		if symbol == key.DOWN:
-			game.KeyDown(G_DOWN)
+			g.keyDown(game.G_DOWN)
 		if symbol == key.RETURN:
-			game.KeyDown(G_OK)
-		if symbol == key.NUMPAD1:
-			game.KeyDown(G_DEVICE1)
-		if symbol == key.NUMPAD2:
-			game.KeyDown(G_DEVICE2)
+			g.keyDown(game.G_OK)
+		if symbol == key.NUM_1:
+			g.keyDown(game.G_DEVICE1)
+		if symbol == key.NUM_2:
+			g.keyDown(game.G_DEVICE2)
 
 	@win.event
 	def on_key_release(symbol, modifiers):
 		if symbol == key.LEFT:
-			game.KeyUp(G_LEFT)
+			g.keyUp(game.G_LEFT)
 		if symbol == key.UP:         
-			game.KeyUp(G_UP)
+			g.keyUp(game.G_UP)
 		if symbol == key.RIGHT:
-			game.KeyUp(G_RIGHT)
+			g.keyUp(game.G_RIGHT)
 		if symbol == key.DOWN:
-			game.KeyUp(G_DOWN)
+			g.keyUp(game.G_DOWN)
 		if symbol == key.RETURN:
-			game.KeyUp(G_OK)
-		if symbol == key.NUMPAD1:
-			game.KeyUp(G_DEVICE1)
-		if symbol == key.NUMPAD2:
-			game.KeyUp(G_DEVICE2)
+			g.keyUp(game.G_OK)
+		if symbol == key.NUM_1:
+			g.keyUp(game.G_DEVICE1)
+		if symbol == key.NUM_2:
+			g.keyUp(game.G_DEVICE2)
 
-	game.create(WINDOW_WIDTH, WINDOW_HEIGHT, win)
+	g.create(WINDOW_WIDTH, WINDOW_HEIGHT, win)
 
 	while not win.has_exit:
 		win.dispatch_events()
 		frame_time = pyglet.clock.tick()
 		#win.clear()
 		# draw ...
-		game.menu()
+		g.menu()
 		win.flip()
-
-	game.Destroy()

@@ -1,6 +1,12 @@
+import ctypes
 import random
 from pyglet.gl import *
 from util import Vector3
+
+
+class Particle(ctypes.Structure):
+	_fields_ = [('pos', Vector3), ('velocity', Vector3), ('life', GLfloat)]
+
 
 class ParticleSystem:
 	def __init__(self, numParticles, maxLife, pos, dir):
@@ -10,7 +16,7 @@ class ParticleSystem:
 		self.__numParticles = numParticles
 		self.__maxLife = maxLife
 		# build the new array of particles
-		self.__particles = [Particle() for i in xrange(numParticles)]
+		self.__particles = (Particle*numParticles)()
 		# initialize all the particles
 		for p in self.__particles:
 			self.resetParticle(p)
@@ -45,8 +51,9 @@ class ParticleSystem:
 		# Attenuate the particle size based on distance
 		glPointSize(8.0)
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, (GLfloat*3)(0.0, 0.05, 0.005))
-		particles_gl = (GLfloat * len(self.__particles))(*self.__particles)
-		glVertexPointer(3, GL_FLOAT, sizeof(Particle), particles_gl)
+		glVertexPointer(3, GL_FLOAT,
+		                ctypes.sizeof(Particle),
+		                ctypes.pointer(self.__particles[0].pos))
 		# Draw
 		glDrawArrays(GL_POINTS, 0, self.__numParticles)
 		glEnable(GL_TEXTURE_2D)
@@ -68,32 +75,3 @@ class ParticleSystem:
 			p.pos.x += p.velocity.x
 			p.pos.y += p.velocity.y
 			p.pos.z += p.velocity.z
-
-
-class Particle:
-	def __init__(self):
-		self.pos = Vector3()
-		self.velocity = Vector3()
-		self.life = 0.0
-
-
-if __name__ == '__main__':
-	import ctypes
-
-	class POS(ctypes.Structure):
-		_fields_ = [("x", GLfloat), ("y", GLfloat), ("z", GLfloat)]
-
-	class Vector3(ctypes.Union):
-		_fields_ = [("__pos", POS), ("vect", GLfloat*3)]
-		_anonymous_ = ("__pos",)
-
-		def __init__(self, *args):
-			print type(self.vect)
-			self.vect = args
-			print type(self.vect)
-
-
-	v = Vector3(1,2,3)
-	#v2 = Vector3(v)
-	v.x = 1.5
-	print v.vect

@@ -2,6 +2,7 @@ import math
 import random
 
 import pyglet
+from pyglet.gl import *
 
 from util import Vector3
 import renderer
@@ -245,15 +246,15 @@ class RaceCourse:
 	def render(self, ri):
 		glPushMatrix()
 		self.checkPoints[self.playerNextCP].renderData.texture = self.cpOnTex
-		ri.Render(self.checkPoints[self.playerNextCP])
+		ri.render(self.checkPoints[self.playerNextCP])
 		self.checkPoints[self.playerNextCP].renderData.texture = None
 		if self.playerNextCP + 1 == MAX_CHECKPOINTS:
 			self.checkPoints[0].renderData.texture = self.cpOffTex
-			ri.Render(self.checkPoints[0])
+			ri.render(self.checkPoints[0])
 			self.checkPoints[0].renderData.texture = None
 		else:
 			self.checkPoints[self.playerNextCP + 1].renderData.texture = self.cpOffTex
-			ri.Render(self.checkPoints[self.playerNextCP + 1])
+			ri.render(self.checkPoints[self.playerNextCP + 1])
 			self.checkPoints[self.playerNextCP + 1].renderData.texture = None
 		glPopMatrix()
 
@@ -340,9 +341,9 @@ class Seascape:
 		for model in self.models:
 			renderer.render(model)
 			# draw reflection
-			model.scale(2.0, -2.0, 2.0) #(2*65536, -2*65536, 2*65536)
+			model.scale[:] = 2.0, -2.0, 2.0 #(2*65536, -2*65536, 2*65536)
 			renderer.render(model)
-			model.scale(2.0,  2.0, 2.0) #(2*65536,  2*65536, 2*65536)
+			model.scale[:] = 2.0,  2.0, 2.0 #(2*65536,  2*65536, 2*65536)
 		# make sure the m_texTranslate never goes out of bounds
 		if self.waterMoved:
 			self.texTranslate -= 0.005
@@ -359,13 +360,13 @@ class Seascape:
 		glEnable(GL_BLEND)
 		glColor4f(1.0, 1.0, 1.0, 0.6)  # 65536x is 1.0f?
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-		RenderWater(renderer)
-		glTranslatex(0, 0, ITOX(WORLD_HEIGHT / 2 +4))
-		RenderWater(renderer)
-		glTranslatex(ITOX(WORLD_HEIGHT / 2 + 4),0,0)
-		RenderWater(renderer)
-		glTranslatex(0, 0, -ITOX(WORLD_HEIGHT / 2 + 4))
-		RenderWater(renderer)
+		self.renderWater(renderer)
+		glTranslatef(0, 0, WORLD_HEIGHT / 2 + 4)
+		self.renderWater(renderer)
+		glTranslatef(WORLD_HEIGHT / 2 + 4, 0, 0)
+		self.renderWater(renderer)
+		glTranslatef(0, 0, -(WORLD_HEIGHT / 2 + 4))
+		self.renderWater(renderer)
 		# turn of blending and restore the original color
 		glDisable(GL_BLEND)
 		glColor4f(1.0, 1.0, 1.0, 1.0)  # 65536x is 1.0f?
@@ -376,7 +377,7 @@ class Seascape:
 		glMatrixMode(GL_TEXTURE)
 		# shift the texture coords to simulate motion
 		glTranslatef(self.texTranslate, self.texTranslate, 0.0)
-		glRotatex(35.0, 0.0, 0.0, 1.0)
+		glRotatef(35.0, 0.0, 0.0, 1.0)
 		glColor4f(1.0, 1.0, 1.0, 0.6)  # 65536x is 1.0f?
 		# render the first sea quad
 		renderer.render(self.sea)
@@ -389,9 +390,9 @@ class Seascape:
 		glColor4f(1.0, 1.0, 1.0, 0.35)  # 65536x is 1.0f?
 		# render another water quad just slightly above the previous one
 		glMatrixMode(GL_MODELVIEW)
-		self.sea.translate(0.0 ,6553, 0.0)  # WTF?
+		self.sea.translate((0.0, 6553, 0.0))  # WTF is 6553?
 		renderer.render(self.sea)
-		self.sea.translate(0,-6553,0)  # WTF?
+		self.sea.translate((0,-6553,0))  # WTF?
 		glMatrixMode(GL_TEXTURE)
 		# reset the texture matrix again
 		glLoadIdentity()

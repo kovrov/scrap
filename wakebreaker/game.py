@@ -29,7 +29,7 @@ class Game:
 		# window dimensions
 		self.width = 0
 		self.height = 0
-		self.keysDown = (False,)*7  # we only test for 4 keys
+		self.keysDown = [False,]*7  # we only test for 4 keys
 		self.hasWon = False  # did we win?
 
 
@@ -84,17 +84,6 @@ class Game:
 		return True
 
 
-	def destroy(self):
-		SAFE_DELETE(self.raceCourse)
-		SAFE_ARRAY_DELETE(self.racers)
-		SAFE_DELETE(self.seascape)
-		self.currentScrren = None
-		SAFE_DELETE(self.splash)
-		SAFE_DELETE(self.victory)
-		SAFE_DELETE(self.defeat)
-		self.renderer.destroy()
-
-
 	def tick(self, time_elapsed):
 		# clear screen
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
@@ -108,9 +97,9 @@ class Game:
 		self.camera.update()
 		# process input
 		if self.keysDown[G_UP] == True:
-			self.racers[0].IncreaseSpeed(6553)		
+			self.racers[0].increaseSpeed(6553)		
 		if self.keysDown[G_DOWN] == True:
-			self.racers[0].IncreaseSpeed(-6553)		
+			self.racers[0].increaseSpeed(-6553)		
 		if self.keysDown[G_RIGHT] == True:
 			self.racers[0].rotate(-5.0)
 		if self.keysDown[G_LEFT] == True:
@@ -118,13 +107,13 @@ class Game:
 		if self.keysDown[G_DEVICE1]:
 			self.renderer.EnableFog()
 		if self.keysDown[G_DEVICE2]:
-			self.renderer.DisableFog()
+			self.renderer.disableFog()
 		# update all major game related classes
 		self.raceCourse.update()
 		self.racers[0].update()
 		self.racers[1].updateAI(self.racers[0])
 		if self.seascape.collided(self.racers[0].ri.position, 1.0):
-			self.racers[0].IncreaseSpeed(-1)
+			self.racers[0].increaseSpeed(-1)
 		if self.seascape.collided(self.racers[1].ri.position, 1.0):
 			self.racers[1].increaseSpeed(-1.0)
 		if self.racers[0].finished:
