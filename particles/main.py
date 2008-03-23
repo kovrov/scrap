@@ -29,6 +29,7 @@ def main():
 		render_context.width = width
 		render_context.height = height
 		render_context.update()
+		return pyglet.event.EVENT_HANDLED
 
 	@win.event
 	def on_key_press(sym, mod):
