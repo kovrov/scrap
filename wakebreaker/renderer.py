@@ -7,19 +7,14 @@ from pyglet.gl import *
 from util import Vector3
 
 class Renderer:
+	# sets up the openGL enable/disables
 	def __init__(self):
 		self.currData = None  # used to reduce state changes
 		self.currTexture = None  # used to reduce state changes
 		self.fogEnabled = False
-
-	# sets up the openGL enable/disables
-	def initialize(self, width, height):
-		self.currTexture = -1
 		# Enable the zbuffer
 		glEnable(GL_DEPTH_TEST)
-		# Set the view port size to the window size
-		glViewport(0, 0, width, height)
-		# Diable lighting and alpha blending
+		# Disable lighting and alpha blending
 		glDisable(GL_LIGHTING)
 		glDisable(GL_BLEND)
 		glCullFace(GL_BACK)
@@ -58,8 +53,8 @@ class Renderer:
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, color_data_gl)  # Set the color data source
 			self.currData = data.renderData
 		if data.renderData.texture and self.currTexture != data.renderData.texture.id:
-			glBindTexture(GL_TEXTURE_2D, data.renderData.texture.target)
-			self.currTexture = data.renderData.texture.target
+			glBindTexture(GL_TEXTURE_2D, data.renderData.texture.id)
+			self.currTexture = data.renderData.texture.id
 		glPushMatrix()
 		glTranslatef(data.position.x, data.position.y, data.position.z)
 		glScalef(data.scale.x, data.scale.y, data.scale.z)
@@ -72,35 +67,34 @@ class Renderer:
 		glPopMatrix()
 
 
-	#Draws a screen size quad with tex on it
+	#Draws a screen size quad with texure on it
 	def draw2DQuad(self, tex):
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 		glPushMatrix()
 		glLoadIdentity()
 		glTranslatef(0.0, -0.25, -5.0)
-		glBindTexture(GL_TEXTURE_2D, tex.target)
-		face_data = [
+		glBindTexture(GL_TEXTURE_2D, tex.id)
+		face_data = (
 				-3.0, -2.0, 0.0,    # First vertex position
 				 3.0, -2.0, 0.0,    # Second vertex position
 				-3.0,  2.0, 0.0,    # Third vertex position
 				 3.0,  2.0, 0.0,    # First vertex position
 				 3.0, -2.0, 0.0,    # Second vertex position
-				-3.0,  2.0, 0.0]    # Third vertex position
+				-3.0,  2.0, 0.0)    # Third vertex position
 		face_data_gl = (GLfloat * len(face_data))(*face_data)
 		glVertexPointer(3, GL_FLOAT, 0, face_data_gl)  # Set the vertex (position) data source
-		tex_coord_data = [
+		tex_coord_data = (
 				 0.0, 0.0,
 				 1.0, 0.0,
 				 0.0, 1.0,
 				 1.0, 1.0,
 				 1.0, 0.0,
-				 0.0, 1.0]
+				 0.0, 1.0)
 		tex_coord_data_gl = (GLfloat * len(tex_coord_data))(*tex_coord_data)
 		glTexCoordPointer(2, GL_FLOAT, 0, tex_coord_data_gl)  # Set the vertex (position) data source
-		index_data = [0, 1, 2, 5, 4, 3]
-		index_data_gl = (GLfloat * len(index_data))(*index_data)
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, index_data_gl)  # Draw the triangle
-		glPopMatrix()	
+		indices_gl = (c_ubyte * 6)(0, 1, 2, 5, 4, 3)
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices_gl)  # Draw the triangle
+		glPopMatrix()
 
 
 	def EnableFog(self):
@@ -133,7 +127,7 @@ class RenderInstance:
 			m_rotation.y = 0;
 		if m_rotation.z + p.z > 23527424 or m_rotation.z + p.z < -23527424:
 			m_rotation.z = 0;
-		m_rotation += p; 
+		m_rotation += p;
 
 	def scale(self, s):
 		if type(s) is Vector3:
@@ -168,3 +162,32 @@ class TexCoord2:
 	def __init__(self):
 		self.u = 0
 		self.v = 0
+
+
+
+if __name__ == '__main__':
+	import math
+
+
+	win = pyglet.window.Window(320, 240)
+	@win.event
+	def on_resize(width, height):
+		fov = 45.0
+		near = 1.0
+		far = 10000.0
+		aspect = float(width) / float(height)
+		glMatrixMode(GL_PROJECTION)
+		glLoadIdentity()
+		gluPerspective(fov, aspect, near, far)
+		glMatrixMode(GL_MODELVIEW)
+		glViewport(0, 0, width, height)
+		return pyglet.event.EVENT_HANDLED
+
+	@win.event
+	def on_draw():
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+		r.draw2DQuad(tex)
+
+	r = Renderer()
+	tex = pyglet.image.load('splash.png').get_texture()
+	pyglet.app.run()

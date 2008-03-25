@@ -14,10 +14,9 @@ G_UP, G_DOWN, G_RIGHT, G_LEFT, G_OK, G_DEVICE1, G_DEVICE2 = xrange(7)
 
 class Game:
 	def __init__(self):
-		self.renderer = renderer.Renderer()
 		self.camera = camera.Camera()
 		self.modelManager = scene.ModelManager()
-		self.currentScrren = None  # The current screen texture.
+		self.currentScreen = None  # The current screen texture.
 		self.splash = None  # The opening screen texture.
 		self.victory = None  # The victory screen texture.
 		self.defeat = None  # The defeat screen texture.
@@ -27,40 +26,16 @@ class Game:
 		self.raceCourse = None  # the course they race on
 		self.playing = False  # are we racing
 		# window dimensions
-		self.width = 0
-		self.height = 0
 		self.keysDown = [False,]*7  # we only test for 4 keys
 		self.hasWon = False  # did we win?
 
 
-	def menu(self):
-		if self.playing:
-			self.tick(0)
-		else:
-			# If the user has won the game:
-			if self.hasWon:
-				self.currentScrren = self.victory
-			else:
-				self.currentScrren = self.defeat
-			# If we should display the opening splash screen:
-			if self.racers[0].currLap == 0 and self.racers[0].nextCheckPoint == 0:
-				# Yaki - start playing automatically:
-				self.playing = True
-				self.currentScrren = self.splash
-				for i in xrange(5): #FIXME:
-					if self.keysDown[i]:
-						self.playing = True
-			self.renderer.draw2DQuad(self.currentScrren)
-
-
-	def create(self, w, h, hWnd):
+	def create(self):
 		self.playing = False
 		# seed the random number generator
 		#srand((unsigned)time(None))
-		self.width = w
-		self.height = h
 		# Create and initialize the OpenGL ES renderer
-		self.renderer.initialize(self.width, self.height)
+		self.renderer = renderer.Renderer()
 		# Set up the player
 		self.racers = (models.Racer(), models.Racer())
 		self.racers[0].initialize(self.modelManager, scene.BOAT2)
@@ -80,8 +55,28 @@ class Game:
 		self.splash = pyglet.image.load('splash.png').get_texture()
 		self.victory = pyglet.image.load('victory.png').get_texture()
 		self.defeat = pyglet.image.load('defeat.png').get_texture()
-		self.currentScrren = None
+		self.currentScreen = None
 		return True
+
+
+	def menu(self):
+		if self.playing:
+			self.tick(0)
+		else:
+			# If the user has won the game:
+			if self.hasWon:
+				self.currentScreen = self.victory
+			else:
+				self.currentScreen = self.defeat
+			# If we should display the opening splash screen:
+			if self.racers[0].currLap == 0 and self.racers[0].nextCheckPoint == 0:
+				# Yaki - start playing automatically:
+				self.playing = True
+				self.currentScreen = self.splash
+				for i in xrange(5): #FIXME:
+					if self.keysDown[i]:
+						self.playing = True
+			self.renderer.draw2DQuad(self.currentScreen)
 
 
 	def tick(self, time_elapsed):
@@ -96,13 +91,13 @@ class Game:
 		self.camera.lookAt(eye, self.racers[0].ri.position, up)
 		self.camera.update()
 		# process input
-		if self.keysDown[G_UP] == True:
+		if self.keysDown[G_UP]:
 			self.racers[0].increaseSpeed(6553)		
-		if self.keysDown[G_DOWN] == True:
+		if self.keysDown[G_DOWN]:
 			self.racers[0].increaseSpeed(-6553)		
-		if self.keysDown[G_RIGHT] == True:
+		if self.keysDown[G_RIGHT]:
 			self.racers[0].rotate(-5.0)
-		if self.keysDown[G_LEFT] == True:
+		if self.keysDown[G_LEFT]:
 			self.racers[0].rotate(5.0)
 		if self.keysDown[G_DEVICE1]:
 			self.renderer.EnableFog()
@@ -123,10 +118,10 @@ class Game:
 			self.hasWon = False
 			self.playing = False
 		# render everything
-		self.racers[0].render(self.renderer)
-		self.racers[1].render(self.renderer)
+		#self.racers[0].render(self.renderer)
+		#self.racers[1].render(self.renderer)
 		self.seascape.render(self.renderer)
-		self.raceCourse.render(self.renderer)
+		#self.raceCourse.render(self.renderer)
 
 
 	def keyDown(self, keyCode):
