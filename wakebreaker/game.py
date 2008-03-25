@@ -88,6 +88,7 @@ class Game:
 					7.0,
 					self.racers[0].ri.position.z - 25.0 * self.racers[0].dir.z * -0.7)
 		up = Vector3(0.0, 1.0, 0.0)
+#		print eye, self.racers[0].ri.position
 		self.camera.lookAt(eye, self.racers[0].ri.position, up)
 		self.camera.update()
 		# process input
@@ -118,10 +119,11 @@ class Game:
 			self.hasWon = False
 			self.playing = False
 		# render everything
-		#self.racers[0].render(self.renderer)
-		#self.racers[1].render(self.renderer)
+		self.racers[0].render(self.renderer)
+		self.racers[1].render(self.renderer)
 		self.seascape.render(self.renderer)
-		#self.raceCourse.render(self.renderer)
+		self.raceCourse.render(self.renderer)
+		#print "##########"
 
 
 	def keyDown(self, keyCode):

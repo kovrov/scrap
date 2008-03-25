@@ -47,6 +47,12 @@ class Renderer:
 				tex_coords_gl = (GLfloat * len(data.renderData.texCoords))(*data.renderData.texCoords)
 				glTexCoordPointer(2, GL_FLOAT, 0, tex_coords_gl)
 			vertices_gl = (GLfloat * len(data.renderData.vertices))(*data.renderData.vertices)
+
+			#print "vertices_gl:", len(data.renderData.vertices)
+			#for i in xrange(len(vertices_gl) / 3): print vertices_gl[i:i+3]
+			#print "vertices_gl[0]", vertices_gl[2]
+			#glFogf(GL_FOG_END, vertices_gl[2]) # debug break
+
 			glVertexPointer(3, GL_FLOAT, 0, vertices_gl)
 			if data.renderData.colorData:
 				color_data_gl = (GLfloat * len(data.renderData.colorData))(*data.renderData.colorData)
@@ -167,14 +173,16 @@ class TexCoord2:
 
 if __name__ == '__main__':
 	import math
+	import models
+	import scene
 
 
-	win = pyglet.window.Window(320, 240)
+	win = pyglet.window.Window()
 	@win.event
 	def on_resize(width, height):
 		fov = 45.0
 		near = 1.0
-		far = 10000.0
+		far = 1000000000.0
 		aspect = float(width) / float(height)
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
@@ -186,8 +194,18 @@ if __name__ == '__main__':
 	@win.event
 	def on_draw():
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-		r.draw2DQuad(tex)
+		glLoadIdentity()
+		k = 1000000000.0
+		gluLookAt(k, 0.0, k,  # eye
+		          racer.ri.position.x, racer.ri.position.y, racer.ri.position.z,  # center
+		          0.0, 1.0, 0.0) # up vector
+		racer.render(r)
 
+	mm = scene.ModelManager()
+	racer = models.Racer()
+	racer.initialize(mm, scene.BOAT2)
+	racer.ri.position[:] = 0,0,0
+	print racer.ri.position
 	r = Renderer()
-	tex = pyglet.image.load('splash.png').get_texture()
 	pyglet.app.run()
+
