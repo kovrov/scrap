@@ -29,22 +29,33 @@ MAX_CHECKPOINTS = 16
 #include "Texture.h"
 
 class Racer:
-	def __init__(self):
-		self.dir = Vector3()
+	def __init__(self, model_manager, model):
+		# get the 3d model data
+		if model == scene.BOAT1:
+			self.ri = renderer.RenderInstance(model_manager.getBoat1())
+		else: # model == BOAT2:
+			self.ri = renderer.RenderInstance(model_manager.getBoat2())
+		# rotate so he's always right side up
+		self.ri.rotation[:] = -90.0, 0.0, 90.0
+		self.ri.scale[:] = 0.5, 0.5, 0.5
+		# set up the position
+		self.ri.position[:] = WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0
+		# update his rotation and direction
+		rot = self.ri.rotation.copy() #COPY
+		rad = DEG2RADX * rot.y
+		self.dir = Vector3(math.cos(rad), 0.0, math.sin(rad))
+		self.nextCPPos = Vector3()
+		self.desiredDir = Vector3()
+		self.up = True  # used in making the boat bob slight
+		self.finished = False  # whether or not we are done with the race
 		self.speed = 0 # ship's current speed
 		self.nextCheckPoint = 0 # which check point he's aiming for
 		self.currLap = 0 # which lap he's on
-		self.hasRotated = False # for rotation optimization
+		self.hasRotated = True # for rotation optimization
 		self.spray = None  # the water spray that shoots out behind the boat
-		self.nextCheckPoint = 0
-		self.currLap = 0
-		self.nextCPPos = Vector3()
-		self.nextCPPos = Vector3()
-		self.desiredDir = Vector3()
-		# Are we done with the race?
-		self.finished = False
-		self.up = False  # used in making the boat bob slight
-		self.finished = False  # whether or not we are done with the race
+		# Initialize the particle system
+		self.spray = fx.ParticleSystem(200, 15, self.ri.position, Vector3(0.0, 1.0, 0.0))
+
 
 	# Keeps the racer inside the seascape
 	def boundsCheck(self):
@@ -74,30 +85,6 @@ class Racer:
 			self.up = True
 		self.ri.position[:] = pos
 
-	# -----------------------------------------
-	def initialize(self, model_manager, model):
-		self.up = True
-		self.finished = False
-		# get the 3d model data
-		self.ri = renderer.RenderInstance()
-		if model == scene.BOAT1:
-			self.ri.renderData = model_manager.getBoat1()
-		else: # model == BOAT2:
-			self.ri.renderData = model_manager.getBoat2()
-		# rotate so he's always right side up
-		self.ri.rotation[:] = -90.0, 0.0, 90.0
-		self.ri.scale[:] = 0.5, 0.5, 0.5
-		# set up the position
-		self.ri.position[:] = WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0
-		# update his rotation and direction
-		rot = self.ri.rotation.copy() #COPY
-		rad = DEG2RADX * rot.y
-		self.dir.x = math.cos(rad)
-		self.dir.z = math.sin(rad)
-		self.hasRotated = True
-		# Initialize the particle system
-		self.spray = fx.ParticleSystem(200, 15, self.ri.position, Vector3(0.0, 1.0, 0.0))
-
 
 	# --------------------------
 	# Rotates this object
@@ -106,7 +93,7 @@ class Racer:
 		self.hasRotated = True
 		# this makes sure the rotation doesn't exceed 360 degrees
 		# the 23527424 is 360 in fixed point (hehe, micro optimization)
-		if self.ri.rotation.y + r > 23527424 or self.ri.rotation.y + r < -23527424:
+		if self.ri.rotation.y + r > 360.0 or self.ri.rotation.y + r < -360.0:
 			self.ri.rotation.y = 0
 		self.ri.rotation.y += r
 
@@ -123,12 +110,12 @@ class Racer:
 		# Bounds check him against the world
 		self.boundsCheck()
 		# slow him down
-		if self.speed - 966 > 0:
-			self.speed -= 966
-		elif self.speed - 966 < 0:
-			self.speed += 1966
+		if self.speed - 0.01474 > 0:
+			self.speed -= 0.01474
+		elif self.speed - 0.01474 < 0:
+			self.speed += 0.03
 		# halt him if too slow
-		if self.speed <= 2621 and self.speed >= -2621:
+		if self.speed <= 0.04 and self.speed >= -0.04:
 			self.speed = 0
 		# keep the particles with us
 		self.updateSpray()
@@ -136,8 +123,8 @@ class Racer:
 
 	def updateAI(self, player):
 		# we hit an island, this on most cases, corrects the problem
-		if self.speed < 20000:
-			self.increaseSpeed(1553)
+		if self.speed < 0.3:
+			self.increaseSpeed(0.024)
 			# go around it
 			self.dir.x = math.cos(90.0 * DEG2RADX)
 			self.dir.z = math.sin(90.0 * DEG2RADX)
@@ -145,26 +132,26 @@ class Racer:
 			# move him in
 			self.ri.translate((self.speed * self.dir.x, 0, -self.dir.z * self.speed))
 		else:
-			self.increaseSpeed(1553)		
+			self.increaseSpeed(0.024)		
 			# build a normalized direction vector
-			self.desiredDir = self.ri.position() - self.nextCPPos
+			self.desiredDir = self.ri.position - self.nextCPPos
 			self.desiredDir.y = 0
 			mag = math.sqrt(self.desiredDir.x * self.desiredDir.x + self.desiredDir.z * self.desiredDir.z)
-			n = DIVX(1.0, mag)
+			n = 1.0 / mag
 			self.desiredDir.x = self.desiredDir.x * n
 			self.desiredDir.z = self.desiredDir.z * n
 			# make the boat rotate the same as the player
-			playerRot = player.ri.rotation() #COPY
-			playerRot.y + 5.0 + rand()% 20.0
-			self.ri.rotation(playerRot)
+			playerRot = Vector3(player.ri.rotation)
+			playerRot.y + 5.0 + random.uniform(0.0, 20.0)
+			self.ri.rotation[:] = playerRot
 			# slow the AI down a little
-			randFac = DIVX(8.0 + rand()%4, 10.0)
+			randFac = 8.0 + random.uniform(0.0, 4.0) / 10.0
 			finalX = -self.desiredDir.x * self.speed
-			finalX = MULX(finalX, randFac, rot)
-			finalZ = MULX(-self.desiredDir.z, self.speed)
-			finalZ = MULX(finalZ, randFac, rot)
+			finalX = finalX * randFac
+			finalZ = -self.desiredDir.z * self.speed
+			finalZ = finalZ * randFac
 			# move the boat		
-			self.ri.Translate(finalX, 0, finalZ)
+			self.ri.translate((finalX, 0.0, finalZ))
 		# keep him in the water
 		self.boundsCheck()
 		# move the spray trail with him
@@ -176,13 +163,13 @@ class Racer:
 		# also keep it spraying in the right direction
 		newDir = self.dir #COPY
 		if self.speed > 0:
-			#newDir.x = MULX(newDir.x, MULX(1.0, 1.0))#WTF?
+			newDir.x = newDir.x
 			newDir.y = 0.1
-			newDir.z = newDir.z, -1.0
+			newDir.z = -newDir.z
 		else:
-			newDir.x = 0
-			newDir.y = 0
-			newDir.z = 0
+			newDir.x = 0.0
+			newDir.y = 0.0
+			newDir.z = 0.0
 		self.spray.redirect(newDir)
 		self.spray.update()
 
@@ -195,14 +182,14 @@ class Racer:
 		# draw the ship
 		renderer.render(self.ri)
 		# draw the spray trail
-		self.spray.render()
+#		self.spray.render()
 
 
 class RaceCourse:
 	# 1. Generates a random race course within the donut described by min and max radius
 	# 2. Adds racers to the race course and sets up the race course
 	def __init__(self, center, minRadius, maxRadius, racers, model_manager):
-		self.checkPoints = [renderer.RenderInstance() for i in xrange(MAX_CHECKPOINTS)]
+		self.checkPoints = [renderer.RenderInstance(model_manager.getCheckPoint()) for i in xrange(MAX_CHECKPOINTS)]
 		# calculate the angle apart each checkpoint has to be
 		interval = TWOPIX / MAX_CHECKPOINTS
 		angle = 0.0
@@ -219,7 +206,6 @@ class RaceCourse:
 			z = z * randZ + center.z
 			# assign them in
 			cp.position[:] = x, 1.0, z
-			cp.renderData = model_manager.getCheckPoint()
 			cp.scale[:] = 1.0, 1.0, 1.0
 			cp.rotation[:] = -90.0, 0.0, 0.0
 			# advance the angle
@@ -277,7 +263,7 @@ class RaceCourse:
 				# he has reached the last checkpoint
 				if CP == MAX_CHECKPOINTS:
 					# increment his lap count
-					racer.CurrLap(racer.CurrLap()+1)
+					racer.CurrLap(racer.CurrLap() + 1)
 					if racer.CurrLap() == 3:
 						# we have a winner
 						racer.SetFinished(True)
@@ -302,17 +288,13 @@ class Seascape:
 	# sets everything up
 	def generate(self, mm):
 		self.waterMoved = True
-		self.models = [renderer.RenderInstance() for i in xrange(15)]
+		self.models = [renderer.RenderInstance(mm.getRandomSeascapeModel()) for i in xrange(15)]
 		for model in self.models:
-			# Get a random island model
-			model.renderData = mm.getRandomSeascapeModel()
 			# generate a random x and z
 			model.position[:] = random.uniform(0.0, WORLD_WIDTH), 0.0, random.uniform(0.0, WORLD_HEIGHT)
 			# generate a random rotation
 			model.rotation[:] = -90.0, random.uniform(0.0, 360.0), 0.0
 		# set up the renderInstance
-		self.sea = renderer.RenderInstance()
-		self.sea.position[:] = 0.0, 0.0, 0.0
 		# Set up the sea floor
 		vertices = (
 			(-2,                      0.0, -2.0),
@@ -322,7 +304,8 @@ class Seascape:
 		indices = (0, 1, 2, 2, 1, 3)
 		uvmap = ((0, 0), (15, 0), (0, 15), (15, 15))
 		texture = pyglet.image.load('watertex.png').get_texture()
-		self.sea.renderData = renderer.RenderData(vertices, indices, uvmap, texture)
+		self.sea = renderer.RenderInstance(renderer.RenderData(vertices, indices, uvmap, texture))
+		self.sea.position[:] = 0.0, 0.0, 0.0
 
 	# checks if anything collided with the islands
 	def collided(self, pos, radius):
@@ -341,35 +324,35 @@ class Seascape:
 		for model in self.models:
 			renderer.render(model)
 			# draw reflection
-			model.scale[:] = 2.0, -2.0, 2.0 #(2*65536, -2*65536, 2*65536)
+			model.scale[:] = 2.0, -2.0, 2.0
 			renderer.render(model)
-			model.scale[:] = 2.0,  2.0, 2.0 #(2*65536,  2*65536, 2*65536)
+			model.scale[:] = 2.0,  2.0, 2.0
 		# make sure the m_texTranslate never goes out of bounds
 		if self.waterMoved:
 			self.texTranslate -= 0.005
 		else:
 			self.texTranslate += 0.005
-		if self.texTranslate > 983040:  # WTF?
+		if self.texTranslate > 15.0:  # 983040x is 15f?
 			self.waterMoved = True
-		if self.texTranslate < -983040:  # WTF?
+		if self.texTranslate < -15.0:  # -983040x is 15f?
 			self.waterMoved = False
 		# Now render the water plane
 		# We render it 4 times, so that it forms a giant block
 		glPushMatrix()
 		# set up blending
 		glEnable(GL_BLEND)
-		glColor4f(1.0, 1.0, 1.0, 0.6)  # 65536x is 1.0f?
+		glColor4f(1.0, 1.0, 1.0, 0.6)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 		self.renderWater(renderer)
-		glTranslatef(0, 0, WORLD_HEIGHT / 2 + 4)
+		glTranslatef(0.0, 0.0, WORLD_HEIGHT / 2 + 4)
 		self.renderWater(renderer)
-		glTranslatef(WORLD_HEIGHT / 2 + 4, 0, 0)
+		glTranslatef(WORLD_HEIGHT / 2.0 + 4.0, 0.0, 0.0)
 		self.renderWater(renderer)
-		glTranslatef(0, 0, -(WORLD_HEIGHT / 2 + 4))
+		glTranslatef(0.0, 0.0, -(WORLD_HEIGHT / 2.0 + 4.0))
 		self.renderWater(renderer)
 		# turn of blending and restore the original color
 		glDisable(GL_BLEND)
-		glColor4f(1.0, 1.0, 1.0, 1.0)  # 65536x is 1.0f?
+		glColor4f(1.0, 1.0, 1.0, 1.0)
 		glPopMatrix()
 
 	# Renders the water
@@ -378,7 +361,7 @@ class Seascape:
 		# shift the texture coords to simulate motion
 		glTranslatef(self.texTranslate, self.texTranslate, 0.0)
 		glRotatef(35.0, 0.0, 0.0, 1.0)
-		glColor4f(1.0, 1.0, 1.0, 0.6)  # 65536x is 1.0f?
+		glColor4f(1.0, 1.0, 1.0, 0.6)
 		# render the first sea quad
 		renderer.render(self.sea)
 		# reset the texture matrix
@@ -387,12 +370,12 @@ class Seascape:
 		glScalef(0.7, 0.7, 0.7)
 		glTranslatef(-self.texTranslate, 0.0, 0.0)
 		# change the transparency
-		glColor4f(1.0, 1.0, 1.0, 0.35)  # 65536x is 1.0f?
+		glColor4f(1.0, 1.0, 1.0, 0.35)
 		# render another water quad just slightly above the previous one
 		glMatrixMode(GL_MODELVIEW)
-		self.sea.translate((0.0, 6553, 0.0))  # WTF is 6553?
+		self.sea.translate((0.0, 0.1, 0.0))  # 6553 == 0.1 ?
 		renderer.render(self.sea)
-		self.sea.translate((0,-6553,0))  # WTF?
+		self.sea.translate((0.0 ,-0.1, 0.0))  # -6553 == -0.1 ?
 		glMatrixMode(GL_TEXTURE)
 		# reset the texture matrix again
 		glLoadIdentity()

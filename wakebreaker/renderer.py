@@ -47,17 +47,11 @@ class Renderer:
 				tex_coords_gl = (GLfloat * len(data.renderData.texCoords))(*data.renderData.texCoords)
 				glTexCoordPointer(2, GL_FLOAT, 0, tex_coords_gl)
 			vertices_gl = (GLfloat * len(data.renderData.vertices))(*data.renderData.vertices)
-
-			#print "vertices_gl:", len(data.renderData.vertices)
-			#for i in xrange(len(vertices_gl) / 3): print vertices_gl[i:i+3]
-			#print "vertices_gl[0]", vertices_gl[2]
-			#glFogf(GL_FOG_END, vertices_gl[2]) # debug break
-
 			glVertexPointer(3, GL_FLOAT, 0, vertices_gl)
 			if data.renderData.colorData:
 				color_data_gl = (GLfloat * len(data.renderData.colorData))(*data.renderData.colorData)
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, color_data_gl)  # Set the color data source
-			self.currData = data.renderData
+#			self.currData = data.renderData
 		if data.renderData.texture and self.currTexture != data.renderData.texture.id:
 			glBindTexture(GL_TEXTURE_2D, data.renderData.texture.id)
 			self.currTexture = data.renderData.texture.id
@@ -68,8 +62,8 @@ class Renderer:
 		glRotatef(data.rotation.x, 1.0, 0.0, 0.0)
 		glRotatef(data.rotation.z, 0.0, 0.0, 1.0)
 		indices_len = len(data.renderData.indices)
-		indices_gl = (GLuint* indices_len)(*data.renderData.indices)
-		glDrawElements(GL_TRIANGLES, indices_len, data.renderData.indexDataType, indices_gl)  # Draw the triangle
+		indices_gl = (GLushort* indices_len)(*data.renderData.indices)
+		glDrawElements(GL_TRIANGLES, indices_len, GL_UNSIGNED_SHORT, indices_gl)
 		glPopMatrix()
 
 
@@ -119,19 +113,19 @@ class Renderer:
 
 # This stores the positional data and renderable data of a an object
 class RenderInstance:
-	def __init__(self):
-		self.renderData = None  # the render data, as requested from the modelmanager
-		self.position   = Vector3(0, 0, 0)
-		self.rotation   = Vector3(0, 0, 0)
-		self.scale      = Vector3(65536, 65536, 65536)
+	def __init__(self, data):
+		self.renderData = data  # the render data, as requested from the modelmanager
+		self.position   = Vector3(0.0, 0.0, 0.0)
+		self.rotation   = Vector3(0.0, 0.0, 0.0)
+		self.scale      = Vector3(1.0, 1.0, 1.0)
 
 	def rotate(self, p):  # Vector3
 		# cap all the values
-		if m_rotation.x + p.x > 23527424 or m_rotation.x + p.x < -23527424:
+		if m_rotation.x + p.x > 360.0 or m_rotation.x + p.x < -360.0:
 			m_rotation.x = 0;
-		if m_rotation.y + p.y > 23527424 or m_rotation.y + p.y < -23527424:
+		if m_rotation.y + p.y > 360.0 or m_rotation.y + p.y < -360.0:
 			m_rotation.y = 0;
-		if m_rotation.z + p.z > 23527424 or m_rotation.z + p.z < -23527424:
+		if m_rotation.z + p.z > 360.0 or m_rotation.z + p.z < -360.0:
 			m_rotation.z = 0;
 		m_rotation += p;
 
@@ -160,7 +154,7 @@ class RenderData:
 		self.texCoords = sum(uvmap[1:], uvmap[0])
 		self.texture = texture
 		self.colorData = None  # Color4*
-		self.indexDataType = GL_UNSIGNED_SHORT
+		#self.indexDataType = GL_UNSIGNED_SHORT
 
 
 
@@ -175,6 +169,53 @@ if __name__ == '__main__':
 	import math
 	import models
 	import scene
+	import data
+
+	def testRender():
+		glBegin(GL_TRIANGLES)
+		# front
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5,  0.5)
+		glTexCoord2f(1.0, 0.0); glVertex3f( 0.5, -0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
+		glTexCoord2f(0.0, 1.0); glVertex3f(-0.5,  0.5,  0.5)
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5,  0.5)
+		# back
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
+		glTexCoord2f(1.0, 0.0); glVertex3f(-0.5,  0.5, -0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5, -0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5, -0.5)
+		glTexCoord2f(0.0, 1.0); glVertex3f( 0.5, -0.5, -0.5)
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
+		# top
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5,  0.5, -0.5)
+		glTexCoord2f(1.0, 0.0); glVertex3f(-0.5,  0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
+		glTexCoord2f(0.0, 1.0); glVertex3f( 0.5,  0.5, -0.5)
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5,  0.5, -0.5)
+		# bottom
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
+		glTexCoord2f(1.0, 0.0); glVertex3f( 0.5, -0.5, -0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5, -0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5, -0.5,  0.5)
+		glTexCoord2f(0.0, 1.0); glVertex3f(-0.5, -0.5,  0.5)
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
+		# right
+		glTexCoord2f(0.0, 0.0); glVertex3f( 0.5, -0.5, -0.5)
+		glTexCoord2f(1.0, 0.0); glVertex3f( 0.5,  0.5, -0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
+		glTexCoord2f(0.0, 1.0); glVertex3f( 0.5, -0.5,  0.5)
+		glTexCoord2f(0.0, 0.0); glVertex3f( 0.5, -0.5, -0.5)
+		# left
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
+		glTexCoord2f(1.0, 0.0); glVertex3f(-0.5, -0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f(-0.5,  0.5,  0.5)
+		glTexCoord2f(1.0, 1.0); glVertex3f(-0.5,  0.5,  0.5)
+		glTexCoord2f(0.0, 1.0); glVertex3f(-0.5,  0.5, -0.5)
+		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
+		glEnd()
 
 
 	win = pyglet.window.Window()
@@ -182,7 +223,7 @@ if __name__ == '__main__':
 	def on_resize(width, height):
 		fov = 45.0
 		near = 1.0
-		far = 1000000000.0
+		far = 256.0
 		aspect = float(width) / float(height)
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
@@ -195,17 +236,36 @@ if __name__ == '__main__':
 	def on_draw():
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
-		k = 1000000000.0
-		gluLookAt(k, 0.0, k,  # eye
-		          racer.ri.position.x, racer.ri.position.y, racer.ri.position.z,  # center
-		          0.0, 1.0, 0.0) # up vector
-		racer.render(r)
+		k = 2.0
+		center = ri.position
+		gluLookAt(k, k, k,  # eye
+		          center.x, center.y, center.z,
+		          0.0, 1.0, 0.0) # up
 
-	mm = scene.ModelManager()
-	racer = models.Racer()
-	racer.initialize(mm, scene.BOAT2)
-	racer.ri.position[:] = 0,0,0
-	print racer.ri.position
+		r.render(ri)
+		#testRender()
+
+		#glBegin(GL_TRIANGLES)
+		#for i in ri.renderData.indices:
+		#	glTexCoord2f(*ri.renderData.texCoords[i*2:i*2+2])
+		#	glVertex3f(*ri.renderData.vertices[i*3:i*3+3])
+		#glEnd()
+
+		####
+		#tex_coords_gl = (GLfloat * len(ri.renderData.texCoords))(*ri.renderData.texCoords)
+		#glTexCoordPointer(2, GL_FLOAT, 0, tex_coords_gl)
+		#vertices_gl = (GLfloat * len(ri.renderData.vertices))(*ri.renderData.vertices)
+		#glVertexPointer(3, GL_FLOAT, 0, vertices_gl)
+		#indices_len = len(ri.renderData.indices)
+		#indices_gl = (GLushort* indices_len)(*ri.renderData.indices)
+		#glDrawElements(GL_TRIANGLES, indices_len, GL_UNSIGNED_SHORT, indices_gl)
+
 	r = Renderer()
-	pyglet.app.run()
+	d = data.loadTest()
+	ri = RenderInstance(RenderData(d['vertices'], d['indices'], d['uvmap'], d['texture']))
 
+	#pyglet.app.run()
+	while not win.has_exit:
+		win.dispatch_events()
+		on_draw()
+		win.flip()

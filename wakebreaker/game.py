@@ -37,9 +37,8 @@ class Game:
 		# Create and initialize the OpenGL ES renderer
 		self.renderer = renderer.Renderer()
 		# Set up the player
-		self.racers = (models.Racer(), models.Racer())
-		self.racers[0].initialize(self.modelManager, scene.BOAT2)
-		self.racers[1].initialize(self.modelManager, scene.BOAT1)
+		self.racers = (models.Racer(self.modelManager, scene.BOAT2),
+		               models.Racer(self.modelManager, scene.BOAT1))
 		# Generate the race course first
 		self.raceCourse = models.RaceCourse(Vector3(models.WORLD_WIDTH / 2.0, 0.0, models.WORLD_HEIGHT / 2.0),
 		                                    58, 60, self.racers, self.modelManager)
