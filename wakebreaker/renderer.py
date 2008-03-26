@@ -171,53 +171,6 @@ if __name__ == '__main__':
 	import scene
 	import data
 
-	def testRender():
-		glBegin(GL_TRIANGLES)
-		# front
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5,  0.5)
-		glTexCoord2f(1.0, 0.0); glVertex3f( 0.5, -0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
-		glTexCoord2f(0.0, 1.0); glVertex3f(-0.5,  0.5,  0.5)
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5,  0.5)
-		# back
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
-		glTexCoord2f(1.0, 0.0); glVertex3f(-0.5,  0.5, -0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5, -0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5, -0.5)
-		glTexCoord2f(0.0, 1.0); glVertex3f( 0.5, -0.5, -0.5)
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
-		# top
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5,  0.5, -0.5)
-		glTexCoord2f(1.0, 0.0); glVertex3f(-0.5,  0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
-		glTexCoord2f(0.0, 1.0); glVertex3f( 0.5,  0.5, -0.5)
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5,  0.5, -0.5)
-		# bottom
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
-		glTexCoord2f(1.0, 0.0); glVertex3f( 0.5, -0.5, -0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5, -0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5, -0.5,  0.5)
-		glTexCoord2f(0.0, 1.0); glVertex3f(-0.5, -0.5,  0.5)
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
-		# right
-		glTexCoord2f(0.0, 0.0); glVertex3f( 0.5, -0.5, -0.5)
-		glTexCoord2f(1.0, 0.0); glVertex3f( 0.5,  0.5, -0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f( 0.5,  0.5,  0.5)
-		glTexCoord2f(0.0, 1.0); glVertex3f( 0.5, -0.5,  0.5)
-		glTexCoord2f(0.0, 0.0); glVertex3f( 0.5, -0.5, -0.5)
-		# left
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
-		glTexCoord2f(1.0, 0.0); glVertex3f(-0.5, -0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f(-0.5,  0.5,  0.5)
-		glTexCoord2f(1.0, 1.0); glVertex3f(-0.5,  0.5,  0.5)
-		glTexCoord2f(0.0, 1.0); glVertex3f(-0.5,  0.5, -0.5)
-		glTexCoord2f(0.0, 0.0); glVertex3f(-0.5, -0.5, -0.5)
-		glEnd()
-
-
 	win = pyglet.window.Window()
 	@win.event
 	def on_resize(width, height):
@@ -236,33 +189,21 @@ if __name__ == '__main__':
 	def on_draw():
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 		glLoadIdentity()
-		k = 2.0
-		center = ri.position
+		k = 10.0
+		center = Vector3() #ri.position
 		gluLookAt(k, k, k,  # eye
 		          center.x, center.y, center.z,
 		          0.0, 1.0, 0.0) # up
-
 		r.render(ri)
-		#testRender()
-
-		#glBegin(GL_TRIANGLES)
-		#for i in ri.renderData.indices:
-		#	glTexCoord2f(*ri.renderData.texCoords[i*2:i*2+2])
-		#	glVertex3f(*ri.renderData.vertices[i*3:i*3+3])
-		#glEnd()
-
-		####
-		#tex_coords_gl = (GLfloat * len(ri.renderData.texCoords))(*ri.renderData.texCoords)
-		#glTexCoordPointer(2, GL_FLOAT, 0, tex_coords_gl)
-		#vertices_gl = (GLfloat * len(ri.renderData.vertices))(*ri.renderData.vertices)
-		#glVertexPointer(3, GL_FLOAT, 0, vertices_gl)
-		#indices_len = len(ri.renderData.indices)
-		#indices_gl = (GLushort* indices_len)(*ri.renderData.indices)
-		#glDrawElements(GL_TRIANGLES, indices_len, GL_UNSIGNED_SHORT, indices_gl)
+		m.render(r)
 
 	r = Renderer()
 	d = data.loadTest()
 	ri = RenderInstance(RenderData(d['vertices'], d['indices'], d['uvmap'], d['texture']))
+
+	mm = scene.ModelManager()
+	m = models.Seascape()
+	m.generate(mm)
 
 	#pyglet.app.run()
 	while not win.has_exit:

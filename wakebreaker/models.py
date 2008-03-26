@@ -9,12 +9,6 @@ import renderer
 import scene
 import fx
 
-PIX = 205887
-TWOPIX = 411775
-
-DEG2RADX = 1144  # pi over 180
-RAD2DEGX = 3754936  # 180 over pi
-
 WORLD_WIDTH	 = 175	
 WORLD_HEIGHT = 175
 
@@ -42,7 +36,7 @@ class Racer:
 		self.ri.position[:] = WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0
 		# update his rotation and direction
 		rot = self.ri.rotation.copy() #COPY
-		rad = DEG2RADX * rot.y
+		rad = math.radians(rot.y)
 		self.dir = Vector3(math.cos(rad), 0.0, math.sin(rad))
 		self.nextCPPos = Vector3()
 		self.desiredDir = Vector3()
@@ -89,7 +83,6 @@ class Racer:
 	# --------------------------
 	# Rotates this object
 	def rotate(self, r):
-		self.ri.rotation[:] = self.ri.rotation
 		self.hasRotated = True
 		# this makes sure the rotation doesn't exceed 360 degrees
 		# the 23527424 is 360 in fixed point (hehe, micro optimization)
@@ -101,7 +94,7 @@ class Racer:
 	def update(self):
 		if self.hasRotated:
 			# rotate the ship if needed
-			rad = DEG2RADX * self.ri.rotation.y
+			rad = math.radians(self.ri.rotation.y)
 			self.dir.x = math.cos(rad)
 			self.dir.z = math.sin(rad)
 			self.hasRotated = False
@@ -126,8 +119,8 @@ class Racer:
 		if self.speed < 0.3:
 			self.increaseSpeed(0.024)
 			# go around it
-			self.dir.x = math.cos(90.0 * DEG2RADX)
-			self.dir.z = math.sin(90.0 * DEG2RADX)
+			self.dir.x = math.cos(math.radians(90.0))
+			self.dir.z = math.sin(math.radians(90.0))
 			self.hasRotated = False
 			# move him in
 			self.ri.translate((self.speed * self.dir.x, 0, -self.dir.z * self.speed))
@@ -161,7 +154,7 @@ class Racer:
 		# keep it the spray trail right with the boat
 		self.spray.move(self.ri.position)
 		# also keep it spraying in the right direction
-		newDir = self.dir #COPY
+		newDir = self.dir.copy() #COPY
 		if self.speed > 0:
 			newDir.x = newDir.x
 			newDir.y = 0.1
@@ -191,7 +184,7 @@ class RaceCourse:
 	def __init__(self, center, minRadius, maxRadius, racers, model_manager):
 		self.checkPoints = [renderer.RenderInstance(model_manager.getCheckPoint()) for i in xrange(MAX_CHECKPOINTS)]
 		# calculate the angle apart each checkpoint has to be
-		interval = TWOPIX / MAX_CHECKPOINTS
+		interval = math.pi*2.0 / MAX_CHECKPOINTS
 		angle = 0.0
 		for cp in self.checkPoints:
 			# generate the x component
@@ -297,12 +290,12 @@ class Seascape:
 		# set up the renderInstance
 		# Set up the sea floor
 		vertices = (
-			(-2,                      0.0, -2.0),
-			(-2,                      0.0, WORLD_HEIGHT / 2.0 + 2.0),
-			(WORLD_WIDTH / 2.0 + 2.0, 0.0, -2.0),
-			(WORLD_WIDTH / 2.0 + 2.0, 0.0, WORLD_HEIGHT / 2.0 + 2.0))
+			(-2,						0.0,	-2.0),
+			(-2,						0.0,	WORLD_HEIGHT / 2.0 + 2.0),
+			(WORLD_WIDTH / 2.0 + 2.0,	0.0,	-2.0),
+			(WORLD_WIDTH / 2.0 + 2.0,	0.0,	WORLD_HEIGHT / 2.0 + 2.0))
 		indices = (0, 1, 2, 2, 1, 3)
-		uvmap = ((0, 0), (15, 0), (0, 15), (15, 15))
+		uvmap = ((0.0, 0.0), (15.0, 0.0), (0.0, 15.0), (15.0, 15.0))
 		texture = pyglet.image.load('watertex.png').get_texture()
 		self.sea = renderer.RenderInstance(renderer.RenderData(vertices, indices, uvmap, texture))
 		self.sea.position[:] = 0.0, 0.0, 0.0

@@ -84,11 +84,11 @@ class Game:
 		glLoadIdentity()
 		# set up the camera to follow the player
 		eye = Vector3(self.racers[0].ri.position.x - 25.0 * self.racers[0].dir.x * 0.7,
-					7.0,
-					self.racers[0].ri.position.z - 25.0 * self.racers[0].dir.z * -0.7)
+		              7.0,
+		              self.racers[0].ri.position.z - 25.0 * self.racers[0].dir.z * -0.7)
+		center = self.racers[0].ri.position
 		up = Vector3(0.0, 1.0, 0.0)
-#		print eye, self.racers[0].ri.position
-		self.camera.lookAt(eye, self.racers[0].ri.position, up)
+		self.camera.lookAt(eye, center, up)
 		self.camera.update()
 		# process input
 		if self.keysDown[G_UP]:
@@ -122,7 +122,6 @@ class Game:
 		self.racers[1].render(self.renderer)
 		self.seascape.render(self.renderer)
 		self.raceCourse.render(self.renderer)
-		#print "##########"
 
 
 	def keyDown(self, keyCode):

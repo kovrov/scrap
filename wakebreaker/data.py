@@ -1737,7 +1737,7 @@ def loadIsland1():
 			(0.325546, -0.465424),  # (21335, -30502),
 			(0.161621, -0.345657))}  # (10592, -22653))}
 
-def loadisland3():
+def loadIsland3():
 	return {
 		'texture': pyglet.image.load('island3tex.png').get_texture(),
 		'vertices': (
