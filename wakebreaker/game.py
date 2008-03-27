@@ -92,9 +92,9 @@ class Game:
 		self.camera.update()
 		# process input
 		if self.keysDown[G_UP]:
-			self.racers[0].increaseSpeed(6553)		
+			self.racers[0].increaseSpeed(0.1)
 		if self.keysDown[G_DOWN]:
-			self.racers[0].increaseSpeed(-6553)		
+			self.racers[0].increaseSpeed(-0.1)
 		if self.keysDown[G_RIGHT]:
 			self.racers[0].rotate(-5.0)
 		if self.keysDown[G_LEFT]:

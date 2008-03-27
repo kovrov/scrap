@@ -13,8 +13,7 @@ if __name__ == '__main__':
 	import game
 	from pyglet.gl import *
 
-	win = pyglet.window.Window(caption="Wake Breaker")
-	g = game.Game()
+	win = pyglet.window.Window(caption="Wake Breaker", resizable=True)
 
 	@win.event
 	def on_key_press(symbol, modifiers):
@@ -49,11 +48,15 @@ if __name__ == '__main__':
 		glViewport(0, 0, width, height)
 		return pyglet.event.EVENT_HANDLED
 
+	g = game.Game()
 	g.create()
 
+	pyglet.clock.set_fps_limit(30)
+	#fps_display = pyglet.clock.ClockDisplay()
 	while not win.has_exit:
 		win.dispatch_events()
 		frame_time = pyglet.clock.tick()
 		#win.clear()
 		g.menu()
+		#fps_display.draw()
 		win.flip()

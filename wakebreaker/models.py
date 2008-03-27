@@ -12,7 +12,7 @@ import fx
 WORLD_WIDTH	 = 175	
 WORLD_HEIGHT = 175
 
-MAX_SPEED = 1 # ship's maximum speed
+MAX_SPEED = 1.0 # ship's maximum speed
 MAX_CHECKPOINTS = 16
 
 #include "Base.h"
@@ -117,32 +117,32 @@ class Racer:
 	def updateAI(self, player):
 		# we hit an island, this on most cases, corrects the problem
 		if self.speed < 0.3:
-			self.increaseSpeed(0.024)
+			self.increaseSpeed(0.025)
 			# go around it
 			self.dir.x = math.cos(math.radians(90.0))
 			self.dir.z = math.sin(math.radians(90.0))
 			self.hasRotated = False
 			# move him in
-			self.ri.translate((self.speed * self.dir.x, 0, -self.dir.z * self.speed))
+			self.ri.translate((self.speed * self.dir.x, 0.0, -self.dir.z * self.speed))
 		else:
-			self.increaseSpeed(0.024)		
+			self.increaseSpeed(0.025)		
 			# build a normalized direction vector
 			self.desiredDir = self.ri.position - self.nextCPPos
-			self.desiredDir.y = 0
+			self.desiredDir.y = 0.0
 			mag = math.sqrt(self.desiredDir.x * self.desiredDir.x + self.desiredDir.z * self.desiredDir.z)
 			n = 1.0 / mag
-			self.desiredDir.x = self.desiredDir.x * n
-			self.desiredDir.z = self.desiredDir.z * n
+			self.desiredDir.x *= n
+			self.desiredDir.z *= n
 			# make the boat rotate the same as the player
-			playerRot = Vector3(player.ri.rotation)
+			playerRot = player.ri.rotation.copy()
 			playerRot.y + 5.0 + random.uniform(0.0, 20.0)
 			self.ri.rotation[:] = playerRot
 			# slow the AI down a little
-			randFac = 8.0 + random.uniform(0.0, 4.0) / 10.0
+			randFac = (8.0 + random.uniform(0.0, 4.0)) / 10.0
 			finalX = -self.desiredDir.x * self.speed
-			finalX = finalX * randFac
+			finalX *= randFac
 			finalZ = -self.desiredDir.z * self.speed
-			finalZ = finalZ * randFac
+			finalZ *= randFac
 			# move the boat		
 			self.ri.translate((finalX, 0.0, finalZ))
 		# keep him in the water
@@ -167,15 +167,17 @@ class Racer:
 		self.spray.update()
 
 	def increaseSpeed(self, s):
-		if self.speed + s < MAX_SPEED:
+		if self.speed < MAX_SPEED:
 			self.speed += s
+		if self.speed > MAX_SPEED:
+			self.speed = MAX_SPEED
 
 	# Renders the ship
 	def render(self, renderer):
 		# draw the ship
 		renderer.render(self.ri)
 		# draw the spray trail
-#		self.spray.render()
+		self.spray.render()
 
 
 class RaceCourse:
@@ -256,10 +258,10 @@ class RaceCourse:
 				# he has reached the last checkpoint
 				if CP == MAX_CHECKPOINTS:
 					# increment his lap count
-					racer.CurrLap(racer.CurrLap() + 1)
-					if racer.CurrLap() == 3:
+					racer.currLap += 1
+					if racer.currLap == 3:
 						# we have a winner
-						racer.SetFinished(True)
+						racer.finished = True
 					CP = 0
 				# assign him his new checkpoint
 				racer.nextCheckPoint = CP
