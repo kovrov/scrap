@@ -15,12 +15,6 @@ WORLD_HEIGHT = 175
 MAX_SPEED = 1.0 # ship's maximum speed
 MAX_CHECKPOINTS = 16
 
-#include "Base.h"
-#include "ParticleSystem.h"
-#include "RenderInstance.h"
-#include "Renderer.h"
-#include "Seascape.h"
-#include "Texture.h"
 
 class Racer:
 	def __init__(self, model_manager, model):
@@ -32,7 +26,6 @@ class Racer:
 		# rotate so he's always right side up
 		self.ri.rotation[:] = -90.0, 0.0, 90.0
 		self.ri.scale[:] = 0.5, 0.5, 0.5
-		# set up the position
 		self.ri.position[:] = WORLD_WIDTH / 2.0, 0.0, WORLD_HEIGHT / 2.0
 		# update his rotation and direction
 		rot = self.ri.rotation.copy() #COPY
@@ -46,8 +39,7 @@ class Racer:
 		self.nextCheckPoint = 0 # which check point he's aiming for
 		self.currLap = 0 # which lap he's on
 		self.hasRotated = True # for rotation optimization
-		self.spray = None  # the water spray that shoots out behind the boat
-		# Initialize the particle system
+		# the water spray that shoots out behind the boat
 		self.spray = fx.ParticleSystem(200, 15, self.ri.position, Vector3(0.0, 1.0, 0.0))
 
 
@@ -135,10 +127,10 @@ class Racer:
 			self.desiredDir.z *= n
 			# make the boat rotate the same as the player
 			playerRot = player.ri.rotation.copy()
-			playerRot.y + 5.0 + random.uniform(0.0, 20.0)
+			playerRot.y + 5.0 + random.uniform(0.0, 0.5)
 			self.ri.rotation[:] = playerRot
 			# slow the AI down a little
-			randFac = (8.0 + random.uniform(0.0, 4.0)) / 10.0
+			randFac = (8.0 + random.uniform(0.0, 0.00005)) / 10.0
 			finalX = -self.desiredDir.x * self.speed
 			finalX *= randFac
 			finalZ = -self.desiredDir.z * self.speed
@@ -154,15 +146,11 @@ class Racer:
 		# keep it the spray trail right with the boat
 		self.spray.move(self.ri.position)
 		# also keep it spraying in the right direction
-		newDir = self.dir.copy() #COPY
+		newDir = self.dir.copy()
 		if self.speed > 0:
-			newDir.x = newDir.x
-			newDir.y = 0.1
-			newDir.z = -newDir.z
+			newDir[:] = newDir.x, 0.1, -newDir.z
 		else:
-			newDir.x = 0.0
-			newDir.y = 0.0
-			newDir.z = 0.0
+			newDir[:] = 0.0, 0.0, 0.0
 		self.spray.redirect(newDir)
 		self.spray.update()
 
@@ -181,25 +169,17 @@ class Racer:
 
 
 class RaceCourse:
-	# 1. Generates a random race course within the donut described by min and max radius
+	# 1. Generates a random race course within the donut described by min and
+	#    max radius
 	# 2. Adds racers to the race course and sets up the race course
 	def __init__(self, center, minRadius, maxRadius, racers, model_manager):
 		self.checkPoints = [renderer.RenderInstance(model_manager.getCheckPoint()) for i in xrange(MAX_CHECKPOINTS)]
 		# calculate the angle apart each checkpoint has to be
-		interval = math.pi*2.0 / MAX_CHECKPOINTS
+		interval = math.pi * 2.0 / MAX_CHECKPOINTS
 		angle = 0.0
 		for cp in self.checkPoints:
-			# generate the x component
-			x = math.cos(angle)
-			# translate it by a bit
-			randX = random.uniform(minRadius, maxRadius)
-			x = x * randX + center.x
-			# generate the z component
-			z = math.sin(angle)
-			# translate it
-			randZ = random.uniform(minRadius, maxRadius)
-			z = z * randZ + center.z
-			# assign them in
+			x = math.cos(angle) * random.uniform(minRadius, maxRadius) + center.x
+			z = math.sin(angle) * random.uniform(minRadius, maxRadius) + center.z
 			cp.position[:] = x, 1.0, z
 			cp.scale[:] = 1.0, 1.0, 1.0
 			cp.rotation[:] = -90.0, 0.0, 0.0
@@ -208,8 +188,8 @@ class RaceCourse:
 		#------------------------
 		# set the racers and the amount of them
 		self.racers = racers
-		# place all the racers at the first checkpoint, each
-		# racer a bit behind the one before him
+		# place all the racers at the first checkpoint, each racer a bit behind
+		# the one before him
 		for racer in self.racers:
 			# set everyone at the starting checkpoint
 			racer.nextCheckPoint = 0

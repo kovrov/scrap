@@ -2,13 +2,6 @@ import random
 
 import renderer
 import data
-#include "island1.h"
-#include "island2.h"
-#include "ModelManager.h"
-#include "Texture.h"
-#include "boat2.h"
-#include "boat1.h"
-#include "checkpoint.h"
 
 
 BOAT1, BOAT2 = xrange(2)
