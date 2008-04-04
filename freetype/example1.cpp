@@ -95,8 +95,8 @@ int OnCreate(HWND hWnd)
 	if (error) return -1;
 
 	g_memdc = ::CreateCompatibleDC(GetDC(hWnd));
-	g_bitmap.height = g_font_face->size->metrics.height / 64;
-	g_bitmap.width = g_font_face->size->metrics.max_advance / 64;
+	g_bitmap.height = g_font_face->max_advance_height;
+	g_bitmap.width = g_font_face->max_advance_width;
 	g_hbitmap = CreateGrayscaleDIB(&g_bitmap);
 	g_prevobj = ::SelectObject(g_memdc, g_hbitmap);
 	assert (g_prevobj && HGDI_ERROR != g_prevobj);
@@ -117,7 +117,6 @@ void OnDrawWindow(HDC hdc)
 	FT_Error error;
 	int pen_x = 0;
 	for (unsigned int i = 0; i < g_text.len; i++)
-	//int i = 0;
 	{
 		FT_UInt glyph_index = FT_Get_Char_Index(g_font_face, g_text.ptr[i]); 
 		assert (glyph_index);
@@ -141,7 +140,7 @@ void OnDrawWindow(HDC hdc)
 		int face_descender = g_font_face->descender / 64;
 		int face_height    = g_font_face->height    / 64;
 
-		memset(g_bitmap.ptr, 0, g_bitmap.len);
+		memset(g_bitmap.ptr, 160, g_bitmap.len);
 		for (int y = 0; y < glyph_height; y++)
 		{
 			int src_row_start = y * glyph_pitch;
