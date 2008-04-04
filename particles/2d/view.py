@@ -63,3 +63,7 @@ def pan_task(vect):
 		real_y = y * speed * time
 		origin = (origin[0] + real_x, origin[1] + real_y)
 		update_projection()
+
+def draw():
+	glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()

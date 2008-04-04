@@ -7,7 +7,7 @@ import ui
 import controller as ctl
 
 
-win = pyglet.window.Window(resizable=True, vsync=False)
+win = pyglet.window.Window(resizable=True, vsync=True)
 
 @win.event
 def on_resize(width, height):
