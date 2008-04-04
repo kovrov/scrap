@@ -21,7 +21,7 @@ def draw_task(texture_id, size, pos):
 
 	while True:
 		view_yaw, view_pitch = yield
-		#glEnable(GL_TEXTURE_2D)
+		glEnable(GL_TEXTURE_2D)
 		glBindTexture(GL_TEXTURE_2D, texture_id)
 		glPushMatrix()
 		glTranslatef(*pos)

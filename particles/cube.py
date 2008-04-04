@@ -4,6 +4,7 @@ def draw_task(size, pos):
 	size /= 2.0
 	while True:
 		yield
+		glDisable(GL_TEXTURE_2D)
 		glPushMatrix()
 		glTranslatef(*pos)
 		glColor3f(1.0, 1.0, 1.0)

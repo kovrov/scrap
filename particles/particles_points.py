@@ -27,15 +27,16 @@ def draw_task(texture_id, size, pos):
 			'zi': float(random.randint(-250, 250)),
 			'xg': 0.0, 'yg': -0.8, 'zg': 0.0,
 					} for i in xrange(50)]
-	glDisable(GL_DEPTH_TEST)  # TODO: see if this integrates well with rest of render...
-	glDisable(GL_TEXTURE_2D)
-	glEnable(GL_BLEND)
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
 	mat = (GLfloat*16)()
 	viewport = (GLint*4)()
 
 	while True:
 		yield
+		glDisable(GL_DEPTH_TEST)  # TODO: see if this integrates well with rest of render...
+		glDisable(GL_TEXTURE_2D)
+		glEnable(GL_BLEND)
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+
 		glGetIntegerv (GL_VIEWPORT, viewport)
 		attenuation = (GLfloat*3)(0.0,  0.0, 2.0/(viewport[3]**2))
 
@@ -78,4 +79,3 @@ def draw_task(texture_id, size, pos):
 		#if not alive:
 		glEnd()
 		glPopMatrix()
-	glEnable(GL_BLEND)

@@ -11,6 +11,7 @@ import render_context
 
 from particles_points import draw_task as draw_particles_points
 from particles_quads import draw_task as draw_particles_quads
+from sparks import draw_task as draw_sparks
 from cube import draw_task as draw_cube
 import camera
 
@@ -76,6 +77,7 @@ def main():
 	right_cube = draw_cube(5.0, ( 5.0, 0.0, 0.0))
 	left_quads = draw_particles_quads(texture.id, 1.0, (-5.0, 0.0, 0.0)); left_quads.next()
 	right_points = draw_particles_points(texture.id, 1.0, (5.0, 0.0, 0.0)) # right
+	right_sparks = draw_sparks(texture.id, 1.0, (5.0, 0.0, 0.0))
 
 	keys = key.KeyStateHandler()
 	win.push_handlers(keys)
@@ -97,8 +99,9 @@ def main():
 			cam.next()
 			right_cube.next()
 			left_cube.next()
-			right_points.next()
+			#right_points.next()
 			left_quads.send((camera.yaw, camera.pitch))
+			right_sparks.next()
 			win.flip()
 	print "fps:  %d" % clock.get_fps()
 
