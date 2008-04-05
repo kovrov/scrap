@@ -8,7 +8,7 @@ menu = Menu()
 game = Game()
 fps_display = pyglet.clock.ClockDisplay()
 
-window = pyglet.window.Window(vsync=False)
+window = pyglet.window.Window(vsync=False, resizable=True)
 
 ortho_matrix = persp_matrix = None
 

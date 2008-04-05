@@ -14,22 +14,15 @@ def get_persp_matrix(fov, aspect, near, far):
 
 def get_ortho_matrix(left, right, bottom, top, near, far):
 	"""
-	glMatrixMode(GL_PROJECTION)
-	glLoadIdentity()
-	glOrtho(left, right, bottom, top, near, far)
-	glMatrixMode(GL_MODELVIEW)
-	m = MATRIX4F()
-	glGetFloatv(GL_PROJECTION_MATRIX, m)
-	print "glOrtho:"
-	print m[0:4]
-	print m[4:8]
-	print m[8:12]
-	print m[12:16]
+	Orthographic projection matrix.
 	"""
+	x = 2. / (right - left)
+	y = 2. / (top - bottom)
+	z = -2. / (far - near)
 	tx = -(right + left) / (right - left)
 	ty = -(top + bottom) / (top - bottom)
 	tz = -(far + near) / (far - near)
-	return MATRIX4F(2./(right-left), 0,               0,             0,#tx,
-	                0,               2./(top-bottom), 0,             0,#ty,
-	                0,               0,              -2./(far-near), 0,#tz,
-	               -1,              -1,               0,             1)
+	return MATRIX4F(x,  0,  0,  0,
+	                0,  y,  0,  0,
+	                0,  0,  z,  0,
+	                tx, ty, tz, 1)
