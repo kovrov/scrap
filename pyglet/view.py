@@ -1,3 +1,6 @@
+
+fov = 60.0
+
 import math
 from pyglet.gl import *
 

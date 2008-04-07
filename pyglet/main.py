@@ -8,7 +8,7 @@ menu = Menu()
 game = Game()
 fps_display = pyglet.clock.ClockDisplay()
 
-window = pyglet.window.Window(vsync=False, resizable=True)
+window = pyglet.window.Window(resizable=True, vsync=False)
 
 ortho_matrix = persp_matrix = None
 
@@ -16,7 +16,7 @@ ortho_matrix = persp_matrix = None
 def on_resize(width, height):
 	global ortho_matrix, persp_matrix
 	glViewport(0, 0, width, height)
-	persp_matrix = view.get_persp_matrix(60, width / float(height), 1, 256)
+	persp_matrix = view.get_persp_matrix(view.fov, width / float(height), 1, 256)
 	ortho_matrix = view.get_ortho_matrix(0, width, 0, height, -1, 1)
 	return pyglet.event.EVENT_HANDLED
 
@@ -32,6 +32,7 @@ def on_draw():
 	glLoadMatrixf(ortho_matrix)
 	glMatrixMode(GL_MODELVIEW)
 	glLoadIdentity()
+	#ui.draw()
 	fps_display.draw()
 
 def set_menu_state():

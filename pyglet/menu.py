@@ -1,4 +1,5 @@
 import pyglet
 
 class Menu:
-	pass
+	def update(td):
+		pass
