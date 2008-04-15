@@ -73,10 +73,15 @@ class BigFile
 
 // tests
 import std.stdio;
+import win32.windows;
 
 void main()
 {
-	auto scope bf = new BigFile("c:/temp/homeworld/update.big");
+	char[1024] buffer;
+	size_t read = GetEnvironmentVariable("HW_Data", buffer.ptr, buffer.length);
+	string path = (read > 0 ? buffer[0 .. read] : ".") ~ "/update.big";
+
+	auto scope bf = new BigFile(path);
 	/*
 	auto file = bf.open("AiPlayer.script");
 	scope (exit) file.close();
