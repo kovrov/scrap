@@ -135,11 +135,11 @@ int decodeLZSS(std.stream.Stream input, std.stream.Stream output)
 	 * increased chance of matching to the earlier strings.
 	 */
 	ubyte[] uncodedLookahead;
-	ubyte[1 << OFFSET_BITS] slidingWindow = 1; // memset // FIXME: 1?
+	ubyte[1 << OFFSET_BITS] slidingWindow = ' '; // memset // FIXME: 1?
 	uint nextChar = 0;
 	while (true)
 	{
-		int c = bit_file.getBit();
+		int c = bit_file.getBit();  // determine what to do 
 		if (c == EOF)
 			break;
 
