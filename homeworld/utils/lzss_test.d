@@ -1,4 +1,4 @@
-import std.stdio;
+﻿import std.stdio;
 import std.stream;
 import win32.windows;
 
@@ -6,7 +6,7 @@ import win32.windows;
 struct BitFile
 {
     Stream _file;
-    ubyte _mask;
+    ubyte _mask = 0b10000000;
     ubyte _rack;
 
 	bool bitioFileInputBit()
@@ -14,11 +14,13 @@ struct BitFile
 		if (_mask == 0b10000000)
 			_file.read(_rack);  // throws at EOF
 
+		bool res = _rack & _mask ? true: false;  // wtf?
+
 		_mask >>= 1;
 		if (_mask == 0)
 			_mask = 0b10000000;
 
-		return _rack & _mask ? true : false;
+		return res;
 	}
 
 	ubyte bitioFileInputBits(int bit_count) // 3|7|11
@@ -63,9 +65,9 @@ void expandLZSS(ref BitFile input, Stream output)
         if (input.bitioFileInputBit())
 		{
             c = input.bitioFileInputBits(8);
-            output.write(c);
+            writef("%s", cast(char)c);//output.write(c);
             window[window_pos] = c;
-            window_pos = (window_pos + 1) & (window.length - 1);  // smart way to wrap index?
+            window_pos = (window_pos + 1) % window.length;
         }
 		else
 		{
@@ -74,10 +76,10 @@ void expandLZSS(ref BitFile input, Stream output)
             match_length += BREAK_EVEN;
             for (int i = 0 ; i <= match_length ; i++)
 			{
-                c = window[(match_position + i) & (window.length - 1)];  // smart way to wrap index?
-                output.write(c);
+                c = window[(match_position + i) % window.length];
+                writef("%s", cast(char)c);//output.write(c);
                 window[window_pos] = c;
-                window_pos = (window_pos + 1) & (window.length - 1);  // smart way to wrap index?
+                window_pos = (window_pos + 1) % window.length;
             }
         }
     }
@@ -86,12 +88,7 @@ void expandLZSS(ref BitFile input, Stream output)
 
 void main()
 {
-	int i = ' ';
-	ubyte b = ' ';
-	//writefln("%b:%b", 0b00000000000000000000000000000001 << (8 - 1),  cast(ubyte)(0b00000000000000000000000000000001 << (8 - 1)));
-	//writefln("%b:%b", 0b00000001 << (8 - 1),  cast(ubyte)(0b00000001 << (8 - 1)));
-	writefln("%b:%b", 0b00000000000000000000000000000001 << (12 - 1), cast(ubyte)(0b00000000000000000000000000000001 << (12 - 1)));
-	writefln("%b:%b", 0b00000001 << (12 - 1), cast(ubyte)(0b00000001 << (12 - 1)));
-	//writefln("%b:%b", 0b00000000000000000000000000000001 << (4 - 1),  cast(ubyte)(0b00000000000000000000000000000001 << (4 - 1)));
-	//writefln("%b:%b", 0b00000001 << (4 - 1),  cast(ubyte)(0b00000001 << (4 - 1)));
+	BitFile bitfile;
+	bitfile._file = new File("data.lzss");
+	expandLZSS(bitfile, null);
 }

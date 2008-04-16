@@ -403,3 +403,10 @@ int DecodeLZSSByFile(FILE *fpIn, FILE *fpOut)
 
     return (EXIT_SUCCESS);
 }
+
+
+int main(int argc, char *argv[])
+{
+	printf("Hello, world\n");
+	return 0;
+}
