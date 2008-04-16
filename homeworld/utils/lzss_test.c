@@ -23,7 +23,7 @@ int bitIOFileInputBit(BitFile *bit_file)
 {
 	int value;
 
-	if (bit_file->mask == 0x80)
+	if (bit_file->mask == 0x80)  // 10000000
 	{
 		bit_file->rack = getc(bit_file->file);
 		//++bit_file->index;
@@ -32,21 +32,21 @@ int bitIOFileInputBit(BitFile *bit_file)
 	value = bit_file->rack & bit_file->mask;
 	bit_file->mask >>= 1;
 	if (bit_file->mask == 0)
-		bit_file->mask = 0x80;
+		bit_file->mask = 0x80;  // 10000000
 	return value ? 1 : 0;
 }
 
 
-unsigned long bitIOFileInputBits(BitFile *bit_file, int bit_count)
+int bitIOFileInputBits(BitFile *bit_file, int bit_count)
 {
-	unsigned long mask;
-	unsigned long return_value;
+	int mask;
+	int return_value;
 
-	mask = 1L << (bit_count - 1);
+	mask = 1 << (bit_count - 1);
 	return_value = 0;
 	while (mask != 0)
 	{
-		if (bit_file->mask == 0x80)
+		if (bit_file->mask == 0x80)  // 10000000
 		{
 			bit_file->rack = getc(bit_file->file);
 			//++bit_file->index;
@@ -57,9 +57,9 @@ unsigned long bitIOFileInputBits(BitFile *bit_file, int bit_count)
 		mask >>= 1;
 		bit_file->mask >>= 1;
 		if (bit_file->mask == 0)
-			bit_file->mask = 0x80;
+			bit_file->mask = 0x80;  // 10000000
 	}
-	return(return_value);
+	return return_value;
 }
 
 
@@ -71,36 +71,37 @@ int lzssExpandFileToBuffer(BitFile *input, char *output, int outputSize)
 	int match_length;
 	int match_position;
 	char *outBuffer = output;
-	unsigned char window[WINDOW_SIZE];
+	char window[WINDOW_SIZE];
  
 	current_position = 1;
 	while (1)
 	{
 		if (bitIOFileInputBit(input))
 		{
-			c = (int)bitIOFileInputBits(input, 8);
+			c = bitIOFileInputBits(input, 8);
 			*(outBuffer++) = c;
-			window[current_position] = (unsigned char)c;
+			window[current_position] = (char)c;
 			current_position = MOD_WINDOW(current_position + 1);
 		}
 		else
 		{
-			match_position = (int)bitIOFileInputBits(input, INDEX_BIT_COUNT);
+			match_position = bitIOFileInputBits(input, INDEX_BIT_COUNT);
 			if (match_position == END_OF_STREAM)
 				break;
-			match_length = (int)bitIOFileInputBits(input, LENGTH_BIT_COUNT);
-			match_length += BREAK_EVEN;
+
+			match_length = bitIOFileInputBits(input, LENGTH_BIT_COUNT) + BREAK_EVEN;
+
 			for (i = 0 ; i <= match_length ; i++)
 			{
 				c = window[MOD_WINDOW(match_position + i)];
 				*(outBuffer++) = c;
-				window[current_position] = (unsigned char)c;
+				window[current_position] = (char)c;
 				current_position = MOD_WINDOW(current_position + 1);
 			}
 		}
 	}
 
-	return (outBuffer - output);
+	return outBuffer - output;
 }
 
 int main(int argc, char *argv[])
@@ -108,10 +109,10 @@ int main(int argc, char *argv[])
 	BitFile bit_file;
 	bit_file.file = fopen("data.lzss", "rb");
 	bit_file.rack = 0;
-	bit_file.mask = 0x80;
+	bit_file.mask = 0x80;  // 10000000
 
-	char output[1024 * 10];
-	int outputSize = 1024 * 10;
+	char output[10 * 1024];
+	int outputSize = 10 * 1024;
 	int len = lzssExpandFileToBuffer(&bit_file, output, outputSize);
 	output[len] = 0;
 	printf("%s\n", output);
