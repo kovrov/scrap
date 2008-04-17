@@ -1,195 +1,86 @@
-/*	Ripped from LZSS implementation by Michael Dipperstein
- *	http://michael.dipperstein.com/lzss/
- */
-
-static import std.stream;  // memset
-
-
-enum BF	{
-		READ = 0,
-		WRITE = 1,
-		APPEND = 2,
-		NO_MODE }
-
-enum ENDIAN {
-		UNKNOWN,
-		LITTLE,
-		BIG}
-
-
-struct EncodedString
-{
-	uint offset;    /* offset to start of longest match */
-	uint length;    /* length of longest match */
-}
+static import std.stream;
 
 
 struct BitFile
 {
-    std.stream.Stream _stream;   /* file pointer used by stdio functions */
-    ENDIAN _endian;              /* endianess of architecture */
-    ubyte _bitBuffer;            /* bits waiting to be read/written */
-    ubyte _bitCount;             /* number of bits in bitBuffer */
-    BF _mode;                    /* open for read, write, or append */
+	std.stream.InputStream _stream;
+	ubyte _mask = 0b10000000;
+	ubyte _rack;
 
-	/*   This function returns the next byte from the file passed as a parameter.
-	 *   Reads next byte from file and updates buffer accordingly.
-	 *   Returns EOF if a whole byte cannot be obtained.  Otherwise, the character read.
-	 */
-	ubyte readByte() // BitFileGetChar
+	bool bitioFileInputBit()
 	{
-		ubyte buff; // 4 bytes!!
-		_stream.read(buff); // throw if at EOF
+		if (_mask == 0b10000000)
+			_stream.read(_rack);  // throws at EOF
 
-		if (_bitCount == 0)  // we can just get byte from file
-			return buff;
+		bool res = _rack & _mask ? true: false;  // wtf?
 
-		/* we have some buffered bits to return too */
-		/* figure out what to return */
-		ubyte tmp = (cast(ubyte)returnValue) >> _bitCount;
-		tmp |= (_bitBuffer << (8 - _bitCount));
+		_mask >>= 1;
+		if (_mask == 0)
+			_mask = 0b10000000;
 
-		/* put remaining in buffer. count shouldn't change. */
-		_bitBuffer = returnValue;
-
-		return tmp;
+		return res;
 	}
 
-	/*	This function returns the next bit from the file passed as a parameter.
-	 *	The bit value returned is the msb in the bit buffer.
-	 *	Reads next bit from bit buffer.  If the buffer is empty, a new byte will be
-	 *	read from the file.
-	 *	Returns 0 if bit == 0, 1 if bit == 1, and EOF if operation fails.
-	 */
-	int getBit()
+	uint bitioFileInputBits(int bit_count)
 	{
-		int returnValue;
-
-		if (_bitCount == 0)  // buffer is empty, read another character
+		uint return_value = 0;
+		uint mask = 0b00000000000000000000000000000001 << (bit_count - 1);
+		while (mask != 0)
 		{
-			returnValue = _stream.getc();
-			if (returnValue == EOF)
-				return EOF;
-			_bitCount = 8;
-			_bitBuffer = returnValue;
+			if (_mask == 0b10000000)
+				_stream.read(_rack);  // throws at EOF
+
+			if (_rack & _mask)
+				return_value |= mask;
+
+			_mask >>= 1;
+			if (_mask == 0)
+				_mask = 0b10000000;
+			mask >>= 1;
 		}
-
-		// bit to return is msb in buffer
-		_bitCount--;
-		returnValue = _bitBuffer >> _bitCount;
-
-		return (returnValue & 0x01);
+		return return_value;
 	}
 }
 
 
-enum {	ENCODED = 0,     // encoded string
-		UNCODED = 1,     // unencoded character
-		MAX_UNCODED = 2} // maximum match length not encoded and maximum length encoded (4 bits)
-
-const OFFSET_BITS = 12;
-const LENGTH_BITS = 4;
+const INDEX_BIT_COUNT = 12;
+const LENGTH_BIT_COUNT = 4;
+const BREAK_EVEN = (1 + INDEX_BIT_COUNT + LENGTH_BIT_COUNT) / 9;
+const END_OF_STREAM = 0;
 
 
-/* wraps array index within array bounds (assumes value < 2 * limit) */
-template wrap(T)
+void expandLZSS(std.stream.InputStream input, std.stream.OutputStream output)
 {
-	T wrap(T value, T limit) { return value < limit ? value : value - limit;}
-}
-
-
-/*	This function provides a machine independent layer that allows a single
- *	function call to stuff an arbitrary number of bits into an integer type
- *	variable.
- *	Calls a function that reads bits from the bit buffer and file stream.  The
- *	bit buffer will be modified as necessary. the bits will be written to "bits"
- *	from least significant byte to most significant byte.
- *	Returns EOF for failure, otherwise the number of bits read by the called
- *	function.
- */
-int BitFileGetBitsInt(ref BitFile stream, void* bits, uint count, size_t size)
-{
-	switch (stream._endian)
-	{
-//	case ENDIAN.LITTLE: return BitFileGetBitsLE(stream, bits, count);
-//	case ENDIAN.BIG:    return BitFileGetBitsBE(stream, bits, count, size);
-	default:            return EOF;
-	}
-}
-
-
-/*	Reads an LZSS encoded input and write decoded data to output buffer.
- *	This algorithm encodes strings as 16 bits (a 12 bit offset + a 4 bit length).
- */
-int decodeLZSS(std.stream.Stream input, std.stream.Stream output)
-{
-	// convert output file to bitfile
 	BitFile bit_file;
 	bit_file._stream = input;
-	bit_file._mode = BF.READ;
-    //bit_file.endian = DetermineEndianess();
-	// offset/length code for string
-	EncodedString code;  
-	/* Fill the sliding window buffer with some known vales.  Encoder must
-	 * use the same values.  If common characters are used, there's an
-	 * increased chance of matching to the earlier strings.
-	 */
-	ubyte[] uncodedLookahead;
-	ubyte[1 << OFFSET_BITS] slidingWindow = ' '; // memset // FIXME: 1?
-	uint nextChar = 0;
+
+	ubyte c;
+	uint match_length;
+	uint match_position;
+	ubyte[1 << INDEX_BIT_COUNT] window;
+	int window_pos = 1;
 	while (true)
 	{
-		int c = bit_file.getBit();  // determine what to do 
-		if (c == EOF)
-			break;
-
-		if (c == UNCODED)  // unencoded character
+		if (bit_file.bitioFileInputBit())
 		{
-			c = bit_file.readByte();
-			if (c == EOF)
-				break;
-
-			// write out byte and put it in sliding window
+			c = bit_file.bitioFileInputBits(8);
 			output.write(c);
-			slidingWindow[nextChar] = c;
-			nextChar = wrap(nextChar + 1, slidingWindow.length);
+			window[window_pos] = c;
+			window_pos = (window_pos + 1) % window.length;
 		}
-		else  // c is encoded string
+		else
 		{
-			code.offset = 0;
-			code.length = 0;
-
-			if (BitFileGetBitsInt(bit_file, &code.offset, OFFSET_BITS, uint.sizeof) == EOF)
+			match_position = bit_file.bitioFileInputBits(INDEX_BIT_COUNT);
+			if (match_position == END_OF_STREAM)
 				break;
-
-			if (BitFileGetBitsInt(bit_file, &code.length, LENGTH_BITS, uint.sizeof) == EOF)
-				break;
-
-			code.length += MAX_UNCODED + 1;
-
-			/****************************************************************
-			* Write out decoded string to file and lookahead.  It would be
-			* nice to write to the sliding window instead of the lookahead,
-			* but we could end up overwriting the matching string with the
-			* new string if abs(offset - next char) < match length.
-			****************************************************************/
-			for (ubyte i = 0; i < code.length; i++)
+			match_length = bit_file.bitioFileInputBits(LENGTH_BIT_COUNT) + BREAK_EVEN;
+			for (uint i = 0; i <= match_length; i++)
 			{
-				c = slidingWindow[wrap(code.offset + i, slidingWindow.length)];
+				c = window[(match_position + i) % window.length];
 				output.write(c);
-				uncodedLookahead[i] = c;
+				window[window_pos] = c;
+				window_pos = (window_pos + 1) % window.length;
 			}
-
-			/* write out decoded string to sliding window */
-			for (uint i = 0; i < code.length; i++)
-				slidingWindow[(nextChar + i) % slidingWindow.length] = uncodedLookahead[i];
-
-			nextChar = wrap(nextChar + code.length, slidingWindow.length);
 		}
 	}
-
-	/* we've decoded everything, free bitfile structure */
-//	BitFileToFILE(bit_file);
-
-	return true;
 }
