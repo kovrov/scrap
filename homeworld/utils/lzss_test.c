@@ -6,6 +6,8 @@
 #define INDEX_BIT_COUNT      12
 #define LENGTH_BIT_COUNT     4
 #define WINDOW_SIZE          ( 1 << INDEX_BIT_COUNT )
+/* any matching phrase that is one character or fewer will be encoded as
+   single characters instead of as a phrase. */
 #define BREAK_EVEN           ( ( 1 + INDEX_BIT_COUNT + LENGTH_BIT_COUNT ) / 9 )
 #define END_OF_STREAM        0
 
@@ -14,7 +16,6 @@ typedef struct BitFile
 	FILE *file;
 	unsigned char mask; // WTF?
 	int rack; // WTF?
-	int pacifier_counter;  // WTF???
 } BitFile;
 
 int bitIOFileInputBit(BitFile *bit_file)
@@ -24,9 +25,9 @@ int bitIOFileInputBit(BitFile *bit_file)
 	if (bit_file->mask == 0x80)  // 10000000
 	{
 		bit_file->rack = getc(bit_file->file);
-		assert (bit_file->rack != EOF);  // fatal_error("Fatal error in InputBit!\n");
+		assert (bit_file->rack != EOF);
 	}
-	value = bit_file->rack & bit_file->mask;
+	value = bit_file->rack & bit_file->mask;  // wtf?
 	bit_file->mask >>= 1;
 	if (bit_file->mask == 0)
 		bit_file->mask = 0x80;  // 10000000
@@ -45,9 +46,9 @@ int bitIOFileInputBits(BitFile *bit_file, int bit_count)
 		if (bit_file->mask == 0x80)  // 10000000
 		{
 			bit_file->rack = getc(bit_file->file);
-			assert (bit_file->rack != EOF);  //fatal_error("Fatal error in InputBit!\n");
+			assert (bit_file->rack != EOF);
 		}
-		if (bit_file->rack & bit_file->mask)
+		if (bit_file->rack & bit_file->mask)  // wtf?
 			return_value |= mask;
 		mask >>= 1;
 		bit_file->mask >>= 1;
@@ -60,14 +61,13 @@ int bitIOFileInputBits(BitFile *bit_file, int bit_count)
 int lzssExpandFileToBuffer(BitFile *input, unsigned char *output, int outputSize)
 {
 	int i;
-	int current_position;
 	unsigned char c;
-	int match_length;
-	int match_position;
 	unsigned char *outBuffer = output;
 	unsigned char window[WINDOW_SIZE];
- 
-	current_position = 1;
+	int match_length;
+	int match_position;
+	int current_position = 1;
+
 	while (1)
 	{
 		if (bitIOFileInputBit(input))
@@ -100,14 +100,16 @@ int lzssExpandFileToBuffer(BitFile *input, unsigned char *output, int outputSize
 
 int main(int argc, char *argv[])
 {
+	unsigned char output[10 * 1024];
+	int outputSize = 10 * 1024;
+	int len = 0;
 	BitFile bit_file;
+
 	bit_file.file = fopen("data.lzss", "rb");
 	bit_file.rack = 0;
 	bit_file.mask = 0x80;  // 10000000
 
-	unsigned char output[10 * 1024];
-	int outputSize = 10 * 1024;
-	int len = lzssExpandFileToBuffer(&bit_file, output, outputSize);
+	len = lzssExpandFileToBuffer(&bit_file, output, outputSize);
 	output[len] = 0;
 	printf("%s\n", output);
 

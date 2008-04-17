@@ -5,9 +5,9 @@ import win32.windows;
 
 struct BitFile
 {
-    Stream _file;
-    ubyte _mask = 0b10000000;
-    ubyte _rack;
+	Stream _file;
+	ubyte _mask = 0b10000000;
+	ubyte _rack;
 
 	bool bitioFileInputBit()
 	{
@@ -23,7 +23,7 @@ struct BitFile
 		return res;
 	}
 
-	ubyte bitioFileInputBits(int bit_count) // 3|7|11
+	uint bitioFileInputBits(int bit_count) // 3|7|11
 	{
 		uint return_value = 0;
 		uint mask = 0b00000000000000000000000000000001 << (bit_count - 1);
@@ -35,10 +35,10 @@ struct BitFile
 			if (_rack & _mask)
 				return_value |= mask;
 
-			mask >>= 1;
 			_mask >>= 1;
 			if (_mask == 0)
 				_mask = 0b10000000;
+			mask >>= 1;
 		}
 		return return_value;
 	}
@@ -53,36 +53,33 @@ const END_OF_STREAM = 0;
 
 void expandLZSS(ref BitFile input, Stream output)
 {
-    int window_pos;
-    ubyte c;
-    int match_length;
-    ubyte match_position;
+	ubyte c;
+	uint match_length;
+	uint match_position;
 	ubyte[1 << INDEX_BIT_COUNT] window;
-
-    window_pos = 1;
-    while (true)
+	int window_pos = 1;
+	while (true)
 	{
-        if (input.bitioFileInputBit())
+		if (input.bitioFileInputBit())
 		{
-            c = input.bitioFileInputBits(8);
-            writef("%s", cast(char)c);//output.write(c);
-            window[window_pos] = c;
-            window_pos = (window_pos + 1) % window.length;
-        }
+			c = input.bitioFileInputBits(8);
+			writef("%s", cast(char)c);//output.write(c);
+			window[window_pos] = c;
+			window_pos = (window_pos + 1) % window.length;
+		}
 		else
 		{
-            match_position = input.bitioFileInputBits(INDEX_BIT_COUNT); // throws at EOF
-            match_length = input.bitioFileInputBits(LENGTH_BIT_COUNT);
-            match_length += BREAK_EVEN;
-            for (int i = 0 ; i <= match_length ; i++)
+			match_position = input.bitioFileInputBits(INDEX_BIT_COUNT); // throws at EOF
+			match_length = input.bitioFileInputBits(LENGTH_BIT_COUNT) + BREAK_EVEN;
+			for (uint i = 0; i <= match_length; i++)
 			{
-                c = window[(match_position + i) % window.length];
-                writef("%s", cast(char)c);//output.write(c);
-                window[window_pos] = c;
-                window_pos = (window_pos + 1) % window.length;
-            }
-        }
-    }
+				c = window[(match_position + i) % window.length];
+				writef("%s", cast(char)c);//output.write(c);
+				window[window_pos] = c;
+				window_pos = (window_pos + 1) % window.length;
+			}
+		}
+	}
 }
 
 

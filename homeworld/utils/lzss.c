@@ -210,11 +210,6 @@ int BitFileGetBit(bit_file_t *stream)
 {
     int returnValue;
 
-    if (stream == NULL)
-    {
-        return(EOF);
-    }
-
     if (stream->bitCount == 0)
     {
         /* buffer is empty, read another character */
@@ -254,32 +249,21 @@ int BitFileGetBit(bit_file_t *stream)
 ***************************************************************************/
 bit_file_t *MakeBitFile(FILE *stream, const BF_MODES mode)
 {
-    bit_file_t *bf;
+    bit_file_t *bf = (bit_file_t *)malloc(sizeof(bit_file_t));
 
-    if (stream == NULL)
-    {
-        /* can't wrapper empty steam */
-        errno = EBADF;
-        bf = NULL;
-    }
-    else
-    {
-        bf = (bit_file_t *)malloc(sizeof(bit_file_t));
-
-        if (bf == NULL)
-        {
-            /* malloc failed */
-            errno = ENOMEM;
-        }
-        else
-        {
-            /* set structure data */
-            bf->fp = stream;
-            bf->bitBuffer = 0;
-            bf->bitCount = 0;
-            bf->mode = mode;
-        }
-    }
+	if (bf == NULL)
+	{
+		/* malloc failed */
+		errno = ENOMEM;
+	}
+	else
+	{
+		/* set structure data */
+		bf->fp = stream;
+		bf->bitBuffer = 0;
+		bf->bitCount = 0;
+		bf->mode = mode;
+	}
 
     bf->endian = DetermineEndianess();
 
