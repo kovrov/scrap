@@ -84,3 +84,14 @@ void expandLZSS(std.stream.InputStream input, std.stream.OutputStream output)
 		}
 	}
 }
+
+//version (unittest) // D 2.0
+	static import std.stdio;
+
+unittest
+{
+	auto scope input = new std.stream.File("data.lzss");
+	auto scope output = new std.stream.MemoryStream();
+	expandLZSS(input, output);
+	std.stdio.writefln("%s", output.toString());
+}

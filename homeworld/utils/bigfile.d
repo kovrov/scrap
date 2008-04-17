@@ -1,7 +1,7 @@
 /* Utilities for manipulating .big files of Relic Entertainment's Homeworld */
 
 static import std.stream;
-import crc;  // relative import works?
+//import crc;  // relative import works?
 
 const FILE_HEADER = "RBF";
 const FILE_VERSION = "1.23";
@@ -18,6 +18,18 @@ struct TOCEntry
     int timeStamp;
     ubyte compressionType;  // bool?
 } ;
+
+/*	When decrypting filenames, don't touch the terminating null when decrypting.
+	Pass in name_size, not name_size + 1. */
+void decrypt_name(ubyte[] buffer) 
+{ 
+    ubyte last_byte = 0xD5;
+    foreach (ref i; buffer) 
+    { 
+        last_byte ^= i; 
+        i = last_byte; 
+    } 
+} 
 
 class BigFile
 {
@@ -56,12 +68,20 @@ class BigFile
 				throw new Exception("Reading TOC entries failed.");
 			// TODO: fix endianness
 		}
+
+		// test
+		auto pos = _stream.position();
 		foreach (TOCEntry entry; _toc)
 		{
-			writefln("entry {%s, %s, %s, %s, %s, %s, %s, %s}",
-					entry.nameCRC1, entry.nameCRC2, entry.nameLength, entry.storedLength,
-					entry.realLength, entry.offset, entry.timeStamp, entry.compressionType);
+			_stream.seekSet(entry.offset);
+			ubyte[] bbuffer;
+			bbuffer.length = entry.nameLength;
+			assert (_stream.read(bbuffer) == bbuffer.length);
+			decrypt_name(bbuffer);
+			writefln("entry: %s", cast(char[])bbuffer);
 		}
+		_stream.seekSet(pos);
+
 		//_stream.seek(, std.stream.SeekPos.Current); 
 	}
 	~this()
@@ -91,50 +111,5 @@ void main()
 	{
 		stdout.writefln("%s", line);
 	}
-	*/
-
-	/* update.big:
-	AiPlayer.script
-	English.script
-	Feman\Choose_Server.fib
-	Feman\Construction_Manager.fib
-	Feman\CSM-ALL.fib
-	Feman\Front_End.fib
-	Feman\Game_Chat.FIB
-	Feman\Horse_Race.fib
-	Feman\Hyperspace_Roll_Call.fib
-	Feman\In_game_esc_menu.FIB
-	Feman\Launch_Manager.FIB
-	Feman\Multiplayer_Game.fib
-	Feman\Multiplayer_LAN_Game.fib
-	Feman\Research_manager.fib
-	Feman\Sensors_manager.fib
-	Feman\single_player_objective.fib
-	Feman\TaskBar.fib
-	Feman\Trader_Interface.FIB
-	French.script
-	German.script
-	Italian.script
-	R1\AdvanceSupportFrigate.shp
-	R1\AttackBomber.shp
-	R1\Carrier.shp
-	R1\CloakedFighter.shp
-	R1\HeavyCorvette.shp
-	R1\HeavyDefender.shp
-	R1\MinelayerCorvette.shp
-	R1\Missile.shp
-	R1\MissileDestroyer.shp
-	R1\MultiGunCorvette.shp
-	R2\AdvanceSupportFrigate.shp
-	R2\AttackBomber.shp
-	R2\Carrier.shp
-	R2\HeavyCorvette.shp
-	R2\HeavyDefender.shp
-	R2\MinelayerCorvette.shp
-	R2\Missile.shp
-	R2\MissileDestroyer.shp
-	R2\MultiGunCorvette.shp
-	Spanish.script
-	tweak.script
 	*/
 }
