@@ -1,10 +1,18 @@
 /* Utilities for manipulating .big files of Relic Entertainment's Homeworld */
 
 static import std.stream;
-//import crc;  // relative import works?
+import crc;  // relative import works?
 
 const FILE_HEADER = "RBF";
 const FILE_VERSION = "1.23";
+
+const BF_FLAG_TOC_SORTED = 1;
+
+
+bool bigCRC64EQ(TOCEntry a, TOCEntry b){return (a.nameCRC1 == b.nameCRC1) && (a.nameCRC2 == b.nameCRC2);}
+bool bigCRC64GT(TOCEntry a, TOCEntry b){return (a.nameCRC1 > b.nameCRC1) || (a.nameCRC1 == b.nameCRC1 && a.nameCRC2 > b.nameCRC2);}
+bool bigCRC64LT(TOCEntry a, TOCEntry b){return (a.nameCRC1 < b.nameCRC1) || (a.nameCRC1 == b.nameCRC1 && a.nameCRC2 < b.nameCRC2);}
+
 
 /* TOC enties are serialized in .big file */
 struct TOCEntry
@@ -33,7 +41,7 @@ void decrypt_name(ubyte[] buffer)
 
 class BigFile
 {
-	std.stream.Stream _stream;
+	std.stream.Stream _stream;  // InputStream
 	uint _number_of_files;
 	uint _flags;
 	TOCEntry[] _toc;
@@ -51,26 +59,23 @@ class BigFile
 		// table of contents
 
 		static assert (_number_of_files.sizeof == 4);  // section is 4 bytes exactly
-		if (4 != _stream.readBlock(cast(void*)&_number_of_files, 4))
-			throw new Exception("Reading number of files failed.");
+		_stream.readExact(cast(void*)&_number_of_files, 4);
 		// TODO: fix endianness
 
 		static assert (_flags.sizeof == 4);  // section is 4 bytes exactly
-		if (4 != _stream.readBlock(cast(void*)&_flags, 4))
-			throw new Exception("Reading number of files failed.");
+		_stream.readExact(cast(void*)&_flags, 4);
 		// TODO: fix endianness
 
 		static assert (TOCEntry.sizeof == 32);  // each toc entry is 32 bytes exactly
 		_toc.length = _number_of_files;
 		foreach (ref entry; _toc)
 		{
-			if (32 != _stream.readBlock(cast(void*)&entry, 32))
-				throw new Exception("Reading TOC entries failed.");
+			_stream.readExact(cast(void*)&entry, 32);
 			// TODO: fix endianness
 		}
 
 		// test
-		auto pos = _stream.position();
+		//auto pos = _stream.position();
 		foreach (TOCEntry entry; _toc)
 		{
 			_stream.seekSet(entry.offset);
@@ -80,13 +85,66 @@ class BigFile
 			decrypt_name(bbuffer);
 			writefln("entry: %s", cast(char[])bbuffer);
 		}
-		_stream.seekSet(pos);
+		//_stream.seekSet(pos);
 
 		//_stream.seek(, std.stream.SeekPos.Current); 
 	}
+
 	~this()
 	{
 		_stream.close();
+	}
+
+	std.stream.InputStream open(string name)
+	{
+		TOCEntry target;
+		target.nameLength = name.length;
+		target.nameCRC1 = crc32(name[0 .. $/2]);
+		target.nameCRC2 = crc32(name[$/2 .. $/2*2]); //[$/2 .. $]
+
+		uint fileNum;
+		if (_flags & BF_FLAG_TOC_SORTED)  // binary search
+		{
+			int low = 0;
+			int high = _number_of_files - 1;
+			while (low <= high)
+			{
+				fileNum = (low + high) / 2;  // middle
+				if (bigCRC64EQ(target, _toc[fileNum]))
+				{
+					auto e = &_toc[fileNum];
+					return new std.stream.SliceStream(_stream, e.offset, e.offset + e.storedLength + e.nameLength);
+				}
+				else if (bigCRC64GT(target, _toc[fileNum]))
+					low = fileNum + 1;
+				else // if (b < a[fileNum])
+					high = fileNum -1;  }
+			throw new Exception("File not found");
+		}
+		else
+		{
+			static int FileNum = 0;
+			// unsorted toc -- linear search, but optimized to
+			// start searching from wherever we left off last time
+			// to potentially find sequentially ordered files faster
+			int startFileNum = FileNum;
+			do
+			{
+				if (_toc[FileNum].nameLength == target.nameLength &&
+					_toc[FileNum].nameCRC1 == target.nameCRC1 &&
+					_toc[FileNum].nameCRC2 == target.nameCRC2)
+				{
+					fileNum = FileNum;
+					auto e = &_toc[fileNum];
+					return new std.stream.SliceStream(_stream, e.offset, e.offset + e.storedLength + e.nameLength);
+				}
+				++FileNum;
+				if (FileNum >= _number_of_files)
+					FileNum = 0;
+			}
+			while (FileNum != startFileNum);
+		}
+		throw new Exception("File not found");
 	}
 }
 
@@ -94,6 +152,7 @@ class BigFile
 // tests
 import std.stdio;
 import win32.windows;
+//pragma (lib, "win32.lib");
 
 void main()
 {

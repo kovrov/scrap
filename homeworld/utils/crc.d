@@ -50,12 +50,13 @@ uint[256] crc32_table = [
 	0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
 	0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D];
 
-uint crc32(ubyte[] packet)
+uint crc32(T)(T[] packet)
 {
+	static assert (T.sizeof == 1);
 	//static uint[] crc32_table = calc_crc32_table();
 	uint crc = 0xFFFFFFFF;
 
-	foreach (element; packet)
+	foreach (ref element; packet)
 	{
 		crc = crc32_table[(crc ^ element) & 0xFF] ^ (crc >> 8);
 	}
@@ -67,7 +68,7 @@ uint crc32(ubyte[] packet)
 //version (unittest) // D 2.0
 	import std.stdio;
 
-unittest
+void main()//unittest
 {
 	struct TEST_DATA
 	{
@@ -115,11 +116,10 @@ unittest
 
 	foreach (data; test_data)
 	{
-		ubyte[] name = cast(ubyte[])data.name;
-		auto crc1 = crc32(name[0 .. $/2]);
-		auto crc2 = crc32(name[$/2 .. $/2*2]); //[$/2 .. $]
+		auto crc1 = crc32(data.name[0 .. $/2]);
+		auto crc2 = crc32(data.name[$/2 .. $/2*2]); //[$/2 .. $]
 		
-		assert (name.length == data.length);
+		assert (data.name.length == data.length);
 		assert (crc1 == data.crc1);
 		assert (crc2 == data.crc2);
 		writefln("%s - ok", data.name);
