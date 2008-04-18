@@ -106,20 +106,28 @@ class LZSSFilterStream : std.stream.Stream
 
 	override size_t readBlock(void* buffer, size_t size)
 	{
-		if (_eof)
+		if (_eof || size < 1)
 			return 0;
+
 		ubyte* outbuf = cast(ubyte*)buffer;
 		size_t read = 0;
 		if (_overflow_buffer.length)
 		{
-			read = _overflow_buffer.length;
-			outbuf[0 .. read] = _overflow_buffer;
-			_overflow_buffer.length = 0;
+			if (_overflow_buffer.length > size) // 30 > 1
+			{
+				outbuf[0 .. size] = _overflow_buffer[0 .. size];
+				_overflow_buffer = _overflow_buffer[size .. $];
+				read = size;
+			}
+			else
+			{
+				read = _overflow_buffer.length;
+				outbuf[0 .. read] = _overflow_buffer;
+				_overflow_buffer.length = 0;
+			}
 		}
 
 		ubyte c;
-		uint match_length;
-		uint match_position;
 		while (read < size)
 		{
 			if (_bit_file.bitioFileInputBit())
@@ -131,13 +139,13 @@ class LZSSFilterStream : std.stream.Stream
 			}
 			else
 			{
-				match_position = _bit_file.bitioFileInputBits(INDEX_BIT_COUNT);
+				uint match_position = _bit_file.bitioFileInputBits(INDEX_BIT_COUNT);
 				if (match_position == END_OF_STREAM)
 				{
 					_eof = true;
 					break;
 				}
-				match_length = _bit_file.bitioFileInputBits(LENGTH_BIT_COUNT) + BREAK_EVEN;
+				uint match_length = _bit_file.bitioFileInputBits(LENGTH_BIT_COUNT) + BREAK_EVEN;
 				for (uint i = 0; i <= match_length; i++)
 				{
 					c = _window[(match_position + i) % _window.length];
@@ -150,7 +158,6 @@ class LZSSFilterStream : std.stream.Stream
 				}
 			}
 		}
-//std.stdio.writefln("%s", (cast(char*)buffer)[0 .. read]);
 		return read;
 	}
 
@@ -174,7 +181,7 @@ class LZSSFilterStream : std.stream.Stream
 //version (unittest) // D 2.0
 	static import std.stdio;
 
-void main()//unittest
+unittest
 {
 	auto scope stream = new LZSSFilterStream(new std.stream.File("data.lzss"));
 	foreach (char[] line; stream)

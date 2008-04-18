@@ -3,6 +3,7 @@
 static import std.stream;
 static import std.string;
 import crc;  // relative import works?
+import lzss;  // relative import works?
 
 const FILE_HEADER = "RBF";
 const FILE_VERSION = "1.23";
@@ -150,8 +151,8 @@ class BigFile
 			throw new Exception("File not found");
 
 		auto s = new std.stream.SliceStream(_stream,
-		                                    e.offset,
-		                                    e.offset + e.storedLength + e.nameLength);
+		                                    e.offset + e.nameLength + 1,
+		                                    e.offset + e.nameLength + 1 + e.storedLength);
 		if (e.compressionType)
 			return new LZSSFilterStream(s);
 
@@ -173,8 +174,8 @@ void main()
 	auto scope bf = new BigFile(path);
 
 	auto file = bf.open("AiPlayer.script");
-	ubyte[] buffer10k;
-	buffer10k.length = 10*1024; // 10kb
-	size_t read10k = file.read(buffer10k);
-	writefln("read: %s", read10k);
+	foreach (char[] line; file)
+	{
+		std.stdio.writefln("%s", line);
+	}
 }
