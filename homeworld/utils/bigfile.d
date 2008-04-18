@@ -1,6 +1,7 @@
 /* Utilities for manipulating .big files of Relic Entertainment's Homeworld */
 
 static import std.stream;
+static import std.string;
 import crc;  // relative import works?
 
 const FILE_HEADER = "RBF";
@@ -76,14 +77,14 @@ class BigFile
 
 		// test
 		//auto pos = _stream.position();
-		foreach (TOCEntry entry; _toc)
+		foreach (ref entry; _toc)
 		{
 			_stream.seekSet(entry.offset);
 			ubyte[] bbuffer;
 			bbuffer.length = entry.nameLength;
 			assert (_stream.read(bbuffer) == bbuffer.length);
 			decrypt_name(bbuffer);
-			writefln("entry: %s", cast(char[])bbuffer);
+			writefln("entry: %s {%X:%X:%d}", cast(char[])bbuffer, entry.nameCRC1, entry.nameCRC2, entry.nameLength);
 		}
 		//_stream.seekSet(pos);
 
@@ -97,54 +98,64 @@ class BigFile
 
 	std.stream.InputStream open(string name)
 	{
+		string targetname = std.string.tolower(name);
 		TOCEntry target;
-		target.nameLength = name.length;
-		target.nameCRC1 = crc32(name[0 .. $/2]);
-		target.nameCRC2 = crc32(name[$/2 .. $/2*2]); //[$/2 .. $]
+		target.nameLength = targetname.length;
+		target.nameCRC1 = crc32(targetname[0 .. $/2]);
+		target.nameCRC2 = crc32(targetname[$/2 .. $/2*2]); //[$/2 .. $]
+		TOCEntry* e;
 
-		uint fileNum;
-		if (_flags & BF_FLAG_TOC_SORTED)  // binary search
+		if (0 && _flags & BF_FLAG_TOC_SORTED)  // binary search
 		{
 			int low = 0;
 			int high = _number_of_files - 1;
 			while (low <= high)
 			{
-				fileNum = (low + high) / 2;  // middle
+				uint fileNum = (low + high) / 2;  // middle
 				if (bigCRC64EQ(target, _toc[fileNum]))
 				{
-					auto e = &_toc[fileNum];
-					return new std.stream.SliceStream(_stream, e.offset, e.offset + e.storedLength + e.nameLength);
+					e = &_toc[fileNum];
+					break;
 				}
 				else if (bigCRC64GT(target, _toc[fileNum]))
 					low = fileNum + 1;
 				else // if (b < a[fileNum])
-					high = fileNum -1;  }
-			throw new Exception("File not found");
+					high = fileNum -1;
+			}
 		}
 		else
 		{
-			static int FileNum = 0;
 			// unsorted toc -- linear search, but optimized to
 			// start searching from wherever we left off last time
 			// to potentially find sequentially ordered files faster
-			int startFileNum = FileNum;
+			static int file_num = 0;
+			int startFileNum = file_num;
 			do
 			{
-				if (_toc[FileNum].nameLength == target.nameLength &&
-					_toc[FileNum].nameCRC1 == target.nameCRC1 &&
-					_toc[FileNum].nameCRC2 == target.nameCRC2)
+				if (_toc[file_num].nameLength == target.nameLength &&
+					_toc[file_num].nameCRC1 == target.nameCRC1 &&
+					_toc[file_num].nameCRC2 == target.nameCRC2)
 				{
-					fileNum = FileNum;
-					auto e = &_toc[fileNum];
-					return new std.stream.SliceStream(_stream, e.offset, e.offset + e.storedLength + e.nameLength);
+					e = &_toc[file_num];
+					break;
 				}
-				++FileNum;
-				if (FileNum >= _number_of_files)
-					FileNum = 0;
+				++file_num;
+				if (file_num >= _number_of_files)
+					file_num = 0;
 			}
-			while (FileNum != startFileNum);
+			while (file_num != startFileNum);
 		}
-		throw new Exception("File not found");
+
+		if (e is null)
+			throw new Exception("File not found");
+
+		auto s = new std.stream.SliceStream(_stream,
+		                                    e.offset,
+		                                    e.offset + e.storedLength + e.nameLength);
+		if (e.compressionType)
+			return new LZSSFilterStream(s);
+
+		return s;
 	}
 }
 
@@ -159,16 +170,11 @@ void main()
 	char[1024] buffer;
 	size_t read = GetEnvironmentVariable("HW_Data", buffer.ptr, buffer.length);
 	string path = (read > 0 ? buffer[0 .. read] : ".") ~ "/update.big";
-
 	auto scope bf = new BigFile(path);
-	/*
+
 	auto file = bf.open("AiPlayer.script");
-	scope (exit) file.close();
-	//interface InputStream
-	//file.readLine
-	foreach (line; file)
-	{
-		stdout.writefln("%s", line);
-	}
-	*/
+	ubyte[] buffer10k;
+	buffer10k.length = 10*1024; // 10kb
+	size_t read10k = file.read(buffer10k);
+	writefln("read: %s", read10k);
 }

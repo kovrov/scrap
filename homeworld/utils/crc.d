@@ -68,7 +68,7 @@ uint crc32(T)(T[] packet)
 //version (unittest) // D 2.0
 	import std.stdio;
 
-void main()//unittest
+unittest
 {
 	struct TEST_DATA
 	{

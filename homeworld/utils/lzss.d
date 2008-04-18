@@ -85,13 +85,100 @@ void expandLZSS(std.stream.InputStream input, std.stream.OutputStream output)
 	}
 }
 
+
+class LZSSFilterStream : std.stream.Stream
+{
+	private BitFile _bit_file;
+	bool _eof = false;
+
+	// readBlock stuff
+	ubyte[] _overflow_buffer;
+	ubyte[1 << INDEX_BIT_COUNT] _window;
+	int _window_pos = 1;
+
+	this (std.stream.InputStream input)
+	{
+		_bit_file._stream = input;
+		readable = true;
+		writeable = false;
+		seekable = false;
+	}
+
+	override size_t readBlock(void* buffer, size_t size)
+	{
+		if (_eof)
+			return 0;
+		ubyte* outbuf = cast(ubyte*)buffer;
+		size_t read = 0;
+		if (_overflow_buffer.length)
+		{
+			read = _overflow_buffer.length;
+			outbuf[0 .. read] = _overflow_buffer;
+			_overflow_buffer.length = 0;
+		}
+
+		ubyte c;
+		uint match_length;
+		uint match_position;
+		while (read < size)
+		{
+			if (_bit_file.bitioFileInputBit())
+			{
+				c = _bit_file.bitioFileInputBits(8);
+				outbuf[read++] = c;
+				_window[_window_pos] = c;
+				_window_pos = (_window_pos + 1) % _window.length;
+			}
+			else
+			{
+				match_position = _bit_file.bitioFileInputBits(INDEX_BIT_COUNT);
+				if (match_position == END_OF_STREAM)
+				{
+					_eof = true;
+					break;
+				}
+				match_length = _bit_file.bitioFileInputBits(LENGTH_BIT_COUNT) + BREAK_EVEN;
+				for (uint i = 0; i <= match_length; i++)
+				{
+					c = _window[(match_position + i) % _window.length];
+					if (read < size)
+						outbuf[read++] = c;
+					else
+						_overflow_buffer ~= c;
+					_window[_window_pos] = c;
+					_window_pos = (_window_pos + 1) % _window.length;
+				}
+			}
+		}
+//std.stdio.writefln("%s", (cast(char*)buffer)[0 .. read]);
+		return read;
+	}
+
+	override size_t writeBlock(void* buffer, size_t size)
+	{
+		throw new Exception("not implemented");
+	}
+
+	override ulong seek(long offset, std.stream.SeekPos whence)
+	{
+		throw new Exception("not implemented");
+	}
+
+	override bool eof()
+	{
+		return _eof;
+	}
+}
+
+
 //version (unittest) // D 2.0
 	static import std.stdio;
 
-unittest
+void main()//unittest
 {
-	auto scope input = new std.stream.File("data.lzss");
-	auto scope output = new std.stream.MemoryStream();
-	expandLZSS(input, output);
-	std.stdio.writefln("%s", output.toString());
+	auto scope stream = new LZSSFilterStream(new std.stream.File("data.lzss"));
+	foreach (char[] line; stream)
+	{
+		std.stdio.writefln("%s", line);
+	}
 }
