@@ -7,10 +7,28 @@ struct BitFile
 	ubyte _mask = 0b10000000;
 	ubyte _rack;
 
+	// buffered file read - read by char was way too slow
+	ubyte[10*1024] _buffer;
+	uint _buffer_pos;
+	uint _buffer_len;
+	bool _eof = false;
+
 	bool bitioFileInputBit()
 	{
 		if (_mask == 0b10000000)
-			_stream.read(_rack);  // throws at EOF
+		{
+			// buffered file read
+			if (_buffer_pos >= _buffer_len)
+			{
+				if (_eof)
+					throw new Exception("EOF?!");
+				_buffer_len = _stream.read(_buffer);  // throws at EOF
+				_buffer_pos = 0;
+				if (_buffer_len < _buffer.length)
+					_eof = true;
+			}			
+			_rack = _buffer[_buffer_pos++];
+		}
 
 		bool res = _rack & _mask ? true: false;  // wtf?
 
@@ -28,7 +46,19 @@ struct BitFile
 		while (mask != 0)
 		{
 			if (_mask == 0b10000000)
-				_stream.read(_rack);  // throws at EOF
+			{
+				// buffered file read
+				if (_buffer_pos >= _buffer_len)
+				{
+					if (_eof)
+						throw new Exception("EOF?!");
+					_buffer_len = _stream.read(_buffer);  // throws at EOF
+					_buffer_pos = 0;
+					if (_buffer_len < _buffer.length)
+						_eof = true;
+				}			
+				_rack = _buffer[_buffer_pos++];
+			}
 
 			if (_rack & _mask)
 				return_value |= mask;
