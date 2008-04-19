@@ -49,43 +49,6 @@ const BREAK_EVEN = (1 + INDEX_BIT_COUNT + LENGTH_BIT_COUNT) / 9;
 const END_OF_STREAM = 0;
 
 
-void expandLZSS(std.stream.InputStream input, std.stream.OutputStream output)
-{
-	BitFile bit_file;
-	bit_file._stream = input;
-
-	ubyte c;
-	uint match_length;
-	uint match_position;
-	ubyte[1 << INDEX_BIT_COUNT] window;
-	int window_pos = 1;
-	while (true)
-	{
-		if (bit_file.bitioFileInputBit())
-		{
-			c = bit_file.bitioFileInputBits(8);
-			output.write(c);
-			window[window_pos] = c;
-			window_pos = (window_pos + 1) % window.length;
-		}
-		else
-		{
-			match_position = bit_file.bitioFileInputBits(INDEX_BIT_COUNT);
-			if (match_position == END_OF_STREAM)
-				break;
-			match_length = bit_file.bitioFileInputBits(LENGTH_BIT_COUNT) + BREAK_EVEN;
-			for (uint i = 0; i <= match_length; i++)
-			{
-				c = window[(match_position + i) % window.length];
-				output.write(c);
-				window[window_pos] = c;
-				window_pos = (window_pos + 1) % window.length;
-			}
-		}
-	}
-}
-
-
 class LZSSFilterStream : std.stream.Stream
 {
 	private BitFile _bit_file;
@@ -113,18 +76,15 @@ class LZSSFilterStream : std.stream.Stream
 		size_t read = 0;
 		if (_overflow_buffer.length)
 		{
-			if (_overflow_buffer.length > size) // 30 > 1
+			if (_overflow_buffer.length > size)
 			{
 				outbuf[0 .. size] = _overflow_buffer[0 .. size];
 				_overflow_buffer = _overflow_buffer[size .. $];
-				read = size;
+				return size;
 			}
-			else
-			{
-				read = _overflow_buffer.length;
-				outbuf[0 .. read] = _overflow_buffer;
-				_overflow_buffer.length = 0;
-			}
+			read = _overflow_buffer.length;
+			outbuf[0 .. read] = _overflow_buffer;
+			_overflow_buffer.length = 0;
 		}
 
 		ubyte c;
