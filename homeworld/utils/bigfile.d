@@ -3,8 +3,8 @@
 static import std.stream;
 static import std.string;
 // relative import works?
-import crc;
-import lzss;
+static import crc;
+static import lzss;
 
 const FILE_HEADER = "RBF";
 const FILE_VERSION = "1.23";
@@ -117,7 +117,7 @@ class BigFile
 		                                    e.offset + e.nameLength + 1,
 		                                    e.offset + e.nameLength + 1 + e.storedLength);
 		if (e.compressionType)
-			return new LZSSFilterStream(s);
+			return new lzss.LZSSFilterStream(s);
 
 		return s;
 	}
@@ -127,8 +127,8 @@ class BigFile
 		string targetname = std.string.tolower(name);
 		TOCEntry target;
 		target.nameLength = targetname.length;
-		target.nameCRC1 = crc32(targetname[0 .. $/2]);
-		target.nameCRC2 = crc32(targetname[$/2 .. $/2*2]); //[$/2 .. $]
+		target.nameCRC1 = crc.crc32(targetname[0 .. $/2]);
+		target.nameCRC2 = crc.crc32(targetname[$/2 .. $/2*2]); //[$/2 .. $]
 		BigFileEntry toc_entry;
 
 		if (_flags & BF_FLAG_TOC_SORTED)  // binary search
@@ -193,14 +193,12 @@ class BigFile
 
 // tests
 import std.stdio;
-import win32.windows;
-//pragma (lib, "win32.lib");
+import std.c.stdlib;
 
 void main()
 {
-	char[1024] buffer;
-	size_t read = GetEnvironmentVariable("HW_Data", buffer.ptr, buffer.length);
-	string path = (read > 0 ? buffer[0 .. read] : ".") ~ "/update.big";
+	string data_path = std.string.toString(getenv("HW_Data"));
+	string path = (data_path ? data_path : ".") ~ "/update.big";
 	auto scope bf = new BigFile(path);
 
 	ubyte[] data;

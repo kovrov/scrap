@@ -1,0 +1,29 @@
+main
+	checkPrevInstance
+	utyOptionsFileRead
+	opKeyboardLoad
+	ProcessCommandLine
+	glCapNT
+	glCap95
+	utyGameSystemsPreInit
+	InitWindow
+	utyForceTopmost
+	utyGameSystemsInit
+	main_loop
+
+main_loop
+	if SDL_PollEvent(&e)
+		event_res = HandleEvent(&e)
+
+		if e.type == SDL_QUIT
+			break;
+	else
+		utyTasksDispatch()
+
+	if opTimerActive
+		if taskTimeElapsed > (opTimerStart + opTimerLength)
+			opTimerExpired();
+
+utyTasksDispatch
+
+utyGameSystemsPreInit
