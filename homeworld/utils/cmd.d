@@ -2,17 +2,17 @@
 // option entity pattern: mask, name, action, help
 void print_help(string str)
 {
-    sdword index, length;
+    long index, length;
 
     //calc length of help string
-    length = strlen("Invalid or unrecognised command line option: '%s'\n");
-    length += strlen(str);
-    foreach (opt; opts)
+    length = "Invalid or unrecognised command line option: '%s'\n".length;
+    length += str.length;
+    foreach (opt; opt_rules)
     {
         if (!(opt.flags & VISIBLE))
             continue;
 
-        if (opt.helpString == null)
+        if (!opt.helpString)
 		{
             length += strlen(opt.parameter) + 2;  // just length of comment
 		}
@@ -25,16 +25,11 @@ void print_help(string str)
         length += 2;  // and a newline
     }
 
-    if ((gHelpString = malloc(length)) == null)              //allocate string
-    {
-        /*MessageBox(null, "Cannot allocate memory for help.", "Command-Line Usage", MB_OK | MB_APPLMODAL);*/
-        fprintf(stderr, "Cannot allocate memory for help.\n");
-        return;
-    }
+	gHelpString.length = length;
 
     //copy all help strings into one
     sprintf(gHelpString, "Invalid or unrecognised command line option: '%s'\n", str);
-    foreach (opt; opts)
+    foreach (opt; opt_rules)
     {
         if (!(opt.flags & VISIBLE))
             continue;
@@ -66,7 +61,7 @@ ulong ProcessCommandLine(string[] args)
         if (str[0] == '-')
             str[0] = '/';
 
-        foreach (opt; opts)
+        foreach (opt; opt_rules)
         {
             if (!opt.helpString)
                 continue;  // don't compare against comment lines
@@ -114,84 +109,79 @@ void main(string[] args)
 		writefln("%s", arg);
 	}
 
-	Option[string] opts = [
-	// DEBUGGING OPTIONS
-		// name            action    dest                  help
-		"debug"[]:         enable  (&DebugWindow,         "Enable debug window."),
-		"nodebugint":      disable (&dbgInt3Enabled,      "Fatal errors don't genereate an int 3 before exiting."),
-		"debugtofile":     enable  (&debugToFile,         "output debugging info to a file."),
-		"rancallerdebug":  enable  (&ranCallerDebug,      "debug non-deterministic calling of random numbers."),
-		"autosavedebug":   enable  (&autoSaveDebug,       "autosaves game frequently"),
-	// SYSTEM OPTIONS
-		// name          action  dest                  validator   help
-		"heap":            set (&MemoryHeapSize,       &memsize,  "<n> - Sets size of global memory heap to [n]."),  // 1 argument of size_t
-		"bigoverride",     set (&fileOverrideBigPath,  &path,     "<path> - Sets path to search for opening files."),  // 1 argument of string
-		"cdpath",          set (&fileCDROMPath,        &path,     "<path> - Sets path to CD-ROM in case of ambiguity."),  // 1 argument of string
-		"settingspath",    set (&fileUserSettingsPath, &path,     "<path> - Sets the path to store settings, saved games, and screenshots (defaults to ~/.homeworld)."),  // 1 argument of string
-		// name            action    dest                  help
-		"freemouse",       disable (&startupClipMouse,    "Mouse free to move about entire screen at startup.  Use <CTRL>F11 to toggle during play."),
-		"ignorebigfiles",  enable  (&IgnoreBigfiles,      "don't use anything from bigfile(s)"),
-		"logfileloads",    enable  (&LogFileLoads,        "create log of data files loaded"),
+	Option[string] opt_rules = [
+	// DEBUGGING OPTIONS -----------------------------------------------------
+		// name           action    dest               help
+		"debug"[]:        enable  (&DebugWindow,      "Enable debug window."),
+		"nodebugint":     disable (&dbgInt3Enabled,   "Fatal errors don't genereate an int 3 before exiting."),
+		"debugtofile":    enable  (&debugToFile,      "output debugging info to a file."),
+		"rancallerdebug": enable  (&ranCallerDebug,   "debug non-deterministic calling of random numbers."),
+		"autosavedebug":  enable  (&autoSaveDebug,    "autosaves game frequently"),
+	// SYSTEM OPTIONS -----------------------------------------------------
+		// name         action  dest                  validator  help
+		"heap":           set (&MemoryHeapSize,       &memsize, "<n> - Sets size of global memory heap to [n]."),  // 1 argument of size_t
+		"bigoverride",    set (&fileOverrideBigPath,  &path,    "<path> - Sets path to search for opening files."),  // 1 argument of string
+		"cdpath",         set (&fileCDROMPath,        &path,    "<path> - Sets path to CD-ROM in case of ambiguity."),  // 1 argument of string
+		"settingspath",   set (&fileUserSettingsPath, &path,    "<path> - Sets the path to store settings, saved games, and screenshots (defaults to ~/.homeworld)."),  // 1 argument of string
+		// name           action    dest               help
+		"freemouse",      disable (&startupClipMouse,   "Mouse free to move about entire screen at startup.  Use <CTRL>F11 to toggle during play."),
+		"ignorebigfiles", enable  (&IgnoreBigfiles,     "don't use anything from bigfile(s)"),
+		"logfileloads",   enable  (&LogFileLoads,       "create log of data files loaded"),
+    // PROCESSOR OPTIONS -----------------------------------------------------
+		// name           action    dest                 help
+		"enablesse",      enable  (&mainAllowKatmai,    "allow use of SSE if support is detected."),
+		"forcesse",       enable  (&mainForceKatmai,    "force usage of SSE even if determined to be unavailable."),
+		"enable3dnow",    enable  (&mainAllow3DNow,     "allow use of 3DNow! if support is detected."),
+	// SOUND OPTIONS -----------------------------------------------------
+		// name           action    dest                 help
+		"nosound",        disable (&enableSFX,          "turn all sound effects off."),
+		"nospeech",       disable (&enableSpeech,       "turn all speech off"),
+		"dsound",         enable  (&useDSound,          "forces mixer to write to DirectSound driver, even if driver reports not certified."),
+		"dsoundcoop",     enable  (&coopDSound,         "switches to co-operative mode of DirectSound (if supported) to allow sharing with other applications."),
+		"waveout",        enable  (&useWaveout,         "forces mixer to write to Waveout even if a DirectSound supported object is available."),
+		"reversestereo",  enable  (&reverseStereo,      "swap the left and right audio channels."),
+	// DETAIL OPTIONS -----------------------------------------------------
+		// name           action    dest                 help
+		"rasterskip",     enable  (&mainRasterSkip,     "enable interlaced display with software renderer."),
+		"nobg",           disable (&showBackgrounds,    "disable display of galaxy backgrounds."),
+		"nofilter",       disable (&texLinearFiltering, "disable bi-linear filtering of textures."),
+		"nosmooth",       disable (&enableSmoothing,    "do not use polygon smoothing."),
+		"niltexture",     enable  (&GLOBAL_NO_TEXTURES, "don't ever load textures at all."),
+		"noeffects",      disable (&etgEffectsEnabled,  "disable all effects (Debug only)."),
+		"nofetextures",   disable (&fetEnableTextures,  "turns off front end textures"),
+		"stipple",        enable  (&enableStipple,      "enable stipple alpha with software renderer."),
+		"noshowdamage",   disable (&gShowDamage,        "Disables showing ship damage effects."),
+	// VIDEO MODE OPTIONS -----------------------------------------------------
+		// name           action    dest                    help
+		"safeGL",         enable  (&mainSafeGL,            "don't use possibly buggy optimized features of OpenGL for rendering."),
+		"triple",         enable  (&mainDoubleIsTriple,    "use when frontend menus are flickering madly."),
+		"nodrawpixels",   enable  (&mainNoDrawPixels,      "use when background images don't appear while loading."),
+		"noswddraw",      disable (&mainSoftwareDirectDraw,"don't use DirectDraw for the software renderer."),
+		"noglddraw",      disable (&mainDirectDraw,        "don't use DirectDraw to setup OpenGL renderers."),
+		"sw",             enable  (&mainForceSoftware,     "reset rendering system to defaults at startup."),
+		"noSavedMode",    disable (&mainAutoRenderer,      "disable recovery of previous display mode."), // hidden
+		"noFastFE",       disable (&mainFastFrontend,      "disable fast frontend rendering."),
+		"fullscreen",     enable  (&fullScreen,            "display fullscreen with software renderer (default)."),
+		"window",         disable (&fullScreen,            "display in a window."),
+		"noBorder",       disable (&showBorder,            "no border on window."),
+		"d3dDeviceCRC",   enable  (&mainOutputCRC,         "generate d3dDeviceCRC.txt for video troubleshooting."), // hidden
+		"minny",          set     (&mainWindow, [320,240], "run at 320x240 resolution."), // hidden
+		"640",            set     (&mainWindow, [640,480], "run at 640x480 resolution (default)."),
+		"800",            set     (&mainWindow, [800,600], "run at 800x600 resolution."),
+		"1024",           set     (&mainWindow,[1024,768], "run at 1024x768 resolution."),
+		"1280",           set     (&mainWindow,[1280,1024],"run at 1280x1024 resolution."),
+		"1600",           set     (&mainWindow,[1600,1200],"run at 1600x1200 resolution."),
+//		"d16",            set     (&MAIN_WindowDepth, 16,  "run in 16 bits of colour."),
+//		"d24",            set     (&MAIN_WindowDepth, 24,  "run in 24 bits of colour."),
+//		"d32",            set     (&MAIN_WindowDepth, 32,  "run in 32 bits of colour."),
+//		"truecolor",      enable  (&trueColor,             "try 24bit modes before 15/16bit."),
+//		"slowBlits",      enable  (&slowBlits,             "use slow screen blits if the default is buggy."),
+		"device":         set (&deviceToSelect, &SelectDevice,  "<n> - Sets size of global memory heap to [n]."),  // 1 argument of size_t
+		"nohint",         enable  (&mainNoPerspective,      "disable usage of OpenGL perspective correction hints."),
+		"noPause",        enable  (&noPauseAltTab,          "don't pause when you alt-tab."), // hidden
+		"noMinimize",     enable  (&noMinimizeAltTab,       "don't minimize when you alt-tab."), // hidden
+
 /+
-    Option(VISIBLE, "PROCESSOR OPTIONS", null, null, 0, null),//-----------------------------------------------------
-//	 flag          param               callback                 variable          value   help
-	Option(VISIBLE,     "enableSSE",         null,                   &mainAllowKatmai,  true,  "allow use of SSE if support is detected."),
-	Option(VISIBLE,     "forceSSE",          null,                   &mainForceKatmai,  true,  "force usage of SSE even if determined to be unavailable."),
-	Option(VISIBLE,     "enable3DNow",       null,                   &mainAllow3DNow,   true,  "allow use of 3DNow! if support is detected."),
-
-    Option(VISIBLE, "SOUND OPTIONS", null, null, 0, null),//-----------------------------------------------------
-//	 flag          param               callback                 variable          value   help
-    Option(VISIBLE,     "noSound",           null,                   &enableSFX,        false, "turn all sound effects off."),
-    Option(VISIBLE,     "noSpeech",          null,                   &enableSpeech,     false, "turn all speech off"),
-    Option(VISIBLE,     "dsound",            null,                   &useDSound,        true,  "forces mixer to write to DirectSound driver, even if driver reports not certified."),
-    Option(VISIBLE,     "dsoundCoop",        null,                   &coopDSound,       true,  "switches to co-operative mode of DirectSound (if supported) to allow sharing with other applications."),
-    Option(VISIBLE,     "waveout",           null,                   &useWaveout,       true,  "forces mixer to write to Waveout even if a DirectSound supported object is available."),
-    Option(VISIBLE,     "reverseStereo",     null,                   &reverseStereo,    true,  "swap the left and right audio channels."),
-
-    Option(VISIBLE, "DETAIL OPTIONS", null, null, 0, null),//-----------------------------------------------------
-//	 flag          param               callback                 variable           value   help
-	Option(VISIBLE,     "rasterSkip",        EnableRasterSkip,        null,              0,     "enable interlaced display with software renderer."),
-    Option(VISIBLE,     "noBG",              null,                   &showBackgrounds,   false, "disable display of galaxy backgrounds."),
-    Option(VISIBLE,     "noFilter",          null,                   &texLinearFiltering,false, "disable bi-linear filtering of textures."),
-    Option(VISIBLE,     "noSmooth",          null,                   &enableSmoothing,   false, "do not use polygon smoothing."),
-    Option(VISIBLE,     "nilTexture",        null,                   &GLOBAL_NO_TEXTURES,true,  "don't ever load textures at all."),
-    Option(VISIBLE,     "noEffects",         null,                   &etgEffectsEnabled, false, "disable all effects (Debug only)."),
-    Option(VISIBLE,     "NoFETextures",      null,                   &fetEnableTextures, false, "turns off front end textures"),
-    Option(VISIBLE,     "stipple",           null,                   &enableStipple,     true,  "enable stipple alpha with software renderer."),
-    Option(VISIBLE,     "noShowDamage",      null,                   &gShowDamage,       false, "Disables showing ship damage effects."),
-
-    Option(VISIBLE, "VIDEO MODE OPTIONS", null, null, 0, null),//-----------------------------------------------------
-//	 flag          param               callback                 variable          value   help
-    Option(VISIBLE,     "safeGL",            null,                   &mainSafeGL,       true,  "don't use possibly buggy optimized features of OpenGL for rendering."),
-	Option(VISIBLE,     "triple",            EnableDoubleIsTriple,    null,             0,     "use when frontend menus are flickering madly."),
-    Option(VISIBLE,     "nodrawpixels",      null,                   &mainNoDrawPixels, true,  "use when background images don't appear while loading."),
-    Option(VISIBLE,     "noswddraw",         null,                   &mainSoftwareDirectDraw, false, "don't use DirectDraw for the software renderer."),
-    Option(VISIBLE,     "noglddraw",         null,                   &mainDirectDraw,   false, "don't use DirectDraw to setup OpenGL renderers."),
-    Option(VISIBLE,     "sw",                null,                   &mainForceSoftware,true,  "reset rendering system to defaults at startup."),
-    Option(0,           "noSavedMode",       null,                   &mainAutoRenderer, false, "disable recovery of previous display mode."),
-	Option(VISIBLE,     "noFastFE",          DisableFastFrontend,     null,             0,     "disable fast frontend rendering."),
-    Option(VISIBLE,     "fullscreen",        null,                   &fullScreen,       true,  "display fullscreen with software renderer (default)."),
-    Option(VISIBLE,     "window",            null,                   &fullScreen,       false, "display in a window."),
-    Option(VISIBLE,     "noBorder",          null,                   &showBorder,       false, "no border on window."),
-    Option(0,           "d3dDeviceCRC",      null,                   &mainOutputCRC,    true,  "generate d3dDeviceCRC.txt for video troubleshooting."),
-    Option(0,           "minny",             EnableMiniRes,           null,             0,     "run at 320x240 resolution."),
-	Option(VISIBLE,     "640",               EnableLoRes,             null,             0,     "run at 640x480 resolution (default)."),
-	Option(VISIBLE,     "800",               EnableHiRes,             null,             0,     "run at 800x600 resolution."),
-	Option(VISIBLE,     "1024",              EnableMegaRes,           null,             0,     "run at 1024x768 resolution."),
-	Option(VISIBLE,     "1280",              EnableUltraRes,          null,             0,     "run at 1280x1024 resolution."),
-	Option(VISIBLE,     "1600",              EnableInsaneRes,         null,             0,     "run at 1600x1200 resolution."),
-//	Option(VISIBLE,     "d16",               Enable16Bit,             null,             0,     "run in 16 bits of colour."),
-//	Option(VISIBLE,     "d24",               Enable24Bit,             null,             0,     "run in 24 bits of colour."),
-//	Option(VISIBLE,     "d32",               Enable32Bit,             null,             0,     "run in 32 bits of colour."),
-//	Option(VISIBLE,     "truecolor",         null,                   &trueColor,        true,  "try 24bit modes before 15/16bit."),
-//	Option(VISIBLE,     "slowBlits",         null,                   &slowBlits,        true,  "use slow screen blits if the default is buggy."),
-    Option(VISIBLE|ARG, "device",            SelectDevice,            null,             0,     "<dev> - select an rGL device by name, eg. sw, fx, d3d."),
-//	Option(VISIBLE,     "gl",                SelectMSGL,             &selectedGL,       true,  "select default OpenGL as renderer."),
-//	Option(VISIBLE,     "d3d",               SelectD3D,               null,             0,     "select Direct3D as renderer."),
-    Option(VISIBLE,     "nohint",            null,                   &mainNoPerspective,true,  "disable usage of OpenGL perspective correction hints."),
-    Option(0,           "noPause",           null,                   &noPauseAltTab,    true,  "don't pause when you alt-tab."),
-    Option(0,           "noMinimize",        null,                   &noMinimizeAltTab, true,  "don't minimize when you alt-tab."),
-
     Option(VISIBLE, "CHEATS AND SHORTCUTS", null, null, 0, null),//-----------------------------------------------------
 //	 flag          param               callback                 variable          value   help
     Option(VISIBLE,     "cheapShips",        null,                   &cmCheapShips,     true,  "ships only cost 1 RU."),
