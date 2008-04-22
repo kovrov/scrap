@@ -38,17 +38,21 @@ class BigFileEntry
 			return _name;
 
 		_stream.seekSet(_toc.offset);
-		_name.length = _toc.nameLength;
-		_stream.readExact(cast(void*)_name.ptr, _name.length);
+		char[] name;
+		name.length = _toc.nameLength;
+		_stream.readExact(cast(void*)name.ptr, name.length);
 
 		/*	When decrypting filenames, don't touch the terminating null
 			when decrypting. Pass in name_size, not name_size + 1. */
 		ubyte last_byte = 0xD5;
-		foreach (ref i; _name)
+		foreach (ref i; name)
 		{
 			last_byte ^= i;
 			i = last_byte;
 		}
+
+		version (D_Version2) _name = name.idup;
+		else                 _name = name;
 
 		return _name;
 	}

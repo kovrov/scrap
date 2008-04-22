@@ -151,6 +151,7 @@ class LZSSFilterStream : std.stream.Stream
 		return read;
 	}
 
+	//version (D_Version2) override size_t writeBlock(const void* buffer, size_t size)
 	override size_t writeBlock(void* buffer, size_t size)
 	{
 		throw new Exception("not implemented");
