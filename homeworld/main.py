@@ -27,11 +27,8 @@ def main():
 
 	# main loop
 	while True:
-		# Give sound a break :)
-		SDL_Delay(0)
-
 		if SDL_PollEvent(&e):
-			event_res = HandleEvent(&e)
+			event_res = HandleEvent(&e) #switch event.type (focus|keys|mouse|quit|serevent|...)
 			if e.type == SDL_QUIT:
 				break
 		else:
@@ -41,7 +38,14 @@ def main():
 			if taskTimeElapsed > (opTimerStart + opTimerLength):
 				opTimerExpired()
 
-
+#---------
+		# (Re)draw the screen
+		# Handle events (keyboard input, mainly)
+		while SDL_PollEvent(&event):
+			if event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE):
+				return cleanUp(0)
+		# while (handling events)
+#---------
 
 
 
@@ -320,3 +324,96 @@ def utyGameSystemsInit():
 
 	utySet(SS2_SystemStarted)  #!!! leave this at the end of this function
 	return(NULL)  #success, return no error
+
+
+# SDL event handling for the application
+HandleEvent (sdl_event)
+    switch sdl_event.type
+	case SDL_ACTIVEEVENT: # IntroActivateMe | IntroDeactivateMe | ActivateMe | DeactivateMe
+	case SDL_KEYUP: # SDLK_ESCAPE|SDLK_F11|SDLK_F12|keyPressUp
+	case SDL_KEYDOWN: # keyPressDown(keyLanguageTranslate();
+	case SDL_USEREVENT: # CommandProcess (wtf?)
+	case SDL_MOUSEBUTTONDOWN: # keyPressDown(LMOUSE_DOUBLE|LMOUSE_BUTTON|MMOUSE_DOUBLE|MMOUSE_BUTTON|RMOUSE_DOUBLE|RMOUSE_BUTTON)
+	case SDL_MOUSEBUTTONUP: # keyPressUp(LMOUSE_BUTTON|LMOUSE_DOUBLE|MMOUSE_BUTTON|MMOUSE_DOUBLE|RMOUSE_BUTTON|RMOUSE_DOUBLE)
+	case SDL_QUIT: # WindowsCleanup SDL_PushEvent(SDL_QUIT)
+
+
+def InitWindow():
+	# create a window (Window created in renderer initialization..)
+
+    mainDevStatsInit()
+    rinEnumerateDevices()
+
+	d3dToSelect = ""
+
+	if mainAutoRenderer and mainGLToSelect:
+        if selectedDEVICE:
+			d3dToSelect = ""
+        else:
+			deviceToSelect = mainDeviceToSelect
+			d3dToSelect = mainD3DToSelect
+
+        if not selectedGL:
+			glToSelect = mainGLToSelect
+
+	rinDevCRC = rinDeviceCRC()
+    if opDeviceCRC != rinDevCRC:
+        opDeviceIndex = -1
+        if mainAutoRenderer:
+            opDeviceCRC = rinDeviceCRC()
+            mainForceSoftware = True
+
+	# successfully re-using previous device
+	# re-use previous devcaps
+	gDevcaps = loadedDevcaps
+
+	if gDevcaps == 0xFFFFFFFF:
+		gDevcaps = 0
+
+	gDevcaps2 = loadedDevcaps2
+
+	if gDevcaps2 == 0xFFFFFFFF:
+		gDevcaps2 = 0
+
+    if not glCapLoadOpenGL(glToSelect):
+        mainSetupSoftware()
+        utyForceTopmost(fullScreen)
+        mainRescaleMainWindow()
+
+        if not glCapLoadOpenGL(glToSelect):
+            raise "Fatal Error: Couldn't initialize default rendering system"
+
+	mainDeviceToSelect = deviceToSelect
+    mainGLToSelect = glToSelect
+
+    glCapStartup()
+
+	if deviceToSelect == "d3d":
+        mainReinitRenderer = 2
+
+    if RGL:
+        if fullScreen:
+            rglFeature(RGL_FULLSCREEN)
+        else:
+            rglFeature(RGL_WINDOWED)
+
+        if mainSoftwareDirectDraw:
+            rglFeature(RGL_HICOLOR)
+        else:
+            rglFeature(RGL_TRUECOLOR)
+
+        if slowBlits:
+            rglFeature(RGL_SLOWBLT)
+        else:
+            rglFeature(RGL_FASTBLT)
+
+        if accelFirst:
+            rglSelectDevice("fx", "")
+            lodScaleFactor = 1.0
+
+		if deviceToSelect:
+            rglSelectDevice(deviceToSelect, d3dToSelect)
+            if deviceToSelect == "sw":
+                lodScaleFactor = 1.0
+    else:
+        lodScaleFactor = 1.0
