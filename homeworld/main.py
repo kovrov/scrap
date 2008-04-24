@@ -26,27 +26,73 @@ def main():
 	utyGameSystemsInit()
 
 	# main loop
-	while True:
-		if SDL_PollEvent(&e):
-			event_res = HandleEvent(&e) #switch event.type (focus|keys|mouse|quit|serevent|...)
-			if e.type == SDL_QUIT:
-				break
-		else:
-			utyTasksDispatch()  #execute all tasks
+	while not window.has_exit:
+		window.dispatch_events()
+		update(pyglet.clock.tick())  #execute all tasks
+		on_draw()
+		window.flip() 
+		# apparently some UI stuff (if ... opTimerExpired)
 
-		if opTimerActive:
-			if taskTimeElapsed > (opTimerStart + opTimerLength):
-				opTimerExpired()
 
-#---------
-		# (Re)draw the screen
-		# Handle events (keyboard input, mainly)
-		while SDL_PollEvent(&event):
-			if event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE):
-				return cleanUp(0)
-		# while (handling events)
-#---------
+def update(dt):
+    # Don't do a taskInitCheck because this sometimes gets called on
+    # exiting, after all the tasks are shut down.
+    if not taskModuleInit:
+        return OKAY
+    #taskInitCheck()
 
+    if demDemoRecording:
+        demNumberTicksSave(ticks)
+    elif demDemoPlaying:
+        ticks = demNumberTicksLoad(ticks)
+
+    taskTimeDelta = ticks / taskFrequency
+    taskTimeElapsed += taskTimeDelta
+    tTicks = ticks  #save the ticks parameter
+
+    # Verify we're not in any task currently.
+    dbgAssertOrIgnore(taskCurrentTask == -1)
+
+    for (taskCurrentTask = 0; taskCurrentTask < taskMaxTask; taskCurrentTask++):
+        if not taskData[taskCurrentTask] or taskData[taskCurrentTask].flags & TF_Paused:
+            continue
+
+        if TitanActive:
+            titanPumpEngine()
+
+        #calculate number of calls
+        if taskData[taskCurrentTask].flags & TF_OncePerFrame:
+
+			""" Don't do this if check, because if you do it is possible that
+			   hundreds of other tasks will get executed and this task will starve
+			   when the game AI gets heavy.  Luke, later check if there's a better
+			   way to do this. """
+            #if (taskData[taskCurrentTask].ticks == 0)  #see if time to execute
+			taskNumberCalls = 1  #flag to call once
+			taskData[taskCurrentTask].ticks = taskData[taskCurrentTask].ticksPerCall
+
+            taskData[taskCurrentTask].ticks--
+        else:  #else it's a real-time task
+            #add leftover ticks from last frame
+            tLocalTicks = tTicks + taskData[taskCurrentTask].ticks
+            #save leftover ticks for next frame
+            taskData[taskCurrentTask].ticks = tLocalTicks % taskData[taskCurrentTask].ticksPerCall
+            taskNumberCalls = tLocalTicks / taskData[taskCurrentTask].ticksPerCall
+            taskNumberCalls = min(taskNumberCalls, TSK_MaxTicks)
+
+        taskProcessIndex++
+
+        for (; taskNumberCalls > 0; taskNumberCalls--):
+            taskData[taskCurrentTask].function(&taskData[taskCurrentTask].context)
+            if not taskData[taskCurrentTask].context: # Task has exited
+                taskStop(taskCurrentTask)
+                break
+    taskCurrentTask = -1 #not currently executing any tasks
+    return OKAY
+
+
+def on_draw():
+	window.clear()
 
 
 def utyGameSystemsInit():
@@ -331,7 +377,7 @@ HandleEvent (sdl_event)
     switch sdl_event.type
 	case SDL_ACTIVEEVENT: # IntroActivateMe | IntroDeactivateMe | ActivateMe | DeactivateMe
 	case SDL_KEYUP: # SDLK_ESCAPE|SDLK_F11|SDLK_F12|keyPressUp
-	case SDL_KEYDOWN: # keyPressDown(keyLanguageTranslate();
+	case SDL_KEYDOWN: # keyPressDown(keyLanguageTranslate()
 	case SDL_USEREVENT: # CommandProcess (wtf?)
 	case SDL_MOUSEBUTTONDOWN: # keyPressDown(LMOUSE_DOUBLE|LMOUSE_BUTTON|MMOUSE_DOUBLE|MMOUSE_BUTTON|RMOUSE_DOUBLE|RMOUSE_BUTTON)
 	case SDL_MOUSEBUTTONUP: # keyPressUp(LMOUSE_BUTTON|LMOUSE_DOUBLE|MMOUSE_BUTTON|MMOUSE_DOUBLE|RMOUSE_BUTTON|RMOUSE_DOUBLE)
