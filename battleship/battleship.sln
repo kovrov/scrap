@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "battleship", "win32\battleship.vcproj", "{D1EE20D7-4618-4494-9F4F-29930D298C4C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game", "game\game.vcproj", "{465BC0CF-C18E-4AA2-899D-82D972889C78}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D1EE20D7-4618-4494-9F4F-29930D298C4C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D1EE20D7-4618-4494-9F4F-29930D298C4C}.Debug|Win32.Build.0 = Debug|Win32
+		{D1EE20D7-4618-4494-9F4F-29930D298C4C}.Release|Win32.ActiveCfg = Release|Win32
+		{D1EE20D7-4618-4494-9F4F-29930D298C4C}.Release|Win32.Build.0 = Release|Win32
+		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Debug|Win32.ActiveCfg = Debug|Win32
+		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Debug|Win32.Build.0 = Debug|Win32
+		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Release|Win32.ActiveCfg = Release|Win32
+		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
