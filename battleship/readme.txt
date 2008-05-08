@@ -9,10 +9,10 @@ Following is formal game rules pseudo code:
 context = BattleshipGame()
 
 states = [
-	# state           # entry action  # Exit action
-	{BATTLE_STARTED,  reset_game,     NULL},
-	{PLAYER_TURN,     NULL,           NULL},
-	{BATTLE_ENDED,    NULL,           NULL}]
+	# state           # entry action   # Exit action
+	{BATTLE_STARTED,  restart_battle,  NULL},
+	{PLAYER_TURN,     NULL,            NULL},
+	{BATTLE_ENDED,    NULL,            NULL}]
 
 transitions = [
 	# state           # input       # condition            # transition   # action
@@ -22,6 +22,21 @@ transitions = [
 	{BATTLE_ENDED     new_game                             BATTLE_STARTED          }]
 
 input action
+
+
+# definitions form:
+
+battle_started = logic.addState(BATTLE_STARTED)
+  player_setup = battle_started.addEvent(PLAYER_SETUP)
+    player_setup.addTransition(all_players_set, PLAYER_TURN)
+player_turn = logic.addState(PLAYER_TURN)
+  player_shoot = player_turn.addEvent(PLAYER_SHOOT, game.shotValidator)
+    player_shoot.addTransition(game.shotMissed, PLAYER_TURN, game.passTurn)
+    player_shoot.addTransition(game.opponentHasNoShips, BATTLE_ENDED)
+battle_ended logic.addState(BATTLE_ENDED)
+  new_game = battle_ended.addEvent(NEW_GAME)
+	  new_game.addTransition(NULL, BATTLE_STARTED)
+
 
 
 # object form:

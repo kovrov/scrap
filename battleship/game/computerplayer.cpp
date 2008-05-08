@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <assert.h>
 
-ComputerPlayer::ComputerPlayer(void)
+ComputerPlayer::ComputerPlayer()
 {
 }
 
-ComputerPlayer::~ComputerPlayer(void)
+ComputerPlayer::~ComputerPlayer()
 {
 }
 
@@ -26,7 +26,7 @@ void generate_random_position(int out_buffer[], unsigned int ship_size, unsigned
 		out_buffer[i] = index + i * orient;
 }
 
-void randomply_place_ship(SeaGrid* sea, unsigned int size)
+void randomly_place_ship(SeaGrid* sea, unsigned int size)
 {
 	assert (sea != NULL);
 	unsigned int sea_side = sea->SideSize();
@@ -49,7 +49,7 @@ void ComputerPlayer::PlaceShips(SeaGrid* sea, const Config& config)
 	{
 		for (unsigned int i=0; i < config.ptr[i].quantity; i++)
 		{
-			randomply_place_ship(sea, config.ptr[i].size);
+			randomly_place_ship(sea, config.ptr[i].size);
 		}
 	}
 }

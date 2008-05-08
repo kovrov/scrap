@@ -51,7 +51,7 @@ def occupy_squares(sea, pos):
 			assert sea[i+S-1] != '#'
 			sea[i+S-1] = '.'  # lower-left
 
-def randomply_place_ship(size, sea):
+def randomly_place_ship(size, sea):
 	sea_side = int(math.sqrt(len(sea)))
 	pos = generate_random_position(size, sea_side)
 	while not is_squares_available(sea, pos):
@@ -65,7 +65,7 @@ def test(sea_side, fleet_conf):
 	sea = [' '] * (sea_side**2)
 	for ship in fleet_conf:
 		for i in xrange(ship[0]):
-			randomply_place_ship(ship[1], sea)
+			randomly_place_ship(ship[1], sea)
 	# print sea
 	for i in xrange(sea_side):
 		for j in xrange(sea_side):
