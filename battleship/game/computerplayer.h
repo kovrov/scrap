@@ -6,8 +6,10 @@
 class ComputerPlayer
 {
 public:
-	ComputerPlayer(void);
-	~ComputerPlayer(void);
+	ComputerPlayer();
+	~ComputerPlayer();
 	void PlaceShips(SeaGrid* sea, const Config& config);
+	void Shoot();
 private:
+	bool* m_shotsTable;
 };

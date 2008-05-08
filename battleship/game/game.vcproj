@@ -4,8 +4,6 @@
 	Version="8,00"
 	Name="game"
 	ProjectGUID="{465BC0CF-C18E-4AA2-899D-82D972889C78}"
-	RootNamespace="game"
-	Keyword="Win32Proj"
 	>
 	<Platforms>
 		<Platform
@@ -46,7 +44,6 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -151,6 +148,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\config.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\fsm.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\game.cpp"
 				>
 			</File>
@@ -166,6 +171,14 @@
 			>
 			<File
 				RelativePath=".\computerplayer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\fsm.h"
 				>
 			</File>
 			<File

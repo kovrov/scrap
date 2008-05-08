@@ -1,5 +1,4 @@
 #pragma once
-#include "seagrid.h"
 
 struct Config
 {
@@ -9,16 +8,4 @@ struct Config
 		unsigned int size;
 	} *ptr;
 	unsigned len;
-};
-
-
-class Game
-{
-public:
-	Game(void);
-public:
-	~Game(void);
-private:
-	Config m_conf;
-	SeaGrid m_sea;
 };

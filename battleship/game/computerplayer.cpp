@@ -53,3 +53,8 @@ void ComputerPlayer::PlaceShips(SeaGrid* sea, const Config& config)
 		}
 	}
 }
+
+void ComputerPlayer::Shoot()
+{
+	//m_shotsTable[]
+}

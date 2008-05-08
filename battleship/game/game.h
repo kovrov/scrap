@@ -1,22 +1,26 @@
 #pragma once
+#include "seagrid.h"
+#include "config.h"
 
-struct Config
-{
-	struct Entity
-	{
-		unsigned int quantity;
-		unsigned int size;
-	} *ptr;
-	unsigned len;
-};
+namespace game {
 
 
-class Game
+class TurnBased
 {
 public:
-	Game(void);
-public:
-	~Game(void);
+	TurnBased(void);
+	~TurnBased(void);
+
+	bool isShotValid();
+	bool isShotMissed();
+	bool passTurn();
+	bool isOpponentHasNoShips();
+	bool isAllPlayersSet();
+
 private:
 	Config m_conf;
+	SeaGrid m_sea;
 };
+
+
+}  // namespace
