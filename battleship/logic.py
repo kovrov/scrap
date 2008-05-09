@@ -1,46 +1,65 @@
+"""
+This module is describing high-level control flow of the game, that is
+essentially logic behind "game rules".
+This is typical "controller" in MVC terminology.
+"""
+import seagrid
+import fsm
 
-
-BATTLE_STARTED, PLAYER_TURN, BATTLE_ENDED = xrange(3)
-SETUP, SHOOT, RESTART = xrange(3)
-PLAYER1, PLAYER2 = xrange(2)
+BATTLE_STARTED, PLAYER_TURN, BATTLE_ENDED = range(100, 103) # states
+SETUP, SHOOT, RESTART = range(200, 203) # events
+PLAYER1, PLAYER2 = range(300, 302)
 SEA_SIDE = 10
 
-def restart_battle(context):
-	print "restart_battle"
-	context['current'] = PLAYER1
-	context['winner'] = None
-	context['players'][PLAYER1]['sea'] = [' '] * (SEA_SIDE**2)
-	context['players'][PLAYER2]['sea'] = [' '] * (SEA_SIDE**2)
+def restart_battle(context):  # entry action
+	print "battle restarted"
+	for player in context['players'].itervalues():
+		player['sea'] = [' '] * (SEA_SIDE**2)
+	context['current'] = context['players'].keys()[0]
 
-def player_setup(context, player, ships):
-	pass
+def all_players_set(context):  # condition
+	for player in context['players'].itervalues():
+		if not player['ready']:
+			print "not all players set!"
+			return False
+	print "all players set!"
+	return True
 
-def player_shoot(context, player, shot):
-	pass
+def missed_shot(context):  # condition
+	current_player = context['players'][context['current']]
+	if current_player['last_shot_hit']:
+		print "shot is not missed!"
+		return False
+	else:
+		print "shot is missed!"
+		return True
 
-def new_game(context):
-	pass
+def opponent_has_no_ships(context):  # condition
+	raise NotImplementedError()
+	sea = context['players'][player]['sea']
+	print "opponent has ships!"
+	return False
+	print "opponent has no ships!"
 
-def all_players_set(context):
-	pass
+def pass_turn(context):  # action
+	print "passing turn..."
+	current_player = context['players'][context['current']]
+	context['current'] = current_player['opponent']
 
-def shot_missed(context, player, shot):
-	pass
+def setup_ships(context, input):  # event input
+	print "setting up ships..."
+	player, ships = input
+	sea = context['players'][player]['sea']
+	for pos in ships:
+		seagrid.occupy_squares(sea, pos)
+	context['players'][player]['ready'] = True
 
-def pass_turn(context):
-	pass
-
-def opponent_has_no_ships(context): 
-	pass
-
-def setup_ships(context):
-	print "setup_ships"
-
-def process_shot(context):
-	pass
-
-def player_lose(context):
-	pass
+def player_shoot(context, input):  # event input
+	print "player shooting..."
+	player, pos = input
+	current_player = context['players'][context['current']]
+	target_sea = context['players'][current_player['opponent']]['sea']
+	current_player['last_shot_hit'] = seagrid.shoot_square(target_sea, pos)
 
 states = {
 	BATTLE_STARTED: {
@@ -54,39 +73,30 @@ states = {
 		'on_enter': None,
 		'events': {
 			SHOOT: {
-				'input': process_shot,
+				'input': player_shoot,
 				'transitions': (
-					{'condition':shot_missed, 'state':PLAYER_TURN, 'action':pass_turn},
-					{'condition':opponent_has_no_ships, 'state':BATTLE_ENDED, 'action':None})},
-			RESTART: {
-				'input': None,
-				'transitions': (
-					{'condition':None, 'state':BATTLE_STARTED, 'action':player_lose},)}}},
+					{'condition':missed_shot, 'state':PLAYER_TURN, 'action':pass_turn},
+					{'condition':opponent_has_no_ships, 'state':BATTLE_ENDED, 'action':None})}}},
 	BATTLE_ENDED: {
 		'on_enter': None,
 		'events': {
 			RESTART: {
 				'input': None,
 				'transitions': (
-					{'condition':None, 'state':BATTLE_STARTED, 'action':None},)}}}
-}
-
-def fsm_set_state(context, state):
-	states[state]['on_enter'](context)
-	context['state'] = state
-
-def fsm_dispatch(context, event, input):
-	states[context['state']]['events'][event](input)
+					{'condition':None, 'state':BATTLE_STARTED, 'action':None},)}}}}
 
 context = {
-		'players': { PLAYER1:{}, PLAYER2:{} },
-		'current': None,
-		'winner':  None}
+	'states': states,
+	'players': {
+		PLAYER1: {'ready': False, 'opponent': PLAYER2},
+		PLAYER2: {'ready': False, 'opponent': PLAYER1}},
+	'current': None}
 
-fsm_set_state(context, BATTLE_STARTED) #game = Game()
+# test
+fsm.set_state(context, BATTLE_STARTED) #game = Game()
 ships = [(24,34,44,54),(37,47,57),(80,81,82),(69,79),(1,2),(85,86),(8,),(6,),(60,),(22,)]
-fsm_dispatch(context, SETUP, (PLAYER1, ships)) #game.setupShips(PLAYER1, ships)
-fsm_dispatch(context, SETUP, (PLAYER2, ships)) #game.setupShips(PLAYER2, ships)
-#while fsm_get_state(context) == PLAYER_TURN: #while game.inprogress:
-fsm_dispatch(context, SHOOT, (PLAYER1, (7,8))) #game.shoot(PLAYER1, (7,8))
-fsm_dispatch(context, SHOOT, (PLAYER2, (5,6))) #game.shoot(PLAYER2, (5,6))
+fsm.dispatch(context, SETUP, (PLAYER1, ships)) #game.setupShips(PLAYER1, ships)
+fsm.dispatch(context, SETUP, (PLAYER2, ships)) #game.setupShips(PLAYER2, ships)
+while fsm.get_state(context) == PLAYER_TURN: #while game.inprogress:
+	fsm.dispatch(context, SHOOT, (PLAYER1, (5,6))) #game.shoot(PLAYER2, (5,6))
+	fsm.dispatch(context, SHOOT, (PLAYER2, (4,4))) #game.shoot(PLAYER1, (4,4))
