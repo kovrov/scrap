@@ -3,7 +3,7 @@ This module is describing high-level control flow of the game, that is
 essentially logic behind "game rules".
 This is typical "controller" in MVC terminology.
 """
-import seagrid
+import board
 import fsm
 
 BATTLE_STARTED, PLAYER_TURN, BATTLE_ENDED = range(100, 103) # states
@@ -14,7 +14,7 @@ SEA_SIDE = 10
 def restart_battle(context):  # entry action
 	print "battle restarted"
 	for player in context['players'].itervalues():
-		player['sea'] = [' '] * (SEA_SIDE**2)
+		player['sea'] = board.SeaGrid(SEA_SIDE)
 	context['current'] = context['players'].keys()[0]
 
 def all_players_set(context):  # condition
@@ -28,18 +28,21 @@ def all_players_set(context):  # condition
 def missed_shot(context):  # condition
 	current_player = context['players'][context['current']]
 	if current_player['last_shot_hit']:
-		print "shot is not missed!"
+		print "shot is hit!"
 		return False
 	else:
 		print "shot is missed!"
 		return True
 
 def opponent_has_no_ships(context):  # condition
-	raise NotImplementedError()
-	sea = context['players'][player]['sea']
-	print "opponent has ships!"
-	return False
-	print "opponent has no ships!"
+	current_player = context['players'][context['current']]
+	target_sea = context['players'][current_player['opponent']]['sea']
+	if target_sea.has_ships():
+		print "opponent has ships!"
+		return False
+	else:
+		print "opponent has no ships!"
+		return True
 
 def pass_turn(context):  # action
 	print "passing turn..."
@@ -51,7 +54,7 @@ def setup_ships(context, input):  # event input
 	player, ships = input
 	sea = context['players'][player]['sea']
 	for pos in ships:
-		seagrid.occupy_squares(sea, pos)
+		sea.place_ship(pos)
 	context['players'][player]['ready'] = True
 
 def player_shoot(context, input):  # event input
@@ -59,7 +62,7 @@ def player_shoot(context, input):  # event input
 	player, pos = input
 	current_player = context['players'][context['current']]
 	target_sea = context['players'][current_player['opponent']]['sea']
-	current_player['last_shot_hit'] = seagrid.shoot_square(target_sea, pos)
+	current_player['last_shot_hit'] = target_sea.shoot_square(pos)
 
 states = {
 	BATTLE_STARTED: {
@@ -93,10 +96,16 @@ context = {
 	'current': None}
 
 # test
+from random import randint
+
 fsm.set_state(context, BATTLE_STARTED) #game = Game()
-ships = [(24,34,44,54),(37,47,57),(80,81,82),(69,79),(1,2),(85,86),(8,),(6,),(60,),(22,)]
+#ships = [(24,34,44,54),(37,47,57),(80,81,82),(69,79),(1,2),(85,86),(8,),(6,),(60,),(22,)]
+ships = [(24,34,44,54),]
 fsm.dispatch(context, SETUP, (PLAYER1, ships)) #game.setupShips(PLAYER1, ships)
 fsm.dispatch(context, SETUP, (PLAYER2, ships)) #game.setupShips(PLAYER2, ships)
 while fsm.get_state(context) == PLAYER_TURN: #while game.inprogress:
-	fsm.dispatch(context, SHOOT, (PLAYER1, (5,6))) #game.shoot(PLAYER2, (5,6))
-	fsm.dispatch(context, SHOOT, (PLAYER2, (4,4))) #game.shoot(PLAYER1, (4,4))
+	fsm.dispatch(context, SHOOT, (PLAYER1, (randint(0,9),randint(0,9)))) #game.shoot(PLAYER2, (5,6))
+	fsm.dispatch(context, SHOOT, (PLAYER2, (4,2)))
+	fsm.dispatch(context, SHOOT, (PLAYER2, (4,3)))
+	fsm.dispatch(context, SHOOT, (PLAYER2, (4,4)))
+	fsm.dispatch(context, SHOOT, (PLAYER2, (4,5)))
