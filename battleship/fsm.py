@@ -1,4 +1,6 @@
+import log
 
+@log.debug
 def set_state(context, state):
 	#print "### SET_STATE:", state
 	st = context['states'][state]
@@ -8,6 +10,7 @@ def set_state(context, state):
 	#context['on_state_changed'](state)
 	return state
 
+@log.debug
 def dispatch(context, event, input):
 	#print "### DISPATCH:", event, input
 	st = context['states'].get(context['state'])
@@ -24,6 +27,7 @@ def dispatch(context, event, input):
 			return
 	#set_state(context, context['state'])
 
+@log.debug
 def get_state(context):
 	#print "### GET_STATE"
 	return context['state']

@@ -5,19 +5,23 @@ validation of actions, and provides status information.
 This is typical "model" in MVC terminology.
 """
 import math
+import log
 
 class SeaGrid:
+	@log.debug
 	def __init__(self, side):
 		self.side = side
 		self.grid = [' '] * (side**2)
 		self.ships = []
 
+	@log.debug
 	def is_squares_available(self, indices):
 		for i in indices:
 			if self.grid[i] != ' ':
 				return False
 		return True
 
+	@log.debug
 	def place_ship(self, indices):
 		row = self.side
 		grid_len = len(self.grid)
@@ -65,6 +69,7 @@ class SeaGrid:
 				self.grid[pos] = '.'
 		self.ships.append(indices)
 
+	@log.debug
 	def shoot_square(self, coords):
 		index = coords[1] * self.side + coords[0]
 		if self.grid[index] != '#':
@@ -80,5 +85,6 @@ class SeaGrid:
 				return True
 		raise RuntimeError("board integrity compromised")
 
+	@log.debug
 	def has_ships(self):
 		return len(self.ships) > 0

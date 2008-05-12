@@ -3,7 +3,9 @@ Battleship map generator
 """
 import math
 import random
+import log
 
+@log.debug
 def setup_ships(sea_side, fleet_conf):
 	"""
 	typical_config = [
@@ -19,6 +21,7 @@ def setup_ships(sea_side, fleet_conf):
 			ships.append(randomly_place_ship(ship[1], sea))
 	return ships
 
+@log.debug
 def randomly_place_ship(size, sea):
 	sea_side = int(math.sqrt(len(sea)))
 	pos = generate_random_position(size, sea_side)
@@ -27,6 +30,7 @@ def randomly_place_ship(size, sea):
 	occupy_squares(sea, pos)
 	return pos
 
+@log.debug
 def generate_random_position(ship_size, sea_side):
 	horizontal = random.choice((True, False))
 	h = random.randrange(sea_side - (ship_size if horizontal else 0))
@@ -35,12 +39,14 @@ def generate_random_position(ship_size, sea_side):
 	orient = 1 if horizontal else sea_side
 	return [index + i * orient for i in xrange(ship_size)]
 
+@log.debug
 def is_squares_available(sea, pos):
 	for i in pos:
 		if sea[i] != ' ':
 			return False
 	return True
 
+@log.debug
 def occupy_squares(sea, pos):
 	S = int(math.sqrt(len(sea)))
 	for i in pos:
