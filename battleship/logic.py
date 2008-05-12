@@ -11,7 +11,7 @@ SETUP='SETUP';SHOOT='SHOOT';RESTART='RESTART' # events
 SEA_SIDE = 10
 
 def restart_battle(context):  # entry action
-	print "battle restarted"
+	#print "battle restarted"
 	for player in context['players'].itervalues():
 		player['sea'] = board.SeaGrid(SEA_SIDE)
 	context['current'] = context['players'].keys()[0]
@@ -19,37 +19,37 @@ def restart_battle(context):  # entry action
 def all_players_set(context):  # condition
 	for player in context['players'].itervalues():
 		if not player['ready']:
-			print "not all players set!"
+			#print "not all players set!"
 			return False
-	print "all players set!"
+	#print "all players set!"
 	return True
 
 def missed_shot(context):  # condition
 	current_player = context['players'][context['current']]
 	if current_player['last_shot_hit']:
-		print "shot is hit!"
+		#print "shot is hit!"
 		return False
 	else:
-		print "shot is missed!"
+		#print "shot is missed!"
 		return True
 
 def opponent_has_no_ships(context):  # condition
 	current_player = context['players'][context['current']]
 	target_sea = context['players'][current_player['opponent']]['sea']
 	if target_sea.has_ships():
-		print "opponent has ships!"
+		#print "opponent has ships!"
 		return False
 	else:
-		print "opponent has no ships!"
+		#print "opponent has no ships!"
 		return True
 
 def pass_turn(context):  # action
-	print "passing turn..."
+	#print "passing turn..."
 	current_player = context['players'][context['current']]
 	context['current'] = current_player['opponent']
 
 def setup_ships(context, input):  # event input
-	print "setting up ships..."
+	#print "setting up ships..."
 	player, ships = input
 	sea = context['players'][player]['sea']
 	for pos in ships:
@@ -57,7 +57,7 @@ def setup_ships(context, input):  # event input
 	context['players'][player]['ready'] = True
 
 def player_shoot(context, input):  # event input
-	print "player shooting..."
+	#print "player shooting..."
 	player, pos = input
 	current_player = context['players'][context['current']]
 	target_sea = context['players'][current_player['opponent']]['sea']
@@ -87,10 +87,16 @@ states = {
 				'transitions': (
 					{'condition':None, 'state':BATTLE_STARTED, 'action':None},)}}}}
 
+fleet_config = (
+	(1, 4),  # one huge
+	(2, 3),  # two bigs
+	(3, 2),  # three mediums
+	(4, 1))  # four smalls
 
 # test
 PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
 
+import ai
 from random import randrange, choice
 
 context = {
@@ -104,18 +110,17 @@ state = fsm.set_state(context, BATTLE_STARTED)
 while state != BATTLE_ENDED:
 	if state == BATTLE_STARTED:
 		print "# BATTLE STARTED"
-		fsm.dispatch(context, SETUP, (PLAYER1,
-			[(24,34,44,54),(37,47,57),(80,81,82),(69,79),(1,02),(85,86),(8,),(6,),(60,),(22,)]))
+		fsm.dispatch(context, SETUP,
+				(PLAYER1, ai.setup_ships(SEA_SIDE, fleet_config)))
 		context['players'][PLAYER1]['shots'] = range(100)
-		fsm.dispatch(context, SETUP, (PLAYER2,
-			[(45,55,65,75),(2,12,22),(71,72,73),(40,41),(91,92),(37,47),(69,),(20,),(4,),(7,)]))
+		fsm.dispatch(context, SETUP,
+				(PLAYER2, ai.setup_ships(SEA_SIDE, fleet_config)))
 		context['players'][PLAYER2]['shots'] = range(100)
 	elif state == PLAYER_TURN:
-		print "# PLAYER TURN"
+		#print "# PLAYER TURN"
 		shot = choice(context['players'][context['current']]['shots'])
 		context['players'][context['current']]['shots'].remove(shot)
-		print "  player:", context['current']
-		print "  shots left:", len(context['players'][context['current']]['shots'])
+		print " ", context['current'], "shots left:", len(context['players'][context['current']]['shots'])
 		fsm.dispatch(context, SHOOT, (context['current'], (shot // 10, shot % 10)))
 	else:
 		raise Exception("Unknown STATE %s" % state)

@@ -1,6 +1,6 @@
 
 def set_state(context, state):
-	print "### SET_STATE:", state
+	#print "### SET_STATE:", state
 	st = context['states'][state]
 	if st['on_enter']:
 		st['on_enter'](context)
@@ -9,7 +9,7 @@ def set_state(context, state):
 	return state
 
 def dispatch(context, event, input):
-	print "### DISPATCH:", event, input
+	#print "### DISPATCH:", event, input
 	st = context['states'].get(context['state'])
 	assert st, "STATE %s" % context['state']
 	ev = st['events'].get(event)
@@ -25,5 +25,5 @@ def dispatch(context, event, input):
 	#set_state(context, context['state'])
 
 def get_state(context):
-	print "### GET_STATE"
+	#print "### GET_STATE"
 	return context['state']
