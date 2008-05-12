@@ -6,9 +6,8 @@ This is typical "controller" in MVC terminology.
 import board
 import fsm
 
-BATTLE_STARTED, PLAYER_TURN, BATTLE_ENDED = range(100, 103) # states
-SETUP, SHOOT, RESTART = range(200, 203) # events
-PLAYER1, PLAYER2 = range(300, 302)
+BATTLE_STARTED='BATTLE_STARTED';PLAYER_TURN='PLAYER_TURN';BATTLE_ENDED='BATTLE_ENDED' # states
+SETUP='SETUP';SHOOT='SHOOT';RESTART='RESTART' # events
 SEA_SIDE = 10
 
 def restart_battle(context):  # entry action
@@ -88,6 +87,12 @@ states = {
 				'transitions': (
 					{'condition':None, 'state':BATTLE_STARTED, 'action':None},)}}}}
 
+
+# test
+PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
+
+from random import randrange, choice
+
 context = {
 	'states': states,
 	'players': {
@@ -95,17 +100,23 @@ context = {
 		PLAYER2: {'ready': False, 'opponent': PLAYER1}},
 	'current': None}
 
-# test
-from random import randint
-
-fsm.set_state(context, BATTLE_STARTED) #game = Game()
-#ships = [(24,34,44,54),(37,47,57),(80,81,82),(69,79),(1,2),(85,86),(8,),(6,),(60,),(22,)]
-ships = [(24,34,44,54),]
-fsm.dispatch(context, SETUP, (PLAYER1, ships)) #game.setupShips(PLAYER1, ships)
-fsm.dispatch(context, SETUP, (PLAYER2, ships)) #game.setupShips(PLAYER2, ships)
-while fsm.get_state(context) == PLAYER_TURN: #while game.inprogress:
-	fsm.dispatch(context, SHOOT, (PLAYER1, (randint(0,9),randint(0,9)))) #game.shoot(PLAYER2, (5,6))
-	fsm.dispatch(context, SHOOT, (PLAYER2, (4,2)))
-	fsm.dispatch(context, SHOOT, (PLAYER2, (4,3)))
-	fsm.dispatch(context, SHOOT, (PLAYER2, (4,4)))
-	fsm.dispatch(context, SHOOT, (PLAYER2, (4,5)))
+state = fsm.set_state(context, BATTLE_STARTED)
+while state != BATTLE_ENDED:
+	if state == BATTLE_STARTED:
+		print "# BATTLE STARTED"
+		fsm.dispatch(context, SETUP, (PLAYER1,
+			[(24,34,44,54),(37,47,57),(80,81,82),(69,79),(1,02),(85,86),(8,),(6,),(60,),(22,)]))
+		context['players'][PLAYER1]['shots'] = range(100)
+		fsm.dispatch(context, SETUP, (PLAYER2,
+			[(45,55,65,75),(2,12,22),(71,72,73),(40,41),(91,92),(37,47),(69,),(20,),(4,),(7,)]))
+		context['players'][PLAYER2]['shots'] = range(100)
+	elif state == PLAYER_TURN:
+		print "# PLAYER TURN"
+		shot = choice(context['players'][context['current']]['shots'])
+		context['players'][context['current']]['shots'].remove(shot)
+		print "  player:", context['current']
+		print "  shots left:", len(context['players'][context['current']]['shots'])
+		fsm.dispatch(context, SHOOT, (context['current'], (shot // 10, shot % 10)))
+	else:
+		raise Exception("Unknown STATE %s" % state)
+	state = fsm.get_state(context)
