@@ -73,6 +73,7 @@ class SeaGrid:
 	def shoot_square(self, coords):
 		index = coords[1] * self.side + coords[0]
 		if self.grid[index] != '#':
+			self.grid[index] = '*'
 			return False
 		self.grid[index] = 'x'
 		# update ships list

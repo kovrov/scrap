@@ -5,6 +5,7 @@ logging.basicConfig(level=logging.DEBUG,
 indent = 0
 
 def debug(func):
+	return func  # no log
 	def wrapped_func(*args, **kwargs):
 		global indent
 		msg = func.__name__ + " " + str(args) + str(kwargs)
@@ -16,6 +17,7 @@ def debug(func):
 	return wrapped_func
 
 def info(func):
+	return func  # no log
 	def wrapped_func(*args, **kwargs):
 		global indent
 		msg = func.__name__ + " " + str(args) + str(kwargs)

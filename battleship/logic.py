@@ -99,33 +99,55 @@ class Game:
 				player1: {'ready': False, 'opponent': player2},
 				player2: {'ready': False, 'opponent': player1}},
 			'current': None}
-		self.state = fsm.set_state(self.context, BATTLE_STARTED)
+		fsm.set_state(self.context, BATTLE_STARTED)
+
+	def get_state(self):
+		return fsm.get_state(self.context)
+
+	def setup(self, player, ships):
+		fsm.dispatch(self.context, SETUP, (player, ships))
+
+	def shot(self, player, shot):
+		fsm.dispatch(self.context, SHOOT, (self.context['current'], shot))
+
+	def current_player(self):
+		return self.context['current']
+
+	def print_sea(self):
+		p1, p2 = self.context['players'].keys()
+		print p1, "              ", p2
+		for i in xrange(SEA_SIDE):
+			for j in xrange(SEA_SIDE):
+				print self.context['players'][p1]['sea'].grid[i * SEA_SIDE + j],
+			print "  ",
+			for j in xrange(SEA_SIDE):
+				print self.context['players'][p2]['sea'].grid[i * SEA_SIDE + j],
+			print
+		print
 
 # test
-PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
-
-
 import ai
 from random import randrange, choice
 
+PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
+shots = {}
 game = Game(PLAYER1, PLAYER2)
-while game.get_state() != BATTLE_ENDED:
-	state = fsm.get_state(context)
-	if game.state == BATTLE_STARTED:
-		log.log("# BATTLE STARTED")
-		fsm.dispatch(context, SETUP,
-				(PLAYER1, ai.setup_ships(SEA_SIDE, fleet_config)))
-		context['players'][PLAYER1]['shots'] = range(100)
-		fsm.dispatch(context, SETUP,
-				(PLAYER2, ai.setup_ships(SEA_SIDE, fleet_config)))
-		context['players'][PLAYER2]['shots'] = range(100)
+state = game.get_state()
+while state != BATTLE_ENDED:
+	if state == BATTLE_STARTED:
+		game.setup(PLAYER1, ai.setup_ships(SEA_SIDE, fleet_config))
+		shots[PLAYER1] = range(100) #ai.ComputerPlayer()
+		game.setup(PLAYER2, ai.setup_ships(SEA_SIDE, fleet_config))
+		shots[PLAYER2] = range(100)
 	elif state == PLAYER_TURN:
-		log.log("# PLAYER TURN")
-		shot = choice(context['players'][context['current']]['shots'])
-		context['players'][context['current']]['shots'].remove(shot)
-		log.log("  " + context['current'] + " shots left: " + str(len(context['players'][context['current']]['shots'])))
-		fsm.dispatch(context, SHOOT, (context['current'], (shot // 10, shot % 10)))
+		current_player_shots = shots[game.current_player()]
+		shot = choice(current_player_shots)
+		current_player_shots.remove(shot)
+		game.shot(game.current_player(), (shot // 10, shot % 10))
+		game.print_sea()
 	elif state == BATTLE_ENDED:
-		log.log("# BATTLE ENDED")
+		print "# BATTLE ENDED"
+		print (game.current_player() + " shots left: " + str(len(current_player_shots)))
 	else:
 		raise Exception("Unknown STATE %s" % state)
+	state = game.get_state()

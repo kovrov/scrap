@@ -5,6 +5,12 @@ import math
 import random
 import log
 
+
+class ComuterPlayer:
+	def __init__(self, sea_side, fleet_conf):
+		pass
+
+
 @log.debug
 def setup_ships(sea_side, fleet_conf):
 	"""
