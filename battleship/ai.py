@@ -12,10 +12,27 @@ class ComputerPlayer:
 
 	def shot(self):
 		assert len(self.shots) > 0
+		for target in self.targets:
+			if len(target) < 2:
+				get_squares = neighbor_squares
+			else:
+				span = abs(target[0] - target[1])
+				if span == 1:  # horisontal target
+					get_squares = horizontal_neighbor_squares
+				elif span == self.sea_side: # vertical target
+					get_squares = vertical_neighbor_squares
+				else:
+					raise Exception("this is impossible!")
+			for i in target:
+				for shot in get_squares(i, self.sea_side):
+					if shot in self.shots:
+						self.shots.remove(shot)
+						return (shot % 10, shot // 10)
+			raise Exception("this is impossible!")
 		shot = random.choice(self.shots)
 		self.shots.remove(shot)
 		print "removing shot", shot
-		return (shot // 10, shot % 10)
+		return (shot % 10, shot // 10)
 
 	def track(self, shot, res):
 		assert res in ('miss', 'hit', 'sunk')
@@ -72,6 +89,9 @@ def diagonal_squares(index, side):
 	return res
 
 def neighbor_squares(index, side):
+	return horizontal_neighbor_squares(index, side) + vertical_neighbor_squares(index, side)
+
+def horizontal_neighbor_squares(index, side):
 	res = []
 	length = side ** 2
 	pos = index - 1  # left
@@ -80,6 +100,11 @@ def neighbor_squares(index, side):
 	pos = index + 1  # right
 	if pos % side != 0 and pos >= 0 and pos < length:
 		res.append(pos)
+	return res
+
+def vertical_neighbor_squares(index, side):
+	res = []
+	length = side ** 2
 	pos = index - side  # up
 	if pos >= 0 and pos < length:
 		res.append(pos)
@@ -87,6 +112,8 @@ def neighbor_squares(index, side):
 	if pos >= 0 and pos < length:
 		res.append(pos)
 	return res
+
+###--------------
 
 def setup_ships(sea_side, fleet_conf):
 	"""
