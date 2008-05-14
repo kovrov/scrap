@@ -130,24 +130,22 @@ import ai
 from random import randrange, choice
 
 PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
-shots = {}
+players = {}
 game = Game(PLAYER1, PLAYER2)
-state = game.get_state()
-while state != BATTLE_ENDED:
+while True:
+	state = game.get_state()
 	if state == BATTLE_STARTED:
 		game.setup(PLAYER1, ai.setup_ships(SEA_SIDE, fleet_config))
-		shots[PLAYER1] = range(100) #ai.ComputerPlayer()
+		players[PLAYER1] = ai.ComputerPlayer(SEA_SIDE, fleet_config)
 		game.setup(PLAYER2, ai.setup_ships(SEA_SIDE, fleet_config))
-		shots[PLAYER2] = range(100)
+		players[PLAYER2] = ai.ComputerPlayer(SEA_SIDE, fleet_config)
 	elif state == PLAYER_TURN:
-		current_player_shots = shots[game.current_player()]
-		shot = choice(current_player_shots)
-		current_player_shots.remove(shot)
-		game.shot(game.current_player(), (shot // 10, shot % 10))
+		current_player = players[game.current_player()]
+		game.shot(game.current_player(), current_player_shots.shot())
 		game.print_sea()
 	elif state == BATTLE_ENDED:
 		print "# BATTLE ENDED"
 		print (game.current_player() + " shots left: " + str(len(current_player_shots)))
+		break
 	else:
 		raise Exception("Unknown STATE %s" % state)
-	state = game.get_state()
