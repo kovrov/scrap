@@ -1,6 +1,15 @@
-import log
 
-@log.debug
+
+class State:
+	__slots__ = ['on_enter', 'on_exit', 'events']
+
+class Event:
+	__slots__ = ['input', 'transitions']
+
+class Transition:
+	__slots__ = ['condition', 'state', 'action']
+
+
 def set_state(context, state):
 	#print "### SET_STATE:", state
 	st = context['states'][state]
@@ -10,7 +19,6 @@ def set_state(context, state):
 	#context['on_state_changed'](state)
 	return state
 
-@log.debug
 def dispatch(context, event, input):
 	#print "### DISPATCH:", event, input
 	st = context['states'].get(context['state'])
@@ -27,7 +35,6 @@ def dispatch(context, event, input):
 			return
 	#set_state(context, context['state'])
 
-@log.debug
 def get_state(context):
 	#print "### GET_STATE"
 	return context['state']

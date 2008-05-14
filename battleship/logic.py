@@ -5,26 +5,22 @@ This is typical "controller" in MVC terminology.
 """
 import board
 import fsm
-import log
 
 BATTLE_STARTED='BATTLE_STARTED';PLAYER_TURN='PLAYER_TURN';BATTLE_ENDED='BATTLE_ENDED' # states
 SETUP='SETUP';SHOOT='SHOOT';RESTART='RESTART' # events
 SEA_SIDE = 10
 
-@log.info
 def restart_battle(context):  # entry action
 	for player in context['players'].itervalues():
 		player['sea'] = board.SeaGrid(SEA_SIDE)
 	context['current'] = context['players'].keys()[0]
 
-@log.info
 def does_all_players_set(context):  # condition
 	for player in context['players'].itervalues():
 		if not player['ready']:
 			return False
 	return True
 
-@log.info
 def is_shot_missed(context):  # condition
 	current_player = context['players'][context['current']]
 	if current_player['last_shot_hit']:
@@ -32,7 +28,6 @@ def is_shot_missed(context):  # condition
 	else:
 		return True
 
-@log.info
 def does_opponent_has_no_ships(context):  # condition
 	current_player = context['players'][context['current']]
 	target_sea = context['players'][current_player['opponent']]['sea']
@@ -41,12 +36,10 @@ def does_opponent_has_no_ships(context):  # condition
 	else:
 		return True
 
-@log.info
 def pass_turn(context):  # action
 	current_player = context['players'][context['current']]
 	context['current'] = current_player['opponent']
 
-@log.info
 def setup_ships(context, input):  # event input
 	player, ships = input
 	sea = context['players'][player]['sea']
@@ -54,7 +47,6 @@ def setup_ships(context, input):  # event input
 		sea.place_ship(pos)
 	context['players'][player]['ready'] = True
 
-@log.info
 def player_shoot(context, input):  # event input
 	player, pos = input
 	current_player = context['players'][context['current']]
@@ -131,21 +123,24 @@ from random import randrange, choice
 
 PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
 players = {}
+shots_made = {}
 game = Game(PLAYER1, PLAYER2)
 while True:
 	state = game.get_state()
 	if state == BATTLE_STARTED:
 		game.setup(PLAYER1, ai.setup_ships(SEA_SIDE, fleet_config))
-		players[PLAYER1] = ai.ComputerPlayer(SEA_SIDE, fleet_config)
 		game.setup(PLAYER2, ai.setup_ships(SEA_SIDE, fleet_config))
+		players[PLAYER1] = ai.ComputerPlayer(SEA_SIDE, fleet_config)
 		players[PLAYER2] = ai.ComputerPlayer(SEA_SIDE, fleet_config)
+		shots_made[PLAYER1] = shots_made[PLAYER2] = 0
 	elif state == PLAYER_TURN:
 		current_player = players[game.current_player()]
-		game.shot(game.current_player(), current_player_shots.shot())
+		game.shot(game.current_player(), current_player.shot())
+		shots_made[game.current_player()] += 1
 		game.print_sea()
 	elif state == BATTLE_ENDED:
 		print "# BATTLE ENDED"
-		print (game.current_player() + " shots left: " + str(len(current_player_shots)))
+		print (game.current_player() + " shots made: " + str(shots_made[game.current_player()]))
 		break
 	else:
 		raise Exception("Unknown STATE %s" % state)
