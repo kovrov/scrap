@@ -54,28 +54,25 @@ def player_shoot(context, input):  # event input
 	current_player['last_shot_hit'] = target_sea.shoot_square(pos)
 
 states = {
-	BATTLE_STARTED: {
-		'on_enter': restart_battle,
-		'events': {
-			SETUP: {
-				'input': setup_ships,
-				'transitions': (
-					{'condition':does_all_players_set, 'state':PLAYER_TURN, 'action':None},)}}},
-	PLAYER_TURN: {
-		'on_enter': None,
-		'events': {
-			SHOOT: {
-				'input': player_shoot,
-				'transitions': (
-					{'condition':is_shot_missed, 'state':PLAYER_TURN, 'action':pass_turn},
-					{'condition':does_opponent_has_no_ships, 'state':BATTLE_ENDED, 'action':None})}}},
-	BATTLE_ENDED: {
-		'on_enter': None,
-		'events': {
-			RESTART: {
-				'input': None,
-				'transitions': (
-					{'condition':None, 'state':BATTLE_STARTED, 'action':None},)}}}}
+	BATTLE_STARTED: fsm.State(
+		on_enter = restart_battle,
+		events = {
+			SETUP: fsm.Event(
+				input = setup_ships,
+				transitions = (
+					fsm.Transition(condition=does_all_players_set, state=PLAYER_TURN),))}),
+	PLAYER_TURN: fsm.State(
+		events = {
+			SHOOT: fsm.Event(
+				input = player_shoot,
+				transitions = (
+					fsm.Transition(condition=is_shot_missed, state=PLAYER_TURN, action=pass_turn),
+					fsm.Transition(condition=does_opponent_has_no_ships, state=BATTLE_ENDED)))}),
+	BATTLE_ENDED: fsm.State(
+		events = {
+			RESTART: fsm.Event(
+				transitions = (
+					fsm.Transition(state=BATTLE_STARTED),))})}
 
 fleet_config = (
 	(1, 4),  # one huge
@@ -140,7 +137,7 @@ while True:
 		game.print_sea()
 	elif state == BATTLE_ENDED:
 		print "# BATTLE ENDED"
-		print (game.current_player() + " shots made: " + str(shots_made[game.current_player()]))
+		print (game.current_player() + "wins, shots made: " + str(shots_made[game.current_player()]))
 		break
 	else:
 		raise Exception("Unknown STATE %s" % state)
