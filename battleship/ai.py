@@ -6,13 +6,87 @@ import random
 
 class ComputerPlayer:
 	def __init__(self, sea_side, fleet_conf):
-		self.shots = range(100)
+		self.sea_side = sea_side
+		self.shots = range(self.sea_side ** 2)
+		self.targets = []  # hit, but not yet sunk opponent ships
 
 	def shot(self):
+		assert len(self.shots) > 0
 		shot = random.choice(self.shots)
 		self.shots.remove(shot)
+		print "removing shot", shot
 		return (shot // 10, shot % 10)
 
+	def track(self, shot, res):
+		assert res in ('miss', 'hit', 'sunk')
+		if res == 'miss':
+			return
+		index = shot[1] * self.sea_side + shot[0]
+		print index, ":"
+		# clear diagonal shots
+		for i in diagonal_squares(index, self.sea_side):
+			if i in self.shots:
+				self.shots.remove(i)
+				print "removing diagonal", i
+		# find the target if its in not a new one
+		target = None
+		for t in self.targets:
+			assert index not in t
+			for n in neighbor_squares(index, self.sea_side):
+				if n in t:
+					target = t
+					break
+		if res == 'hit':
+			if target is not None:
+				target.append(index)
+				return
+			self.targets.append([index,])
+		if res == 'sunk':
+			for n in neighbor_squares(index, self.sea_side):
+				if n in self.shots:
+					self.shots.remove(n)
+					print "removing sunk shot", n
+			if target is not None:
+				self.targets.remove(target)
+				for i in target:
+					for n in neighbor_squares(i, self.sea_side):
+						if n in self.shots:
+							self.shots.remove(n)
+							print "removing sunk target", n
+
+def diagonal_squares(index, side):
+	res = []
+	length = side ** 2
+	pos = index - side + 1  # upper-right
+	if pos % side != 0 and pos >= 0 and pos < length:
+		res.append(pos)
+	pos = index - side - 1  # upper-left
+	if index % side != 0 and pos >= 0 and pos < length:
+		res.append(pos)
+	pos = index + side + 1  # lower-right
+	if pos % side != 0 and pos >= 0 and pos < length:
+		res.append(pos)
+	pos = index + side - 1  # lower-left
+	if index % side != 0 and pos >= 0 and pos < length:
+		res.append(pos)
+	return res
+
+def neighbor_squares(index, side):
+	res = []
+	length = side ** 2
+	pos = index - 1  # left
+	if index % side != 0 and pos >= 0 and pos < length:
+		res.append(pos)
+	pos = index + 1  # right
+	if pos % side != 0 and pos >= 0 and pos < length:
+		res.append(pos)
+	pos = index - side  # up
+	if pos >= 0 and pos < length:
+		res.append(pos)
+	pos = index + side  # down
+	if pos >= 0 and pos < length:
+		res.append(pos)
+	return res
 
 def setup_ships(sea_side, fleet_conf):
 	"""

@@ -23,10 +23,7 @@ def does_all_players_set(context):  # condition
 
 def is_shot_missed(context):  # condition
 	current_player = context['players'][context['current']]
-	if current_player['last_shot_hit']:
-		return False
-	else:
-		return True
+	return current_player['last_shot'] == 'miss'
 
 def does_opponent_has_no_ships(context):  # condition
 	current_player = context['players'][context['current']]
@@ -51,7 +48,7 @@ def player_shoot(context, input):  # event input
 	player, pos = input
 	current_player = context['players'][context['current']]
 	target_sea = context['players'][current_player['opponent']]['sea']
-	current_player['last_shot_hit'] = target_sea.shoot_square(pos)
+	current_player['last_shot'] = target_sea.shoot_square(pos)
 
 states = {
 	BATTLE_STARTED: fsm.State(
@@ -75,29 +72,44 @@ states = {
 					fsm.Transition(state=BATTLE_STARTED),))})}
 
 fleet_config = (
-	(1, 4),  # one huge
-	(2, 3),  # two bigs
-	(3, 2),  # three mediums
-	(4, 1))  # four smalls
+	(1, 4),  # one battleship
+	(2, 3),  # two cruisers
+	(3, 2),  # three destroyers
+	(4, 1))  # four boats
+# from wikipedia article
+fleet_config_2a = (
+	(1, 5),  # one carrier
+	(1, 4),  # one battleship
+	(2, 3),  # two cruiser
+	(1, 2))  # one destroyer
+# from wikipedia pix
+fleet_config_2b = (
+	(1, 5),  # one carier
+	(1, 4),  # one battleship
+	(1, 3),  # one cruiser
+	(2, 2),  # two destroyers
+	(2, 1))  # two boats
 
+# Just a "nice" client helper
 class Game:
 	def __init__(self, player1, player2):
 		self.context = {
-			'states': states,
 			'players': {
 				player1: {'ready': False, 'opponent': player2},
 				player2: {'ready': False, 'opponent': player1}},
 			'current': None}
-		fsm.set_state(self.context, BATTLE_STARTED)
+		self.state_machine = fsm.Transducer(states, BATTLE_STARTED, self.context)
 
 	def get_state(self):
-		return fsm.get_state(self.context)
+		return self.state_machine.get_state()
 
 	def setup(self, player, ships):
-		fsm.dispatch(self.context, SETUP, (player, ships))
+		self.state_machine.dispatch(SETUP, (player, ships))
 
 	def shot(self, player, shot):
-		fsm.dispatch(self.context, SHOOT, (self.context['current'], shot))
+		assert self.context['current'] == player
+		self.state_machine.dispatch(SHOOT, (player, shot))
+		return self.context['players'][player]['last_shot']
 
 	def current_player(self):
 		return self.context['current']
@@ -112,16 +124,15 @@ class Game:
 			for j in xrange(SEA_SIDE):
 				print self.context['players'][p2]['sea'].grid[i * SEA_SIDE + j],
 			print
-		print
 
 # test
 import ai
 from random import randrange, choice
 
 PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
+game = Game(PLAYER1, PLAYER2)
 players = {}
 shots_made = {}
-game = Game(PLAYER1, PLAYER2)
 while True:
 	state = game.get_state()
 	if state == BATTLE_STARTED:
@@ -131,13 +142,17 @@ while True:
 		players[PLAYER2] = ai.ComputerPlayer(SEA_SIDE, fleet_config)
 		shots_made[PLAYER1] = shots_made[PLAYER2] = 0
 	elif state == PLAYER_TURN:
-		current_player = players[game.current_player()]
-		game.shot(game.current_player(), current_player.shot())
-		shots_made[game.current_player()] += 1
+		current_player_id = game.current_player()
+		current_player = players[current_player_id]
+		shot = current_player.shot()
+		res = game.shot(current_player_id, shot)
+		shots_made[current_player_id] += 1
 		game.print_sea()
+		print current_player_id, res, shot
+		current_player.track(shot, res)
 	elif state == BATTLE_ENDED:
 		print "# BATTLE ENDED"
-		print (game.current_player() + "wins, shots made: " + str(shots_made[game.current_player()]))
+		print game.current_player(), "win, shots made:", shots_made[game.current_player()]
 		break
 	else:
 		raise Exception("Unknown STATE %s" % state)

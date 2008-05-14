@@ -69,16 +69,16 @@ class SeaGrid:
 		index = coords[1] * self.side + coords[0]
 		if self.grid[index] != '#':
 			self.grid[index] = '*'
-			return False
+			return 'miss'
 		self.grid[index] = 'x'
 		# update ships list
 		for ship in self.ships:
 			if index in ship:
 				for i in ship:
 					if self.grid[i] == '#':
-						return True
+						return 'hit'
 				self.ships.remove(ship)
-				return True
+				return 'sunk'
 		raise RuntimeError("board integrity compromised")
 
 	def has_ships(self):
