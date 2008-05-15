@@ -4,19 +4,12 @@ It incapsulates implementation of tasks like fleet setup, player shots,
 validation of actions, and provides status information.
 This is typical "model" in MVC terminology.
 """
-import math
 
 class SeaGrid:
 	def __init__(self, side):
 		self.side = side
 		self.grid = [' '] * (side**2)
 		self.ships = []
-
-	def is_squares_available(self, indices):
-		for i in indices:
-			if self.grid[i] != ' ':
-				return False
-		return True
 
 	def place_ship(self, indices):
 		row = self.side
