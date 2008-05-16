@@ -12,6 +12,24 @@ SEA_SIDE = 10
 
 # Just a "nice" client helper
 class Game:
+	"""
+	Usage like this:
+
+	game = logic.Game("player one", "player two")
+	while True:
+		state = game.get_state()
+		if state == logic.BATTLE_STARTED:
+			ships_for_player_one = ...
+			game.setup("player one", ships_for_player_one)
+			ships_for_player_two = ...
+			game.setup("player two", ships_for_player_two)
+		elif state == logic.PLAYER_TURN:
+			current_player_id = game.current_player()
+			the_shot = ...
+			shot_result = game.shot(current_player_id, the_shot)
+		elif state == logic.BATTLE_ENDED:
+			break
+	"""
 	config = (
 		(1, 4),  # one battleship
 		(2, 3),  # two cruisers

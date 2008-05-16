@@ -6,21 +6,19 @@ import array
 def print_sea(game, player_id, last_shot, res):
 	rows = 10
 	side = rows*2+1
-	#player = players[player_id]
-	#player.shot_history
 	grid = array.array('c', ' '*(rows*side))
 	for x, y in game.player_shots(player_id):
 		grid[y * side + x*2+1] = '.'
 	for ship in game.opponent_ships(player_id):
 		for s in ship:
-			grid[s.y * side + s.x*2+1] = '#' if s.active else 'x'
+			grid[s.y * side + s.x*2+1] = ' ' if s.active else 'x'
 	x, y = last_shot
 	grid[y * side + x*2] = '['
 	grid[y * side + x*2+2] = ']'
-	padding = ' ' * 22 if player_id == PLAYER1 else ''
+	padding = ' ' * 40 + '|' if player_id == PLAYER1 else ''
 	for i in xrange(rows):
 		print padding, grid[i*side:(i+1)*side].tostring()
-	print player_id, res, last_shot
+	print padding, player_id, res, last_shot, '\n'
 
 
 PLAYER1='PLAYER1'; PLAYER2='PLAYER2'
