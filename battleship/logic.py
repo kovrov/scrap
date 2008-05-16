@@ -40,23 +40,19 @@ class Game:
 	def current_player(self):
 		return self.context['current']
 
-	def print_sea(self):
-		p1, p2 = self.context['players'].keys()
-		print p1, "              ", p2
-		for i in xrange(SEA_SIDE):
-			for j in xrange(SEA_SIDE):
-				print self.context['players'][p1]['sea'].grid[i * SEA_SIDE + j],
-			print "  ",
-			for j in xrange(SEA_SIDE):
-				print self.context['players'][p2]['sea'].grid[i * SEA_SIDE + j],
-			print
+	def opponent_ships(self, player):
+		opponent = self.context['players'][player]['opponent']
+		return self.context['players'][opponent]['sea'].ships
 
+	def player_shots(self, player):
+		opponent = self.context['players'][player]['opponent']
+		return self.context['players'][opponent]['sea'].shots
 
 # Rule defenitions and 
 
 def restart_battle(context):  # entry action
 	for player in context['players'].itervalues():
-		player['sea'] = board.SeaGrid(SEA_SIDE)
+		player['sea'] = None
 	context['current'] = context['players'].keys()[0]
 
 def does_all_players_set(context):  # condition
@@ -72,10 +68,10 @@ def is_shot_missed(context):  # condition
 def does_opponent_has_no_ships(context):  # condition
 	current_player = context['players'][context['current']]
 	target_sea = context['players'][current_player['opponent']]['sea']
-	if target_sea.has_ships():
-		return False
-	else:
+	if len(target_sea.active_ships) == 0:
 		return True
+	else:
+		return False
 
 def pass_turn(context):  # action
 	current_player = context['players'][context['current']]
@@ -83,9 +79,7 @@ def pass_turn(context):  # action
 
 def setup_ships(context, input):  # event input
 	player, ships = input
-	sea = context['players'][player]['sea']
-	for pos in ships:
-		sea.place_ship(pos)
+	context['players'][player]['sea'] = board.SeaGrid(SEA_SIDE, ships)
 	context['players'][player]['ready'] = True
 
 def player_shoot(context, input):  # event input
