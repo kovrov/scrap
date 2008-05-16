@@ -11,7 +11,12 @@ class SeaGrid:
 		self.grid = [' '] * (side**2)
 		self.ships = []
 
-	def place_ship(self, indices):
+	def place_ship(self, ship):
+		x, y, ship_size, horizontal = ship
+		index = y * self.side + x
+		orient = 1 if horizontal else self.side
+		indices = [index + i * orient for i in xrange(ship_size)]
+
 		row = self.side
 		grid_len = len(self.grid)
 		for i in indices:

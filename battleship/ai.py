@@ -125,9 +125,9 @@ def setup_ships(sea_side, fleet_conf):
 	"""
 	ships = []
 	sea = [' '] * (sea_side**2)
-	for ship in fleet_conf:
-		for i in xrange(ship[0]):
-			ships.append(randomly_place_ship(ship[1], sea))
+	for quantity, size in fleet_conf:
+		for i in xrange(quantity):
+			ships.append(randomly_place_ship(size, sea))
 	return ships
 
 def randomly_place_ship(size, sea):
@@ -140,19 +140,26 @@ def randomly_place_ship(size, sea):
 
 def generate_random_position(ship_size, sea_side):
 	horizontal = random.choice((True, False))
-	h = random.randrange(sea_side - (ship_size if horizontal else 0))
-	v = random.randrange(sea_side - (0 if horizontal else ship_size))
-	index = v * sea_side + h
-	orient = 1 if horizontal else sea_side
-	return [index + i * orient for i in xrange(ship_size)]
+	x = random.randrange(sea_side - (ship_size if horizontal else 0))
+	y = random.randrange(sea_side - (0 if horizontal else ship_size))
+	return (x, y, ship_size, horizontal)
 
-def is_squares_available(sea, pos):
-	for i in pos:
+def is_squares_available(sea, ship):
+	sea_side = int(math.sqrt(len(sea)))
+	x, y, ship_size, horizontal = ship
+	index = y * sea_side + x
+	orient = 1 if horizontal else sea_side
+	for i in [index + i * orient for i in xrange(ship_size)]:
 		if sea[i] != ' ':
 			return False
 	return True
 
-def occupy_squares(sea, pos):
+def occupy_squares(sea, ship):
+	sea_side = int(math.sqrt(len(sea)))
+	x, y, ship_size, horizontal = ship
+	index = y * sea_side + x
+	orient = 1 if horizontal else sea_side
+	pos = [index + i * orient for i in xrange(ship_size)]
 	S = int(math.sqrt(len(sea)))
 	for i in pos:
 		assert sea[i] == ' '
