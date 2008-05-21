@@ -50,7 +50,7 @@ class Game:
 	def setup(self, player, ships):
 		self.state_machine.dispatch(SETUP, (player, ships))
 
-	def shot(self, player, shot):
+	def shoot(self, player, shot):
 		assert self.context['current'] == player
 		self.state_machine.dispatch(SHOOT, (player, shot))
 		return self.context['players'][player]['last_shot']
@@ -66,7 +66,7 @@ class Game:
 		opponent = self.context['players'][player]['opponent']
 		return self.context['players'][opponent]['sea'].shots
 
-# Rule defenitions and 
+# Rule defenitions and support
 
 def restart_battle(context):  # entry action
 	for player in context['players'].itervalues():

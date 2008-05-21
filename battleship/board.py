@@ -6,7 +6,7 @@ This is typical "model" in MVC terminology.
 """
 
 class SeaGrid:
-	def __init__(self, side, ships):
+	def __init__(self, side, anchors):
 		grid_len = side**2
 		grid = [' '] * grid_len
 
@@ -14,8 +14,8 @@ class SeaGrid:
 		self.ships = []
 		self.active_ships = []
 		self.shots = []
-		for ship in ships:
-			x, y, ship_size, horizontal = ship
+		for anchor in anchors:
+			x, y, ship_size, horizontal = anchor
 			index = y * side + x
 			orient = 1 if horizontal else side
 			indices = [index + i * orient for i in xrange(ship_size)]

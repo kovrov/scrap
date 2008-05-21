@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="9.00"
 	Name="game"
 	ProjectGUID="{465BC0CF-C18E-4AA2-899D-82D972889C78}"
+	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -144,11 +145,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\computerplayer.cpp"
+				RelativePath=".\ai.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\config.cpp"
+				RelativePath=".\board.cpp"
 				>
 			</File>
 			<File
@@ -156,11 +157,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\game.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\seagrid.cpp"
+				RelativePath=".\logic.cpp"
 				>
 			</File>
 		</Filter>
@@ -170,11 +167,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\computerplayer.h"
+				RelativePath=".\ai.h"
 				>
 			</File>
 			<File
-				RelativePath=".\config.h"
+				RelativePath=".\board.h"
 				>
 			</File>
 			<File
@@ -182,11 +179,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\game.h"
-				>
-			</File>
-			<File
-				RelativePath=".\seagrid.h"
+				RelativePath=".\logic.h"
 				>
 			</File>
 		</Filter>

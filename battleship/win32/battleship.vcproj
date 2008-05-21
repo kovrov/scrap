@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="battleship"
 	ProjectGUID="{D1EE20D7-4618-4494-9F4F-29930D298C4C}"
 	>

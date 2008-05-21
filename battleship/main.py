@@ -37,7 +37,7 @@ while True:
 		current_player_id = game.current_player()
 		current_player = players[current_player_id]
 		shot = current_player.shot()
-		res = game.shot(current_player_id, shot)
+		res = game.shoot(current_player_id, shot)
 		current_player.track(shot, res)
 		shots_made[current_player_id] += 1
 		print_sea(game, current_player_id, shot, res)
