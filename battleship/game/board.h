@@ -9,6 +9,11 @@ enum SHOT { MISS, HIT, SUNK };  // results
 struct Pos
 {
 	short x,y;
+	Pos(short x_val, short y_val)
+	{
+		x = x_val;
+		y = y_val;
+	}
 	bool operator== (const Pos& pos) const
 	{
 		return (x == pos.x && y == pos.y) ? true : false;
@@ -26,10 +31,9 @@ struct ShipSegment
 {
 	Pos pos;
 	bool active;
-	ShipSegment(short x, short y)
+	ShipSegment(short x, short y):
+		pos (x, y)
 	{
-		pos.x = x;
-		pos.y = y;
 		active = true;
 	}
 };

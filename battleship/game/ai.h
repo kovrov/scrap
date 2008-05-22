@@ -9,7 +9,7 @@ namespace ai {
 class ComputerPlayer
 {
 	ComputerPlayer(short sea_side, std::vector<logic::FleetConf> fleet_conf);
-	void Shot();
+	board::Pos Shot();
 	void Track(board::Pos shot, board::SHOT res);
 private:
 	short m_sea_side;

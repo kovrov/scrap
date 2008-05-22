@@ -1,7 +1,20 @@
 #include "ai.h"
 
+#include <algorithm>
+#include <functional>
+#include <exception>
+#include <assert.h>
+#include <stdlib.h>
+
+
 namespace ai {
 
+
+typedef std::vector<int> (*NEIGHBOR_FN)(size_t index, short side);
+std::vector<int> neighbor_squares(size_t index, short side);
+std::vector<int> horizontal_neighbor_squares(size_t index, short side);
+std::vector<int> vertical_neighbor_squares(size_t index, short side);
+std::vector<int> diagonal_squares(size_t index, short side);
 
 ComputerPlayer::ComputerPlayer(short sea_side, std::vector<logic::FleetConf> fleet_conf)
 {
@@ -11,11 +24,12 @@ ComputerPlayer::ComputerPlayer(short sea_side, std::vector<logic::FleetConf> fle
 }
 
 
-void ComputerPlayer::Shot()
+board::Pos ComputerPlayer::Shot()
 {
 	assert (m_shots.size() > 0);
 	for (std::vector< std::vector<int> >::iterator it=m_targets.begin(); it != m_targets.end(); it++)
 	{
+		NEIGHBOR_FN get_squares = NULL;
 		std::vector<int>& target = *it;
 		if (target.size() < 2)
 		{
@@ -23,7 +37,7 @@ void ComputerPlayer::Shot()
 		}
 		else
 		{
-			span = abs(target[0] - target[1]);
+			unsigned span = abs(target[0] - target[1]);
 			if (span == 1)  // horisontal target
 				get_squares = horizontal_neighbor_squares;
 			else if (span == m_sea_side) // vertical target
@@ -32,71 +46,85 @@ void ComputerPlayer::Shot()
 				throw std::exception("this is impossible!");
 		}
 
-		for (i in target)
+		for (std::vector<int>::iterator it=target.begin(); it != target.end(); it++)
 		{
-			for (shot in get_squares(i, m_sea_side))
+			int i = *it;
+			std::vector<int> squares = get_squares(i, m_sea_side);
+			for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); i++)
 			{
-				if (shot in m_shots)
+				int& shot = *it;
+				if (0 < std::count(m_shots.begin(), m_shots.end(), shot))
 				{
-					m_shots.remove(shot);
-					return (shot % 10, shot / 10);
+					m_shots.erase(std::find(m_shots.begin(), m_shots.end(), shot));
+					return board::Pos(shot % m_sea_side, shot / m_sea_side);
 				}
 			}
 		}
 		throw std::exception("this is impossible!");
 	}
-	shot = random.choice(m_shots);
-	m_shots.remove(shot);
-	return board::Pos(shot % 10, shot / 10);
+	std::vector<int>::iterator shot_it = m_shots.begin() + (rand() % m_shots.size()); // random.choice(m_shots);
+	int shot = *shot_it;
+	m_shots.erase(shot_it);
+	return board::Pos(shot % m_sea_side, shot / m_sea_side);
 }
+
 
 
 
 void ComputerPlayer::Track(board::Pos shot, board::SHOT res)
 {
-	if (res == board::SHOT::MISS)
+	if (res == board::MISS)
 		return;
-	index = shot.y * m_sea_side + shot.x;
+	size_t index = shot.y * m_sea_side + shot.x;
 	// clear diagonal shots
-	for (i in diagonal_squares(index, m_sea_side))
+	{std::vector<int> squares = diagonal_squares(index, m_sea_side);
+	for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); it++)
 	{
-		if (i in m_shots)
-			m_shots.remove(i);
-	}
+		std::vector<int>::iterator find_it = std::find(m_shots.begin(), m_shots.end(), *it);
+		if (find_it != m_shots.end())
+			m_shots.erase(find_it);
+	}}
 	// find the target if its in not a new one
-	target = None
-	for (t in m_targets)
+	std::vector<int>* targetP = NULL;
+	for (std::vector< std::vector<int> >::iterator it=m_targets.begin(); it != m_targets.end(); it++)
 	{
-		assert (index not in t);
-		for (n in neighbor_squares(index, m_sea_side))
+		std::vector<int>& t = *it;
+		assert (0 == std::count(t.begin(), t.end(), index));
+		std::vector<int> squares = neighbor_squares(index, m_sea_side);
+		for (std::vector<int>::iterator it = squares.begin(); it != squares.end(); it++)
 		{
-			if (n in t)
+			int& n = *it;
+			if (0 != std::count(t.begin(), t.end(), n))
 			{
-				target = t;
+				targetP = &t;
 				break;
 			}
 		}
 	}
-	if (res == 'hit')
+
+	if (res == board::HIT)
 	{
-		if (target is not None)
+		if (targetP != NULL)
 		{
-			target.append(index);
+			targetP->push_back(index);
 			return;
 		}
-		m_targets.append([index,]);
+		m_targets.push_back(std::vector<int>(1, index));
 	}
-	if (res == 'sunk')
+
+	if (res == board::SUNK)
 	{
-		for (n in neighbor_squares(index, m_sea_side))
+		std::vector<int> squares = neighbor_squares(index, m_sea_side);
+		for (std::vector<int>::iterator it = squares.begin(); it != squares.end(); it++)
 		{
-			if n in m_shots:
-				m_shots.remove(n);
+			std::vector<int>::iterator find_it = std::find(m_shots.begin(), m_shots.end(), *it);
+			if (find_it != m_shots.end())
+				m_shots.erase(find_it);
 		}
-		if (target is not None)
+		if (targetP != NULL)
 		{
-			m_targets.remove(target);
-			for (i in target)
+			m_targets.erase(*targetP);
+			for (i in targetP)
 			{
 				for (n in neighbor_squares(i, m_sea_side))
 				{
@@ -109,37 +137,40 @@ void ComputerPlayer::Track(board::Pos shot, board::SHOT res)
 }
 
 
-void diagonal_squares(index, side)
+std::vector<int> diagonal_squares(index, side)
 {
-	res = []
-	length = side ** 2
+	std::vector<int> res;
+	length = m_side * m_side;
 	pos = index - side + 1;  // upper-right
 	if (pos % side != 0 && pos >= 0 && pos < length)
 	{
-		res.append(pos)
+		res.push_back(pos);
 	}
 	pos = index - side - 1;  // upper-left
 	if (index % side != 0 && pos >= 0 && pos < length)
 	{
-		res.append(pos)
+		res.push_back(pos);
 	}
 	pos = index + side + 1;  // lower-right
 	if (pos % side != 0 && pos >= 0 && pos < length)
 	{
-		res.append(pos)
+		res.push_back(pos);
 	}
 	pos = index + side - 1;  // lower-left
 	if (index % side != 0 && pos >= 0 && pos < length)
 	{
-		res.append(pos)
+		res.push_back(pos);
 	}
-	return res
+	return res;
 }
 
-void neighbor_squares(index, side):
+std::vector<int> neighbor_squares(index, side)
+{
 	return horizontal_neighbor_squares(index, side) + vertical_neighbor_squares(index, side)
+}
 
-void horizontal_neighbor_squares(index, side):
+std::vector<int> horizontal_neighbor_squares(index, side)
+{
 	res = []
 	length = side ** 2
 	pos = index - 1;  // left
@@ -149,8 +180,10 @@ void horizontal_neighbor_squares(index, side):
 	if pos % side != 0 && pos >= 0 && pos < length:
 		res.append(pos)
 	return res
+}
 
-void vertical_neighbor_squares(index, side):
+void vertical_neighbor_squares(index, side)
+{
 	res = []
 	length = side ** 2
 	pos = index - side;  // up
@@ -160,10 +193,12 @@ void vertical_neighbor_squares(index, side):
 	if pos >= 0 && pos < length:
 		res.append(pos)
 	return res
+}
 
 //--------------
 
-void setup_ships(sea_side, fleet_conf):
+void setup_ships(sea_side, fleet_conf)
+{
 	/*
 	typical_config = [
 	(1, 4),  // one huge
@@ -177,22 +212,28 @@ void setup_ships(sea_side, fleet_conf):
 		for i in xrange(quantity):
 			ships.append(randomly_place_ship(size, sea))
 	return ships
+}
 
-void randomly_place_ship(size, sea):
+void randomly_place_ship(size, sea)
+{
 	sea_side = int(math.sqrt(len(sea)))
 	pos = generate_random_position(size, sea_side)
 	while not is_squares_available(sea, pos):
 		pos = generate_random_position(size, sea_side)
 	occupy_squares(sea, pos)
 	return pos
+}
 
-void generate_random_position(ship_size, sea_side):
+void generate_random_position(ship_size, sea_side)
+{
 	horizontal = random.choice((True, False))
 	x = random.randrange(sea_side - (ship_size if horizontal else 0))
 	y = random.randrange(sea_side - (0 if horizontal else ship_size))
 	return (x, y, ship_size, horizontal)
+}
 
-void is_squares_available(sea, ship):
+void is_squares_available(sea, ship)
+{
 	sea_side = int(math.sqrt(len(sea)))
 	x, y, ship_size, horizontal = ship
 	index = y * sea_side + x
@@ -201,6 +242,7 @@ void is_squares_available(sea, ship):
 		if sea[i] != ' ':
 			return False
 	return True
+}
 
 void occupy_squares(sea, ship)
 {
