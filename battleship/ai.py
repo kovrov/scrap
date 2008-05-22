@@ -10,7 +10,7 @@ class ComputerPlayer:
 		self.shots = range(self.sea_side ** 2)
 		self.targets = []  # hit, but not yet sunk opponent ships
 
-	def shot(self):
+	def shoot(self):
 		assert len(self.shots) > 0
 		for target in self.targets:
 			if len(target) < 2:

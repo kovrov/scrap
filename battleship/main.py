@@ -36,7 +36,7 @@ while True:
 	elif state == logic.PLAYER_TURN:
 		current_player_id = game.current_player()
 		current_player = players[current_player_id]
-		shot = current_player.shot()
+		shot = current_player.shoot()
 		res = game.shoot(current_player_id, shot)
 		current_player.track(shot, res)
 		shots_made[current_player_id] += 1
