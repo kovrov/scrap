@@ -20,7 +20,7 @@ typedef int PLAYER_HANDLE;
 
 struct FleetConf
 {
-	short size, quantity;
+	unsigned short size, quantity;
 	FleetConf(short s, short q){ size = s, quantity = q;}
 };
 

@@ -22,8 +22,14 @@ struct Pos
 
 struct ShipAnchor
 {
+	ShipAnchor(short x, short y, short size, bool horiz)
+	: pos (x,y)
+	{
+		ship_size = size;
+		horizontal = horiz;
+	}
 	Pos pos;
-	short ship_size;
+	unsigned short ship_size;
 	bool horizontal;
 };
 

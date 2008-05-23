@@ -201,102 +201,125 @@ std::vector<int> vertical_neighbor_squares(size_t index, short side)
 
 //--------------
 
-void generate_random_position(ship_size, sea_side)
+board::ShipAnchor GenerateRandPos(short ship_size, short sea_side)
 {
-	horizontal = random.choice((True, False))
-		x = random.randrange(sea_side - (ship_size if horizontal else 0))
-		y = random.randrange(sea_side - (0 if horizontal else ship_size))
-		return (x, y, ship_size, horizontal)
+	bool horizontal = rand() % 2 == 1;  // random.choice((true, false));
+	short x = rand() % (sea_side - (horizontal ? ship_size : 0));
+	short y = rand() % (sea_side - (horizontal ? 0 : ship_size));
+	return board::ShipAnchor(x, y, ship_size, horizontal);
 }
 
-void is_squares_available(std::vector<char>& sea, ship)
+bool IsSquaresAvailable(std::vector<char>& sea, const board::ShipAnchor& ship, unsigned sea_side)
 {
-	sea_side = int(math.sqrt(len(sea)))
-		x, y, ship_size, horizontal = ship
-		index = y * sea_side + x
-		orient = 1 if horizontal else sea_side
-		for i in [index + i * orient for i in xrange(ship_size)]:
-	if sea[i] != ' ':
-	return False
-		return True
+	size_t index = ship.pos.y * sea_side + ship.pos.x;
+	short orient = ship.horizontal ? 1 : sea_side;
+	for (size_t i=0; i < ship.ship_size; i++)
+	{
+		if (sea[index + i * orient] != ' ')
+			return false;
+	}
+	return true;
 }
 
-void occupy_squares(std::vector<char>& sea, ship)
+void OccupySquares(std::vector<char>& sea, const board::ShipAnchor& ship, int sea_side)
 {
-	sea_side = int(math.sqrt(len(sea)))
-		x, y, ship_size, horizontal = ship
-		index = y * sea_side + x
-		orient = 1 if horizontal else sea_side
-		pos = [index + i * orient for i in xrange(ship_size)]
-	S = int(math.sqrt(len(sea)))
-		for (i in pos)
+	int grid_len = sea.size();
+	size_t index = ship.pos.y * sea_side + ship.pos.x;
+	unsigned orient = ship.horizontal ? 1 : sea_side;
+
+	std::vector<size_t> segments(ship.ship_size);
+	for (size_t i=0; i < ship.ship_size; i++)
+		segments[i] = index + i * orient;
+
+	for (std::vector<size_t>::iterator it=segments.begin(); it != segments.end(); it++)
+	{
+		size_t& i = *it;
+		assert (sea[i] == ' ');
+		sea[i] = '#';
+		// horizontal margin
+		int pos = i - 1;  // left
+		if (i % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
-			assert sea[i] == ' '
-				sea[i] = '#'
-				// horizontal margin
-				if i % S != 0 && i-1 >= 0 && i-1 < len(sea) && i-1 not in pos)
-				{
-					assert sea[i-1] != '#'
-						sea[i-1] = '.';  // left
-				}
-				if (i+1) % S != 0 && i+1 >= 0 && i+1 < len(sea) && i+1 not in pos)
-				{
-					assert sea[i+1] != '#'
-						sea[i+1] = '.';  // right
-				}
-				// vertical margin
-				if i-S >= 0 && i-S < len(sea) && i-S not in pos)
-				{
-					assert sea[i-S] != '#'
-						sea[i-S] = '.';  // up
-				}
-				if i+S >= 0 && i+S < len(sea) && i+S not in pos)
-				{
-					assert sea[i+S] != '#'
-						sea[i+S] = '.';  // down
-				}
-				// diagonal margin
-				if (i-S+1) % S != 0 && i-S+1 >= 0 && i-S+1 < len(sea))
-				{
-					assert sea[i-S+1] != '#'
-						sea[i-S+1] = '.';  // upper-right
-				}
-				if i % S != 0 && i-S-1 >= 0 && i-S-1 < len(sea))
-				{
-					assert sea[i-S-1] != '#'
-						sea[i-S-1] = '.';  // upper-left
-				}
-				if (i+S+1) % S != 0 && i+S+1 >= 0 && i+S+1 < len(sea))
-				{
-					assert sea[i+S+1] != '#'
-						sea[i+S+1] = '.';  // lower-right
-				}
-				if i % S != 0 && i+S-1 >= 0 && i+S-1 < len(sea))
-				{
-					assert sea[i+S-1] != '#'
-						sea[i+S-1] = '.';  // lower-left
-				}
+			if (0 == std::count(segments.begin(), segments.end(), pos))
+			{
+				assert (sea[pos] != '#');
+				sea[pos] = '.';
+			}
 		}
+		pos = i + 1;  // right
+		if (pos % sea_side != 0 && pos >= 0 && pos < grid_len)
+		{
+			if (0 == std::count(segments.begin(), segments.end(), pos))
+			{
+				assert (sea[pos] != '#');
+				sea[pos] = '.';
+			}
+		}
+		// vertical margin
+		pos = i - sea_side;  // up
+		if (pos >= 0 && pos < grid_len)
+		{
+			if (0 == std::count(segments.begin(), segments.end(), pos))
+			{
+				assert (sea[pos] != '#');
+				sea[pos] = '.';
+			}
+		}
+		pos = i + sea_side;  // down
+		if (pos >= 0 && pos < grid_len)
+		{
+			if (0 == std::count(segments.begin(), segments.end(), pos))
+			{
+				assert (sea[pos] != '#');
+				sea[pos] = '.';
+			}
+		}
+		// diagonal margins
+		pos = i - sea_side + 1;  // upper-right
+		if (pos % sea_side != 0 && pos >= 0 && pos < grid_len)
+		{
+			assert (sea[pos] != '#');
+			sea[pos] = '.';
+		}
+		pos = i - sea_side - 1;  // upper-left
+		if (i % sea_side != 0 && pos >= 0 && pos < grid_len)
+		{
+			assert (sea[pos] != '#');
+			sea[pos] = '.';
+		}
+		pos = i + sea_side + 1;  // lower-right
+		if (pos % sea_side != 0 && pos >= 0 && pos < grid_len)
+		{
+			assert (sea[pos] != '#');
+			sea[pos] = '.';
+		}
+		pos = i + sea_side - 1;  // lower-left
+		if (i % sea_side != 0 && pos >= 0 && pos < grid_len)
+		{
+			assert (sea[pos] != '#');
+			sea[pos] = '.';
+		}
+	}
 }
 
 
-board::Ship randomly_place_ship(size_t size, std::vector<char>& sea, short sea_side)
+board::ShipAnchor RandomlyPlaceShip(short size, std::vector<char>& sea, short sea_side)
 {
-	pos = generate_random_position(size, sea_side)
-	while not is_squares_available(sea, pos):
-		pos = generate_random_position(size, sea_side)
-	occupy_squares(sea, pos)
-	return pos
+	board::ShipAnchor pos = GenerateRandPos(size, sea_side);
+	while (!IsSquaresAvailable(sea, pos, sea_side))
+		pos = GenerateRandPos(size, sea_side);
+	OccupySquares(sea, pos, sea_side);
+	return pos;
 }
 
-void setup_ships(short sea_side, std::vector<logic::FleetConf> fleet_conf)
+std::vector<board::ShipAnchor> setup_ships(short sea_side, std::vector<logic::FleetConf> fleet_conf)
 {
-	std::vector<board::Ship> ships;
+	std::vector<board::ShipAnchor> ships;
 	std::vector<char> sea(sea_side * sea_side, ' ');
 	for (std::vector<logic::FleetConf>::iterator it=fleet_conf.begin(); it != fleet_conf.end(); it++)
 	{
 		for (size_t i=0; i < (*it).quantity; i++)
-			ships.push_back(randomly_place_ship((*it).size, sea), sea_side);
+			ships.push_back(RandomlyPlaceShip((*it).size, sea, sea_side));
 	}
 	return ships;
 }
