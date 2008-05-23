@@ -5,9 +5,12 @@
 
 namespace ai {
 
+std::vector<board::ShipAnchor> setup_ships(short sea_side, std::vector<logic::FleetConf> fleet_conf);
 
 class ComputerPlayer
 {
+public:
+	ComputerPlayer() {}
 	ComputerPlayer(short sea_side, std::vector<logic::FleetConf> fleet_conf);
 	board::Pos Shot();
 	void Track(board::Pos shot, board::SHOT res);

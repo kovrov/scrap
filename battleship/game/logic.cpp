@@ -42,6 +42,62 @@ struct EventData
 {
 };
 
+
+// Rule defenitions and support
+
+void restart_battle(GameContext* context)  // entry action
+{
+	for (player in context['players'].itervalues())
+		player['sea'] = None;
+	context['current'] = context['players'].keys()[0];
+}
+
+void does_all_players_set(GameContext* context)  // condition
+{
+	for (player in context['players'].itervalues())
+	{
+		if (not player['ready'])
+			return false;
+	return true;
+}
+
+void is_shot_missed(GameContext* context)  // condition
+{
+	current_player = context['players'][context['current']];
+	return current_player['last_shot'] == 'miss';
+}
+
+void does_opponent_has_no_ships(GameContext* context)  // condition
+{
+	current_player = context['players'][context['current']];
+	target_sea = context['players'][current_player['opponent']]['sea'];
+	if (len(target_sea.active_ships) == 0)
+		return true;
+	else
+		return false;
+}
+
+void pass_turn(GameContext* context)  // action
+{
+	current_player = context['players'][context['current']];
+	context['current'] = current_player['opponent'];
+}
+
+void setup_ships(GameContext* context, EventData* input)  // event input
+{
+	player, ships = input;
+	context['players'][player]['sea'] = board.SeaGrid(SEA_SIDE, ships);
+	context['players'][player]['ready'] = true;
+}
+
+void player_shoot(GameContext* context, EventData* input)  // event input
+{
+	player, pos = input;
+	current_player = context['players'][context['current']];
+	target_sea = context['players'][current_player['opponent']]['sea'];
+	current_player['last_shot'] = target_sea.shoot_square(pos);
+}
+
 Game::Game(PLAYER_HANDLE player1, PLAYER_HANDLE player2)
 {
 	m_config.push_back(FleetConf(1, 4));  // one battleship
@@ -50,6 +106,28 @@ Game::Game(PLAYER_HANDLE player1, PLAYER_HANDLE player2)
 	m_config.push_back(FleetConf(4, 1));  // four boats
 	m_context = new GameContext(player1, player2);
 	std::map<int, fsm::State<GameContext, EventData> > states;
+
+	states[BATTLE_STARTED] = fsm::State<GameContext, EventData>();
+	states[BATTLE_STARTED].onEnter = restart_battle;
+	states[BATTLE_STARTED].events[SETUP] = fsm::Event<GameContext, EventData>;
+/*		events = {
+			SETUP: fsm.Event(
+				input = setup_ships,
+				transitions = (
+					fsm.Transition(condition=does_all_players_set, state=PLAYER_TURN),))}),
+	PLAYER_TURN: fsm.State(
+		events = {
+			SHOOT: fsm.Event(
+				input = player_shoot,
+				transitions = (
+					fsm.Transition(condition=is_shot_missed, state=PLAYER_TURN, action=pass_turn),
+					fsm.Transition(condition=does_opponent_has_no_ships, state=BATTLE_ENDED)))}),
+	BATTLE_ENDED: fsm.State(
+		events = {
+			RESTART: fsm.Event(
+				transitions = (
+					fsm.Transition(state=BATTLE_STARTED),))})}
+*/
 	m_fsm = new fsm::Transducer<GameContext, EventData>(states, BATTLE_STARTED, m_context);
 }
 Game::~Game()
