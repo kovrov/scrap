@@ -50,7 +50,7 @@ board::Pos ComputerPlayer::Shot()
 		{
 			int i = *it;
 			std::vector<int> squares = get_squares(i, m_sea_side);
-			for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); i++)
+			for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); it++)
 			{
 				int& shot = *it;
 				if (0 < std::count(m_shots.begin(), m_shots.end(), shot))

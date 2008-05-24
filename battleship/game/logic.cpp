@@ -38,8 +38,25 @@ struct GameContext
 	}
 };
 
+enum EVENTDATATYPE { SHIPS, POS };
+
 struct EventData
 {
+	PLAYER_HANDLE player;
+	EVENTDATATYPE type;
+	void* data;
+	EventData(PLAYER_HANDLE p, const std::vector<board::ShipAnchor>* ships)
+	{
+		player = p;
+		type = SHIPS;
+		data = const_cast<std::vector<board::ShipAnchor>*>(ships);
+	}
+	EventData(PLAYER_HANDLE p, const board::Pos* pos)
+	{
+		player = p;
+		type = POS;
+		data = const_cast<board::Pos*>(pos);
+	}
 };
 
 
@@ -47,55 +64,67 @@ struct EventData
 
 void restart_battle(GameContext* context)  // entry action
 {
-	for (player in context['players'].itervalues())
-		player['sea'] = None;
-	context['current'] = context['players'].keys()[0];
+	for (std::map<PLAYER_HANDLE,PlayerState>::iterator it = context->players.begin();
+		it != context->players.end();
+		it++)
+	{
+		PlayerState& player = it->second;
+		player.sea = NULL;
+	}
+	context->current = context->players.begin()->first;
 }
 
-void does_all_players_set(GameContext* context)  // condition
+bool does_all_players_set(GameContext* context)  // condition
 {
-	for (player in context['players'].itervalues())
+	for (std::map<PLAYER_HANDLE,PlayerState>::iterator it = context->players.begin();
+		it != context->players.end();
+		it++)
 	{
-		if (not player['ready'])
+		PlayerState& player = it->second;
+		if (!player.ready)
 			return false;
+	}
 	return true;
 }
 
-void is_shot_missed(GameContext* context)  // condition
+bool is_shot_missed(GameContext* context)  // condition
 {
-	current_player = context['players'][context['current']];
-	return current_player['last_shot'] == 'miss';
+	PlayerState& current_player = context->players[context->current];
+	return current_player.last_shot == board::MISS;
 }
 
-void does_opponent_has_no_ships(GameContext* context)  // condition
+bool does_opponent_has_no_ships(GameContext* context)  // condition
 {
-	current_player = context['players'][context['current']];
-	target_sea = context['players'][current_player['opponent']]['sea'];
-	if (len(target_sea.active_ships) == 0)
-		return true;
-	else
-		return false;
+	PlayerState& current_player = context->players[context->current];
+	board::SeaGrid* target_sea = context->players[current_player.opponent].sea;
+	return target_sea->active_ships.size() == 0;
 }
 
 void pass_turn(GameContext* context)  // action
 {
-	current_player = context['players'][context['current']];
-	context['current'] = current_player['opponent'];
+	context->current = context->players[context->current].opponent;
 }
 
-void setup_ships(GameContext* context, EventData* input)  // event input
+bool setup_ships(GameContext* context, const EventData& input)  // event input
 {
-	player, ships = input;
-	context['players'][player]['sea'] = board.SeaGrid(SEA_SIDE, ships);
-	context['players'][player]['ready'] = true;
+	assert (input.type == SHIPS);
+	const std::vector<board::ShipAnchor>& ships = *reinterpret_cast<std::vector<board::ShipAnchor>*>(input.data);
+	if (context->players[input.player].sea != NULL)
+		delete context->players[input.player].sea;
+	context->players[input.player].sea = new board::SeaGrid(10, ships);
+	context->players[input.player].ready = true;
+	return true;
 }
 
-void player_shoot(GameContext* context, EventData* input)  // event input
+bool player_shoot(GameContext* context, const EventData& input)  // event input
 {
-	player, pos = input;
-	current_player = context['players'][context['current']];
-	target_sea = context['players'][current_player['opponent']]['sea'];
-	current_player['last_shot'] = target_sea.shoot_square(pos);
+	assert (input.player == context->current);
+	assert (input.type == POS);
+	board::Pos& pos = *reinterpret_cast<board::Pos*>(input.data);
+	PlayerState& current_player = context->players[context->current];
+	board::SeaGrid* target_sea = context->players[current_player.opponent].sea;
+	current_player.last_shot = target_sea->ShootSquare(pos);
+	return true;
 }
 
 Game::Game(PLAYER_HANDLE player1, PLAYER_HANDLE player2)
@@ -107,27 +136,34 @@ Game::Game(PLAYER_HANDLE player1, PLAYER_HANDLE player2)
 	m_context = new GameContext(player1, player2);
 	std::map<int, fsm::State<GameContext, EventData> > states;
 
-	states[BATTLE_STARTED] = fsm::State<GameContext, EventData>();
+	states[BATTLE_STARTED] = fsm::State<GameContext,EventData>();
 	states[BATTLE_STARTED].onEnter = restart_battle;
-	states[BATTLE_STARTED].events[SETUP] = fsm::Event<GameContext, EventData>;
-/*		events = {
-			SETUP: fsm.Event(
-				input = setup_ships,
-				transitions = (
-					fsm.Transition(condition=does_all_players_set, state=PLAYER_TURN),))}),
-	PLAYER_TURN: fsm.State(
-		events = {
-			SHOOT: fsm.Event(
-				input = player_shoot,
-				transitions = (
-					fsm.Transition(condition=is_shot_missed, state=PLAYER_TURN, action=pass_turn),
-					fsm.Transition(condition=does_opponent_has_no_ships, state=BATTLE_ENDED)))}),
-	BATTLE_ENDED: fsm.State(
-		events = {
-			RESTART: fsm.Event(
-				transitions = (
-					fsm.Transition(state=BATTLE_STARTED),))})}
-*/
+	states[BATTLE_STARTED].events[SETUP] = fsm::Event<GameContext,EventData>();
+	states[BATTLE_STARTED].events[SETUP].input = setup_ships;
+		fsm::Transition<GameContext,EventData> tr;
+		tr.condition = does_all_players_set;
+		tr.state = PLAYER_TURN;
+	states[BATTLE_STARTED].events[SETUP].transitions.push_back(tr);
+
+	states[PLAYER_TURN] = fsm::State<GameContext,EventData>();
+	states[PLAYER_TURN].events[SHOOT] = fsm::Event<GameContext,EventData>();
+	states[PLAYER_TURN].events[SHOOT].input = player_shoot;
+		fsm::Transition<GameContext,EventData> player_turn_tr;
+		player_turn_tr.state = PLAYER_TURN;
+		player_turn_tr.condition = is_shot_missed;
+		player_turn_tr.action = pass_turn;
+	states[PLAYER_TURN].events[SHOOT].transitions.push_back(player_turn_tr);
+		fsm::Transition<GameContext,EventData> battle_ended_tr;
+		battle_ended_tr.state = BATTLE_ENDED;
+		battle_ended_tr.condition = does_opponent_has_no_ships;
+	states[PLAYER_TURN].events[SHOOT].transitions.push_back(battle_ended_tr);
+
+	states[BATTLE_ENDED] = fsm::State<GameContext,EventData>();
+	states[BATTLE_ENDED].events[RESTART] = fsm::Event<GameContext,EventData>();
+	fsm::Transition<GameContext,EventData> battle_started_tr;
+	battle_started_tr.state = BATTLE_STARTED;
+	states[BATTLE_ENDED].events[RESTART].transitions.push_back(battle_started_tr);
+
 	m_fsm = new fsm::Transducer<GameContext, EventData>(states, BATTLE_STARTED, m_context);
 }
 Game::~Game()
@@ -143,14 +179,14 @@ STATE Game::GetState()
 
 void Game::Setup(PLAYER_HANDLE player, const std::vector<board::ShipAnchor>& ships)
 {
-	EventData data;  // (player, ships)
+	EventData data(player, &ships);  // (player, ships)
 	m_fsm->Dispatch(SETUP, data);
 }
 
 board::SHOT Game::Shoot(PLAYER_HANDLE player, const board::Pos& shot)
 {
 	assert (m_context->current == player);
-	EventData data;  // (player, shot)
+	EventData data(player, &shot);
 	m_fsm->Dispatch(SHOOT, data);
 	return m_context->players[player].last_shot;
 }

@@ -33,7 +33,7 @@ struct State
 template <typename CTX, typename DATA>
 struct Event
 {
-	bool (*input)(CTX*, DATA&);  // INPUT_VALIDATOR
+	bool (*input)(CTX*, const DATA&);  // INPUT_VALIDATOR
 	std::vector<Transition<CTX,DATA> > transitions;
 	Event()
 	{

@@ -24,15 +24,18 @@ void print_sea(logic::Game& game, logic::PLAYER_HANDLE player_id, board::Pos& la
 	}
 	grid[last_shot.y * side + last_shot.x*2] = '[';
 	grid[last_shot.y * side + last_shot.x*2+2] = ']';
-	char padding[] = "                                        ";
-	if (player_id == 0) padding [39] = '|'; // PLAYER1
+	char* padding = (player_id == 0) ? "                                       |" : "";
 	for (int i=0; i < rows; i++)
 	{
 		std::cout << padding;
 		for (int j = i * side; j < (i + 1) * side; j++)
 			std::cout << grid[j];
+		std::cout << '\n';
 	}
-	std::cout << padding << player_id << ' ' << res << ' ' << last_shot.x << ',' << last_shot.y << '\n';
+	std::cout << padding
+		<< " PLAYER_" << player_id << ' '
+		<< res << ' '
+		<< last_shot.x << ',' << last_shot.y << "\n\n";
 }
 
 int main(int argc, char *argv[])
