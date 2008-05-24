@@ -1,3 +1,10 @@
+
+#ifdef _DEBUG
+	#define _CRTDBG_MAP_ALLOC
+	#include <stdlib.h>
+	#include <crtdbg.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -38,7 +45,7 @@ void print_sea(logic::Game& game, logic::PLAYER_HANDLE player_id, board::Pos& la
 		<< last_shot.x << ',' << last_shot.y << "\n\n";
 }
 
-int main(int argc, char *argv[])
+void run()
 {
 	logic::PLAYER_HANDLE PLAYER1 = 0;
 	logic::PLAYER_HANDLE PLAYER2 = 1;
@@ -77,5 +84,13 @@ int main(int argc, char *argv[])
 			throw std::exception("unknown state");
 		}
 	}
+}
+
+int main(int argc, char *argv[])
+{
+	run();
+	#ifdef _DEBUG
+		_CrtDumpMemoryLeaks();
+	#endif
 	return 0;
 }

@@ -122,15 +122,19 @@ void ComputerPlayer::Track(board::Pos shot, board::SHOT res)
 		}
 		if (target_it != m_targets.end())
 		{
+			std::vector<int> target = *target_it;
 			m_targets.erase(target_it);
-			std::vector<int>& target = *target_it;
 			for (std::vector<int>::iterator it = target.begin(); it != target.end(); it++)
 			{
 				std::vector<int> squares = neighbor_squares(*it, m_sea_side);
 				for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); it++)
 				{
-					if (0 < std::count(m_shots.begin(), m_shots.end(), *it))
-						m_shots.erase(it);
+					std::vector<int>::iterator shot_it = std::find(m_shots.begin(), m_shots.end(), *it);
+					if (shot_it != m_shots.end())
+					{
+						m_shots.erase(shot_it);
+						return;
+					}
 				}
 			}
 		}

@@ -15,15 +15,17 @@ struct PlayerState
 	PLAYER_HANDLE opponent;
 	board::SHOT last_shot;
 	board::SeaGrid* sea;
-	PlayerState()
+	PlayerState() // DELME
 	{
 		opponent = 0;
 		ready = false;
+		sea = NULL;
 	}
 	PlayerState(PLAYER_HANDLE opponent_handle)
 	{
 		opponent = opponent_handle;
 		ready = false;
+		sea = NULL;
 	}
 };
 
@@ -35,6 +37,17 @@ struct GameContext
 	{
 		players[player1] = PlayerState(player2);
 		players[player2] = PlayerState(player1);
+	}
+	~GameContext()
+	{
+		for (std::map<PLAYER_HANDLE, PlayerState>::iterator it=players.begin(); it != players.end(); it++)
+		{
+			if (it->second.sea != NULL)
+			{
+				delete it->second.sea;
+				it->second.sea = NULL;
+			}
+		}
 	}
 };
 

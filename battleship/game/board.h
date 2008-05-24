@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 
 namespace board {
@@ -42,6 +43,10 @@ struct ShipSegment
 	{
 		active = true;
 	}
+	bool operator== (const ShipSegment& segment) const
+	{
+		return (pos == segment.pos) ? true : false;
+	}
 };
 
 struct Ship
@@ -49,7 +54,7 @@ struct Ship
 	std::vector<ShipSegment> segments;
 	bool operator== (const Ship& ship) const
 	{
-		return (this == &ship) ? true : false;
+		return (segments == ship.segments) ? true : false;
 	}
 };
 
