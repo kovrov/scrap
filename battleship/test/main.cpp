@@ -1,4 +1,3 @@
-
 #ifdef _DEBUG
 	#define _CRTDBG_MAP_ALLOC
 	#include <stdlib.h>
@@ -10,9 +9,10 @@
 #include <map>
 #include <exception>
 
-#include "logic.h"
-#include "ai.h"
-#include "board.h"
+#include "../game/logic.h"
+#include "../game/ai.h"
+#include "../game/board.h"
+
 
 void print_sea(logic::Game& game, logic::PLAYER_HANDLE player_id, board::Pos& last_shot, board::SHOT res)
 {
@@ -86,7 +86,7 @@ void run()
 	}
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	run();
 	#ifdef _DEBUG

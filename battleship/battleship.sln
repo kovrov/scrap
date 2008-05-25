@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "battleship", "win32\battleship.vcproj", "{D1EE20D7-4618-4494-9F4F-29930D298C4C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcproj", "{4F14BC05-490F-4379-8342-F0DFBE7BAB06}"
+	ProjectSection(ProjectDependencies) = postProject
+		{465BC0CF-C18E-4AA2-899D-82D972889C78} = {465BC0CF-C18E-4AA2-899D-82D972889C78}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game", "game\game.vcproj", "{465BC0CF-C18E-4AA2-899D-82D972889C78}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "battleship", "win32\battleship.vcproj", "{D1EE20D7-4618-4494-9F4F-29930D298C4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,9 +24,12 @@ Global
 		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Debug|Win32.Build.0 = Debug|Win32
 		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Release|Win32.ActiveCfg = Release|Win32
 		{465BC0CF-C18E-4AA2-899D-82D972889C78}.Release|Win32.Build.0 = Release|Win32
+		{4F14BC05-490F-4379-8342-F0DFBE7BAB06}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4F14BC05-490F-4379-8342-F0DFBE7BAB06}.Debug|Win32.Build.0 = Debug|Win32
+		{4F14BC05-490F-4379-8342-F0DFBE7BAB06}.Release|Win32.ActiveCfg = Release|Win32
+		{4F14BC05-490F-4379-8342-F0DFBE7BAB06}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
-
