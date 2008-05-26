@@ -1,7 +1,6 @@
 #include "logic.h"
 #include "fsm.h"
 
-//#include <stdlib.h>
 #include <assert.h>
 #include <map>
 
@@ -110,7 +109,7 @@ bool does_opponent_has_no_ships(GameContext* context)  // condition
 {
 	PlayerState& current_player = context->players[context->current];
 	board::SeaGrid* target_sea = context->players[current_player.opponent].sea;
-	return target_sea->active_ships.size() == 0;
+	return target_sea->active_ships == 0;
 }
 
 void pass_turn(GameContext* context)  // action

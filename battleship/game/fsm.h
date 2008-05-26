@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __BATTLESHIP_FSM_H
+#define __BATTLESHIP_FSM_H
+
 #pragma warning (disable: 4290) // exception specification ignored
 
 #include <vector>
@@ -10,7 +12,7 @@
 namespace fsm {
 
 
-// Private implementation (?)
+// forward declarations
 template <typename CTX, typename DATA> struct State;
 template <typename CTX, typename DATA> struct Event;
 template <typename CTX, typename DATA> struct Transition;
@@ -115,3 +117,6 @@ private:
 
 
 }  // namespace
+
+
+#endif // __BATTLESHIP_FSM_H

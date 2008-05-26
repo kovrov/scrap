@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <algorithm>
-#include <memory>
 #include <assert.h>
 
 
@@ -11,31 +10,32 @@ namespace board {
 
 SeaGrid::SeaGrid(short side_len, const std::vector<ShipAnchor>& anchors)
 {
+	active_ships = 0;
 	side = side_len;
 	short grid_len = side*side;
 	std::vector<char> grid(grid_len, ' ');
 
-	for (std::vector<ShipAnchor>::const_iterator it=anchors.begin(); it != anchors.end(); it++)
+	for (std::vector<ShipAnchor>::const_iterator i=anchors.begin(); i != anchors.end(); i++)
 	{
-		const ShipAnchor& anchor = *it;
-		int index = anchor.pos.y * side + anchor.pos.x;
+		const ShipAnchor& anchor = *i;
+		int start_index = anchor.pos.y * side + anchor.pos.x;
 		int orient = anchor.horizontal ? 1 : side;
 		std::vector<int> indices;
-		for (int i=0; i < anchor.ship_size; i++)
+		for (int j=0; j < anchor.ship_size; j++)
 		{
-			indices.push_back(index + i * orient);
+			indices.push_back(start_index + j * orient);
 		}
 
 		Ship ship;
-		for (std::vector<int>::iterator it=indices.begin(); it != indices.end(); it++)
+		for (std::vector<int>::iterator j=indices.begin(); j != indices.end(); j++)
 		{
-			int& i = *it;
-			assert (grid[i] == ' ');
-			grid[i] = '#';
-			ship.segments.push_back(ShipSegment(i % side, i / side));
+			int index = *j;
+			assert (grid[index] == ' ');
+			grid[index] = '#';
+			ship.segments.push_back(ShipSegment(index % side, index / side));
 			// horizontal margin
-			int pos = i - 1;  // left
-			if (i % side != 0 && pos >= 0 && pos < grid_len)
+			int pos = index - 1;  // left
+			if (index % side != 0 && pos >= 0 && pos < grid_len)
 			{
 				if (0 == std::count(indices.begin(), indices.end(), pos))
 				{
@@ -43,7 +43,7 @@ SeaGrid::SeaGrid(short side_len, const std::vector<ShipAnchor>& anchors)
 					grid[pos] = '.';
 				}
 			}
-			pos = i + 1;  // right
+			pos = index + 1;  // right
 			if (pos % side != 0 && pos >= 0 && pos < grid_len)
 			{
 				if (0 == std::count(indices.begin(), indices.end(), pos))
@@ -53,7 +53,7 @@ SeaGrid::SeaGrid(short side_len, const std::vector<ShipAnchor>& anchors)
 				}
 			}
 			// vertical margin
-			pos = i - side;  // up
+			pos = index - side;  // up
 			if (pos >= 0 && pos < grid_len)
 			{
 				if (0 == std::count(indices.begin(), indices.end(), pos))
@@ -62,7 +62,7 @@ SeaGrid::SeaGrid(short side_len, const std::vector<ShipAnchor>& anchors)
 					grid[pos] = '.';
 				}
 			}
-			pos = i + side;  // down
+			pos = index + side;  // down
 			if (pos >= 0 && pos < grid_len)
 			{
 				if (0 == std::count(indices.begin(), indices.end(), pos))
@@ -72,33 +72,33 @@ SeaGrid::SeaGrid(short side_len, const std::vector<ShipAnchor>& anchors)
 				}
 			}
 			// diagonal margins
-			pos = i - side + 1;  // upper-right
+			pos = index - side + 1;  // upper-right
 			if (pos % side != 0 && pos >= 0 && pos < grid_len)
 			{
 				assert (grid[pos] != '#');
 				grid[pos] = '.';
 			}
-			pos = i - side - 1;  // upper-left
-			if (i % side != 0 && pos >= 0 && pos < grid_len)
+			pos = index - side - 1;  // upper-left
+			if (index % side != 0 && pos >= 0 && pos < grid_len)
 			{
 				assert (grid[pos] != '#');
 				grid[pos] = '.';
 			}
-			pos = i + side + 1;  // lower-right
+			pos = index + side + 1;  // lower-right
 			if (pos % side != 0 && pos >= 0 && pos < grid_len)
 			{
 				assert (grid[pos] != '#');
 				grid[pos] = '.';
 			}
-			pos = i + side - 1;  // lower-left
-			if (i % side != 0 && pos >= 0 && pos < grid_len)
+			pos = index + side - 1;  // lower-left
+			if (index % side != 0 && pos >= 0 && pos < grid_len)
 			{
 				assert (grid[pos] != '#');
 				grid[pos] = '.';
 			}
 		}
 		ships.push_back(ship);
-		active_ships.push_back(ship);
+		active_ships++;
 	}
 }
 
@@ -114,12 +114,12 @@ SHOT SeaGrid::ShootSquare(Pos& coords)
 	if (0 != std::count(shots.begin(), shots.end(), coords))
 		throw std::exception("can't shoot twice");
 	shots.push_back(coords);
-	for (std::vector<Ship>::iterator it=ships.begin(); it != ships.end(); it++)
+	for (std::vector<Ship>::iterator i=ships.begin(); i != ships.end(); i++)
 	{
-		Ship& ship = *it;
-		for (std::vector<ShipSegment>::iterator it=ship.segments.begin(); it != ship.segments.end(); it++)
+		Ship& ship = *i;
+		for (std::vector<ShipSegment>::iterator j=ship.segments.begin(); j != ship.segments.end(); j++)
 		{
-			ShipSegment& segment = *it;
+			ShipSegment& segment = *j;
 			if (segment.pos == coords)
 			{
 				assert (segment.active);
@@ -130,7 +130,7 @@ SHOT SeaGrid::ShootSquare(Pos& coords)
 				}
 				else
 				{
-					active_ships.erase(std::find(active_ships.begin(), active_ships.end(), ship));
+					active_ships--;
 					return SUNK;
 				}
 			}
@@ -140,4 +140,4 @@ SHOT SeaGrid::ShootSquare(Pos& coords)
 }
 
 
-}; // namespace
+}  // namespace

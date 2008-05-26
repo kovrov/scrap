@@ -1,8 +1,13 @@
-#pragma once
+#ifndef __BATTLESHIP_LOGIC_H
+#define __BATTLESHIP_LOGIC_H
+
 
 #include <vector>
 #include "board.h"
-#include "fsm.h"
+
+
+// pimpl (forward declarations) of fsm stuff
+namespace fsm { template <typename CTX, typename DATA> class Transducer; }
 
 
 namespace logic {
@@ -20,7 +25,7 @@ typedef int PLAYER_HANDLE;
 struct FleetConf
 {
 	unsigned short size, quantity;
-	FleetConf(short s, short q){ size = s, quantity = q;}
+	FleetConf(short s, short q) { size = s, quantity = q; }
 };
 
 struct GameContext;
@@ -46,3 +51,6 @@ private:
 
 
 }  // namespace
+
+
+#endif // __BATTLESHIP_LOGIC_H

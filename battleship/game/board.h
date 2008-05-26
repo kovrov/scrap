@@ -1,6 +1,9 @@
-#pragma once
+#ifndef __BATTLESHIP_BOARD_H
+#define __BATTLESHIP_BOARD_H
+
 
 #include <vector>
+
 
 namespace board {
 
@@ -64,10 +67,13 @@ public:
 	SeaGrid(short side, const std::vector<ShipAnchor>& anchors);
 	SHOT ShootSquare(Pos& coords);
 	std::vector<Ship> ships;
-	std::vector<Ship> active_ships;
+	unsigned int active_ships;
 	std::vector<Pos> shots;
 	short side;
 };
 
 
-}; // namespace
+}  // namespace
+
+
+#endif // __BATTLESHIP_BOARD_H

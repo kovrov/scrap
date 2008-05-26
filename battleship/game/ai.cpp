@@ -1,10 +1,8 @@
 #include "ai.h"
 
 #include <algorithm>
-#include <functional>
 #include <exception>
 #include <assert.h>
-#include <stdlib.h>
 
 
 namespace ai {
@@ -16,7 +14,8 @@ std::vector<int> horizontal_neighbor_squares(size_t index, short side);
 std::vector<int> vertical_neighbor_squares(size_t index, short side);
 std::vector<int> diagonal_squares(size_t index, short side);
 
-ComputerPlayer::ComputerPlayer(short sea_side, std::vector<logic::FleetConf> fleet_conf)
+
+ComputerPlayer::ComputerPlayer(short sea_side, const std::vector<logic::FleetConf>& fleet_conf)
 {
 	m_sea_side = sea_side;
 	m_shots.resize(m_sea_side * m_sea_side);
@@ -27,10 +26,10 @@ ComputerPlayer::ComputerPlayer(short sea_side, std::vector<logic::FleetConf> fle
 board::Pos ComputerPlayer::Shot()
 {
 	assert (m_shots.size() > 0);
-	for (std::vector< std::vector<int> >::iterator it=m_targets.begin(); it != m_targets.end(); it++)
+	for (std::vector< std::vector<int> >::iterator i=m_targets.begin(); i != m_targets.end(); i++)
 	{
 		NEIGHBOR_FN get_squares = NULL;
-		std::vector<int>& target = *it;
+		std::vector<int>& target = *i;
 		if (target.size() < 2)
 		{
 			get_squares = neighbor_squares;
@@ -46,13 +45,13 @@ board::Pos ComputerPlayer::Shot()
 				throw std::exception("this is impossible!");
 		}
 
-		for (std::vector<int>::iterator it=target.begin(); it != target.end(); it++)
+		for (std::vector<int>::iterator j=target.begin(); j != target.end(); j++)
 		{
-			int i = *it;
-			std::vector<int> squares = get_squares(i, m_sea_side);
-			for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); it++)
+			int index = *j;
+			std::vector<int> squares = get_squares(index, m_sea_side);
+			for (std::vector<int>::iterator n=squares.begin(); n != squares.end(); n++)
 			{
-				int& shot = *it;
+				int& shot = *n;
 				if (0 < std::count(m_shots.begin(), m_shots.end(), shot))
 				{
 					m_shots.erase(std::find(m_shots.begin(), m_shots.end(), shot));
@@ -78,24 +77,24 @@ void ComputerPlayer::Track(board::Pos shot, board::SHOT res)
 	size_t index = shot.y * m_sea_side + shot.x;
 	// clear diagonal shots
 	{std::vector<int> squares = diagonal_squares(index, m_sea_side);
-	for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); it++)
+	for (std::vector<int>::iterator i=squares.begin(); i != squares.end(); i++)
 	{
-		std::vector<int>::iterator find_it = std::find(m_shots.begin(), m_shots.end(), *it);
+		std::vector<int>::iterator find_it = std::find(m_shots.begin(), m_shots.end(), *i);
 		if (find_it != m_shots.end())
 			m_shots.erase(find_it);
 	}}
 	// find the target if its in not a new one
 	std::vector< std::vector<int> >::iterator target_it = m_targets.end();
-	for (std::vector< std::vector<int> >::iterator it=m_targets.begin(); it != m_targets.end(); it++)
+	for (std::vector< std::vector<int> >::iterator i=m_targets.begin(); i != m_targets.end(); i++)
 	{
-		std::vector<int>& t = *it;
+		std::vector<int>& t = *i;
 		assert (0 == std::count(t.begin(), t.end(), index));
 		std::vector<int> squares = neighbor_squares(index, m_sea_side);
 		for (std::vector<int>::iterator square_it = squares.begin(); square_it != squares.end(); square_it++)
 		{
 			if (0 != std::count(t.begin(), t.end(), *square_it))
 			{
-				target_it = it;
+				target_it = i;
 				break;
 			}
 		}
@@ -113,23 +112,24 @@ void ComputerPlayer::Track(board::Pos shot, board::SHOT res)
 
 	if (res == board::SUNK)
 	{
-		std::vector<int> squares = neighbor_squares(index, m_sea_side);
-		for (std::vector<int>::iterator it = squares.begin(); it != squares.end(); it++)
+		{std::vector<int> squares = neighbor_squares(index, m_sea_side);
+		for (std::vector<int>::iterator i = squares.begin(); i != squares.end(); i++)
 		{
-			std::vector<int>::iterator find_it = std::find(m_shots.begin(), m_shots.end(), *it);
+			std::vector<int>::iterator find_it = std::find(m_shots.begin(), m_shots.end(), *i);
 			if (find_it != m_shots.end())
 				m_shots.erase(find_it);
-		}
+		}}
+
 		if (target_it != m_targets.end())
 		{
 			std::vector<int> target = *target_it;
 			m_targets.erase(target_it);
-			for (std::vector<int>::iterator it = target.begin(); it != target.end(); it++)
+			for (std::vector<int>::iterator i = target.begin(); i != target.end(); i++)
 			{
-				std::vector<int> squares = neighbor_squares(*it, m_sea_side);
-				for (std::vector<int>::iterator it=squares.begin(); it != squares.end(); it++)
+				std::vector<int> squares = neighbor_squares(*i, m_sea_side);
+				for (std::vector<int>::iterator j=squares.begin(); j != squares.end(); j++)
 				{
-					std::vector<int>::iterator shot_it = std::find(m_shots.begin(), m_shots.end(), *it);
+					std::vector<int>::iterator shot_it = std::find(m_shots.begin(), m_shots.end(), *j);
 					if (shot_it != m_shots.end())
 					{
 						m_shots.erase(shot_it);
@@ -228,21 +228,21 @@ bool IsSquaresAvailable(std::vector<char>& sea, const board::ShipAnchor& ship, u
 void OccupySquares(std::vector<char>& sea, const board::ShipAnchor& ship, int sea_side)
 {
 	int grid_len = sea.size();
-	size_t index = ship.pos.y * sea_side + ship.pos.x;
+	size_t start_index = ship.pos.y * sea_side + ship.pos.x;
 	unsigned orient = ship.horizontal ? 1 : sea_side;
 
 	std::vector<size_t> segments(ship.ship_size);
 	for (size_t i=0; i < ship.ship_size; i++)
-		segments[i] = index + i * orient;
+		segments[i] = start_index + i * orient;
 
-	for (std::vector<size_t>::iterator it=segments.begin(); it != segments.end(); it++)
+	for (std::vector<size_t>::iterator i=segments.begin(); i != segments.end(); i++)
 	{
-		size_t& i = *it;
-		assert (sea[i] == ' ');
-		sea[i] = '#';
+		size_t& index = *i;
+		assert (sea[index] == ' ');
+		sea[index] = '#';
 		// horizontal margin
-		int pos = i - 1;  // left
-		if (i % sea_side != 0 && pos >= 0 && pos < grid_len)
+		int pos = index - 1;  // left
+		if (index % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
 			if (0 == std::count(segments.begin(), segments.end(), pos))
 			{
@@ -250,7 +250,7 @@ void OccupySquares(std::vector<char>& sea, const board::ShipAnchor& ship, int se
 				sea[pos] = '.';
 			}
 		}
-		pos = i + 1;  // right
+		pos = index + 1;  // right
 		if (pos % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
 			if (0 == std::count(segments.begin(), segments.end(), pos))
@@ -260,7 +260,7 @@ void OccupySquares(std::vector<char>& sea, const board::ShipAnchor& ship, int se
 			}
 		}
 		// vertical margin
-		pos = i - sea_side;  // up
+		pos = index - sea_side;  // up
 		if (pos >= 0 && pos < grid_len)
 		{
 			if (0 == std::count(segments.begin(), segments.end(), pos))
@@ -269,7 +269,7 @@ void OccupySquares(std::vector<char>& sea, const board::ShipAnchor& ship, int se
 				sea[pos] = '.';
 			}
 		}
-		pos = i + sea_side;  // down
+		pos = index + sea_side;  // down
 		if (pos >= 0 && pos < grid_len)
 		{
 			if (0 == std::count(segments.begin(), segments.end(), pos))
@@ -279,26 +279,26 @@ void OccupySquares(std::vector<char>& sea, const board::ShipAnchor& ship, int se
 			}
 		}
 		// diagonal margins
-		pos = i - sea_side + 1;  // upper-right
+		pos = index - sea_side + 1;  // upper-right
 		if (pos % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
 			assert (sea[pos] != '#');
 			sea[pos] = '.';
 		}
-		pos = i - sea_side - 1;  // upper-left
-		if (i % sea_side != 0 && pos >= 0 && pos < grid_len)
+		pos = index - sea_side - 1;  // upper-left
+		if (index % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
 			assert (sea[pos] != '#');
 			sea[pos] = '.';
 		}
-		pos = i + sea_side + 1;  // lower-right
+		pos = index + sea_side + 1;  // lower-right
 		if (pos % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
 			assert (sea[pos] != '#');
 			sea[pos] = '.';
 		}
-		pos = i + sea_side - 1;  // lower-left
-		if (i % sea_side != 0 && pos >= 0 && pos < grid_len)
+		pos = index + sea_side - 1;  // lower-left
+		if (index % sea_side != 0 && pos >= 0 && pos < grid_len)
 		{
 			assert (sea[pos] != '#');
 			sea[pos] = '.';
@@ -316,14 +316,14 @@ board::ShipAnchor RandomlyPlaceShip(short size, std::vector<char>& sea, short se
 	return pos;
 }
 
-std::vector<board::ShipAnchor> setup_ships(short sea_side, std::vector<logic::FleetConf> fleet_conf)
+std::vector<board::ShipAnchor> setup_ships(short sea_side, const std::vector<logic::FleetConf>& fleet_conf)
 {
 	std::vector<board::ShipAnchor> ships;
 	std::vector<char> sea(sea_side * sea_side, ' ');
-	for (std::vector<logic::FleetConf>::iterator it=fleet_conf.begin(); it != fleet_conf.end(); it++)
+	for (std::vector<logic::FleetConf>::const_iterator i=fleet_conf.begin(); i != fleet_conf.end(); i++)
 	{
-		for (size_t i=0; i < (*it).quantity; i++)
-			ships.push_back(RandomlyPlaceShip((*it).size, sea, sea_side));
+		for (size_t j=0; j < (*i).quantity; j++)
+			ships.push_back(RandomlyPlaceShip((*i).size, sea, sea_side));
 	}
 	return ships;
 }
