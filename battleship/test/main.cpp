@@ -8,29 +8,33 @@
 #include <vector>
 #include <map>
 #include <exception>
+#include <stdlib.h>
+#include <time.h>
 
 #include "../game/logic.h"
 #include "../game/ai.h"
 #include "../game/board.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 
 void print_sea(logic::Game& game, logic::PLAYER_HANDLE player_id, board::Pos& last_shot, board::SHOT res)
 {
 	int rows = 10;
-	int side = rows*2+1;
-	std::vector<char> grid((rows*side), ' ');
-	const std::vector<board::Pos> shots = game.GetPlayerShots(player_id);
-	for (std::vector<board::Pos>::const_iterator it = shots.begin(); it != shots.end(); it++)
-		grid[(*it).y * side + (*it).x * 2 + 1] = '.';
-	const std::vector<board::Ship> ships = game.GetOpponentShips(player_id);
-	for (std::vector<board::Ship>::const_iterator it=ships.begin(); it != ships.end(); it++)
+	int side = rows * 2 + 1;
+	std::vector<char> grid(rows * side, ' ');
+
+	foreach (const board::Pos& shot, game.GetPlayerShots(player_id))
+		grid[shot.y * side + shot.x * 2 + 1] = '.';
+
+	foreach (const board::Ship& ship, game.GetOpponentShips(player_id))
 	{
-		const std::vector<board::ShipSegment> segments = (*it).segments;
-		for (std::vector<board::ShipSegment>::const_iterator it=segments.begin(); it != segments.end(); it++)
-			grid[(*it).pos.y * side + (*it).pos.x * 2 + 1] = (*it).active ? ' ' : 'x';
+		foreach (const board::ShipSegment& segment, ship.segments)
+			grid[segment.pos.y * side + segment.pos.x * 2 + 1] = segment.active ? ' ' : 'x';
 	}
-	grid[last_shot.y * side + last_shot.x*2] = '[';
-	grid[last_shot.y * side + last_shot.x*2+2] = ']';
+	grid[last_shot.y * side + last_shot.x * 2] = '[';
+	grid[last_shot.y * side + last_shot.x * 2 + 2] = ']';
 	char* padding = (player_id == 0) ? "                                       |" : "";
 	for (int i=0; i < rows; i++)
 	{
@@ -88,6 +92,7 @@ void run()
 
 int main(int argc, char* argv[])
 {
+	srand((unsigned)time(NULL));
 	run();
 	#ifdef _DEBUG
 		_CrtDumpMemoryLeaks();
