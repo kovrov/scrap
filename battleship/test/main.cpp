@@ -35,7 +35,7 @@ void print_sea(logic::Game& game, logic::PLAYER_HANDLE player_id, board::Pos& la
 	}
 	grid[last_shot.y * side + last_shot.x * 2] = '[';
 	grid[last_shot.y * side + last_shot.x * 2 + 2] = ']';
-	char* padding = (player_id == 0) ? "                                       |" : "";
+	const char* padding = (player_id == 0) ? "                                       |" : "";
 	for (int i=0; i < rows; i++)
 	{
 		std::cout << padding;
@@ -85,7 +85,7 @@ void run()
 		}
 		else
 		{
-			throw std::exception("unknown state");
+			throw std::exception();  // unknown state
 		}
 	}
 }

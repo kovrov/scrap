@@ -145,8 +145,9 @@ void ComputerPlayer::Track(board::Pos shot, board::SHOT res)
 std::vector<int> diagonal_squares(size_t index, short side)
 {
 	std::vector<int> res;
+	res.reserve(4);
 	unsigned length = side * side;
-	size_t pos = index - side + 1;  // upper-right
+	int pos = index - side + 1;  // upper-right
 	if (pos % side != 0 && pos >= 0 && pos < length)
 	{
 		res.push_back(pos);
@@ -180,8 +181,9 @@ std::vector<int> neighbor_squares(size_t index, short side)
 std::vector<int> horizontal_neighbor_squares(size_t index, short side)
 {
 	std::vector<int> res;
+	res.reserve(4);
 	size_t length = side * side;
-	size_t pos = index - 1;  // left
+	int pos = index - 1;  // left
 	if (index % side != 0 && pos >= 0 && pos < length)
 		res.push_back(pos);
 	pos = index + 1;  // right
@@ -193,8 +195,9 @@ std::vector<int> horizontal_neighbor_squares(size_t index, short side)
 std::vector<int> vertical_neighbor_squares(size_t index, short side)
 {
 	std::vector<int> res;
+	res.reserve(4);
 	size_t length = side * side;
-	size_t pos = index - side;  // up
+	int pos = index - side;  // up
 	if (pos >= 0 && pos < length)
 		res.push_back(pos);
 	pos = index + side;  // down
@@ -319,6 +322,7 @@ board::ShipAnchor RandomlyPlaceShip(short size, std::vector<char>& sea, short se
 std::vector<board::ShipAnchor> setup_ships(short sea_side, const std::vector<logic::FleetConf>& fleet_conf)
 {
 	std::vector<board::ShipAnchor> ships;
+	ships.reserve(10);  // wild guess
 	std::vector<char> sea(sea_side * sea_side, ' ');
 	for (std::vector<logic::FleetConf>::const_iterator i=fleet_conf.begin(); i != fleet_conf.end(); i++)
 	{
