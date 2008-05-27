@@ -42,7 +42,7 @@ board::Pos ComputerPlayer::Shot()
 			else if (span == m_sea_side) // vertical target
 				get_squares = vertical_neighbor_squares;
 			else
-				throw std::exception("this is impossible!");
+				throw std::exception();  // this is impossible!
 		}
 
 		for (std::vector<int>::iterator j=target.begin(); j != target.end(); j++)
@@ -59,7 +59,7 @@ board::Pos ComputerPlayer::Shot()
 				}
 			}
 		}
-		throw std::exception("this is impossible!");
+		throw std::exception();  // this is impossible!
 	}
 	std::vector<int>::iterator shot_it = m_shots.begin() + (rand() % m_shots.size()); // random.choice(m_shots);
 	int shot = *shot_it;
