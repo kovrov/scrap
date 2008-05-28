@@ -76,13 +76,14 @@ public:
 
 	void Dispatch(int event_id, DATA& input) throw (InvalidEventException)
 	{
-		std::map<int, State<CTX,DATA> >::iterator st = m_states.find(m_state);
+		// typename here is to fix come compilers
+		typename std::map<int, State<CTX,DATA> >::iterator st = m_states.find(m_state);
 		assert (st != m_states.end());
-		std::map<int, Event<CTX,DATA> >::iterator ev = (*st).second.events.find(event_id);
+		typename std::map<int, Event<CTX,DATA> >::iterator ev = (*st).second.events.find(event_id);
 		if (ev == st->second.events.end())
 			throw InvalidEventException();
 		ev->second.input(p_context, input);
-		std::vector<Transition<CTX,DATA> >::iterator tr;
+		typename std::vector<Transition<CTX,DATA> >::iterator tr;
 		for (tr = ev->second.transitions.begin(); tr != ev->second.transitions.end(); tr++)
 		{
 			if (tr->condition && tr->condition(p_context))
