@@ -1,0 +1,2 @@
+
+exe test : main.cpp /game//game ;

@@ -99,6 +99,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\view.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -115,6 +119,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\view.h"
 				>
 			</File>
 		</Filter>

@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "battleship.h"
+#include "view.h"
+#include <assert.h>
 
 #define MAX_LOADSTRING 100
 
@@ -10,9 +12,10 @@
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
+HWND hwndView;
 
 // Forward declarations of functions included in this code module:
-ATOM				MyRegisterClass(HINSTANCE hInstance);
+ATOM				RegisterMainWindowClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
@@ -32,13 +35,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_BATTLESHIP, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
+	RegisterMainWindowClass(hInstance);
+	// register view class
+	InitView();
 
 	// Perform application initialization:
-	if (!InitInstance (hInstance, nCmdShow))
-	{
+	if (!InitInstance(hInstance, nCmdShow))
 		return FALSE;
-	}
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_BATTLESHIP));
 
@@ -57,33 +60,20 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 
 
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-//  COMMENTS:
-//
-//    This function and its usage are only necessary if you want this code
-//    to be compatible with Win32 systems prior to the 'RegisterClassEx'
-//    function that was added to Windows 95. It is important to call this function
-//    so that the application will get 'well formed' small icons associated
-//    with it.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
+ATOM RegisterMainWindowClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
 	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= WndProc;
+	wcex.lpfnWndProc	= &WndProc;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
 	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_BATTLESHIP));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
+	wcex.hbrBackground	= (HBRUSH)(NULL); // no background
 	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_BATTLESHIP);
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -160,6 +150,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// TODO: Add any drawing code here...
 		EndPaint(hWnd, &ps);
 		break;
+	case WM_CREATE:
+		hwndView = CreateWindowEx(NULL, 
+			VIEW_CLASS, _T(""), 
+			WS_CHILD | WS_VISIBLE,
+			0, 0, 0, 0, 
+			hWnd,  // hwndParent
+			0, 
+			GetModuleHandle(0), 
+			0);
+		assert (hwndView);
+		return 0;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;

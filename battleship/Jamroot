@@ -1,0 +1,8 @@
+
+using gcc ;
+
+use-project /game : game ;
+
+project : requirements
+    <include>C:/soft/boost  ; 
+build-project test ;

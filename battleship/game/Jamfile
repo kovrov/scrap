@@ -1,0 +1,2 @@
+
+lib game : logic.cpp board.cpp ai.cpp : <link>static ;
