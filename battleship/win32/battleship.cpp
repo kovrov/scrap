@@ -165,6 +165,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+
+	case WM_SIZE:
+		{
+		short width  = (short)LOWORD(lParam);
+		short height = (short)HIWORD(lParam);
+		MoveWindow(hwndView, 0, 0, width, height, TRUE);
+		}
+		return 0;
+
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
