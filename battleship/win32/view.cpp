@@ -1,60 +1,59 @@
 #include "stdafx.h"
 #include "view.h"
+#include "../game/board.h"
 
 #include <comdef.h>
 #include <gdiplus.h>
 using namespace Gdiplus;
 
 
-int width = 50;
-int corner = width - width / 3;
-unsigned char seaColor1[]  = {0xEE, 0xF6, 0xFF};
-unsigned char seaColor2[]  = {0xda, 0xe6, 0xf4};
-unsigned char shipColor1[] = {0x2F, 0x53, 0x7C};
-unsigned char shipColor2[] = {0x53, 0x79, 0xA4};
+int width = 40;
+float corner = width - width / 3.0f;
+const int gridBorder = 2;
+const int gridPadding = width / 4;
+const int gridWidth = width*10 + gridBorder*2 + gridPadding*2;
+const Color  seaColor1(      0xEE, 0xF6, 0xFF);
+const Color  seaColor2(0x7F, 0x99, 0xAE, 0xC6);
+const Color shipColor1(      0x2F, 0x53, 0x7C);
+const Color shipColor2(      0x53, 0x79, 0xA4);
 
 
-void draw_ship(Graphics& graphics, int x, int y, int size, int disposition)
+void draw_ship(Graphics* graphics, int x, int y, int size, int disposition)
 {
-	Pen pen(Color(shipColor1[0], shipColor1[1], shipColor1[2]), corner);
+	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
+	Pen pen(shipColor1, corner);
 	pen.SetLineJoin(LineJoinRound);
-	graphics.DrawRectangle(&pen,
+	graphics->DrawRectangle(&pen,
 				x*width + corner/2, y*width + corner/2,
 				width*(disposition==1?size:1) - corner, width*(disposition==0?size:1) - corner);
-	SolidBrush brush(Color(shipColor2[0], shipColor2[1], shipColor2[2]));
-	float k = 1.0 - 0.4;
+	SolidBrush brush(shipColor2);
+	float k = 1.0f - 0.4f;
 	for (int i=0; i < size; i++)
 	{
-		graphics.FillEllipse(&brush,
+		graphics->FillEllipse(&brush,
 			i * (disposition==1?width:0) + x*width + width*k/2,
 			i * (disposition==1?0:width) + y*width + width*k/2,
 			width - width*k,
 			width - width*k);
 	}
+	graphics->SetSmoothingMode(SmoothingModeDefault);
 }
 
 
-void draw_radar_grid(HDC hdc)
+void draw_map_grid(Graphics* graphics)
 {
-	Graphics graphics(hdc);
-	graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+	// border
+	SolidBrush brush1(shipColor1);
+	graphics->FillRectangle(&brush1, 0, 0, gridWidth, gridWidth);
 
-	SolidBrush brush(Color(seaColor1[0], seaColor1[1], seaColor1[2]));
-	graphics.FillRectangle(&brush, 0, 0, width*10, width*10);
+	// background
+	SolidBrush brush(seaColor1);
+	graphics->FillRectangle(&brush, gridBorder, gridBorder,
+				gridWidth-gridBorder*2, gridWidth-gridBorder*2);
 
-	SolidBrush brush2(Color(seaColor2[0], seaColor2[1], seaColor2[2]));
-	float k = 1.0 - 0.2;
-	for (int i=0; i<100; i++)
-	{
-		int x = i % 10 * width;
-		int y = i / 10 * width;
-		graphics.FillEllipse(&brush2,
-			x + width*k/2,
-			y + width*k/2,
-			width - width*k,
-			width - width*k);
-	}
+	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
 
+	// ships
 	int x = 2;
 	int y = 1;
 	int size = 2;
@@ -66,31 +65,65 @@ void draw_radar_grid(HDC hdc)
 	size = 3;
 	disposition = 1; // horizontal
 	draw_ship(graphics, x, y, size, disposition);
+
+	// grid
+	SolidBrush brush2(seaColor2);
+	float k = 1.0f - 0.2f;
+	for (int i=0; i < 11*11; i++)
+	{
+		int x = i % 11 * width;
+		int y = i / 11 * width;
+		graphics->FillRectangle(&brush2, x-3, y, 7, 1);
+		graphics->FillRectangle(&brush2, x, y-3, 1, 7);
+	}
+
+	graphics->ResetTransform();
 }
 
 
 class BattleshipView
 {
 public:
-	BattleshipView(HWND hwnd) { m_hwnd = hwnd; }
-	~BattleshipView(void) {}
+	BattleshipView(HWND hwnd)
+	  : m_mapBitmap (gridWidth, gridWidth)
+	  , m_radarBitmap (gridWidth, gridWidth)
+	{
+		m_mapGraphics = Graphics::FromImage(&m_mapBitmap);
+		m_radarGraphics = Graphics::FromImage(&m_radarBitmap);
+		m_hwnd = hwnd;
+	}
+	~BattleshipView(void)
+	{
+		delete m_mapGraphics;
+	}
 	LONG OnPaint()
 	{
 		PAINTSTRUCT ps; 
 		HDC hdc = BeginPaint(m_hwnd, &ps); 
 
-		//RECT rc; 
-		//GetClientRect(m_hwnd, &rc);
-		//FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
+		Graphics graphics(hdc);
 
-		draw_radar_grid(hdc);
-		//draw_map_grid(hdc);
+		draw_map_grid(m_mapGraphics);
+		//draw_radar_grid(hdc);
+
+		graphics.DrawImage(&m_mapBitmap, 0, 0, m_mapBitmap.GetWidth(), m_mapBitmap.GetHeight());
 
 		EndPaint(m_hwnd, &ps); 
 		return 0;
 	}
 private:
 	HWND m_hwnd;
+	Graphics* m_mapGraphics;
+	Bitmap m_mapBitmap;
+	Graphics* m_radarGraphics;
+	Bitmap m_radarBitmap;
+	// drawing state
+	void* m_radarShips;
+	void* m_radarShots;
+	bool m_radarShotActive;
+	void* m_mapShips;
+	void* m_mapShots;
+	bool m_mapShotActive;
 };
 
 
