@@ -6,24 +6,66 @@
 using namespace Gdiplus;
 
 
+int width = 50;
+int corner = width - width / 3;
+unsigned char seaColor1[]  = {0xEE, 0xF6, 0xFF};
+unsigned char seaColor2[]  = {0xda, 0xe6, 0xf4};
+unsigned char shipColor1[] = {0x2F, 0x53, 0x7C};
+unsigned char shipColor2[] = {0x53, 0x79, 0xA4};
+
+
+void draw_ship(Graphics& graphics, int x, int y, int size, int disposition)
+{
+	Pen pen(Color(shipColor1[0], shipColor1[1], shipColor1[2]), corner);
+	pen.SetLineJoin(LineJoinRound);
+	graphics.DrawRectangle(&pen,
+				x*width + corner/2, y*width + corner/2,
+				width*(disposition==1?size:1) - corner, width*(disposition==0?size:1) - corner);
+	SolidBrush brush(Color(shipColor2[0], shipColor2[1], shipColor2[2]));
+	float k = 1.0 - 0.4;
+	for (int i=0; i < size; i++)
+	{
+		graphics.FillEllipse(&brush,
+			i * (disposition==1?width:0) + x*width + width*k/2,
+			i * (disposition==1?0:width) + y*width + width*k/2,
+			width - width*k,
+			width - width*k);
+	}
+}
+
+
 void draw_radar_grid(HDC hdc)
 {
 	Graphics graphics(hdc);
 	graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-	int width = 20;
-	int corner = 16;
 
-	int x = 30;
-	int y = 30;
-	Pen pen(Color(255, 0, 0, 0), corner);
-	pen.SetLineJoin(LineJoinRound);
-	graphics.DrawRectangle(&pen, x + corner/2, y + corner/2, width - corner, width*2 - corner);
+	SolidBrush brush(Color(seaColor1[0], seaColor1[1], seaColor1[2]));
+	graphics.FillRectangle(&brush, 0, 0, width*10, width*10);
 
-	x = 60;
-	y = 30;
-	Pen pen2(Color(255, 0, 0, 0), corner);
-	pen2.SetAlignment(PenAlignmentInset);
-	graphics.DrawRectangle(&pen2, x, y, width, width*2);
+	SolidBrush brush2(Color(seaColor2[0], seaColor2[1], seaColor2[2]));
+	float k = 1.0 - 0.2;
+	for (int i=0; i<100; i++)
+	{
+		int x = i % 10 * width;
+		int y = i / 10 * width;
+		graphics.FillEllipse(&brush2,
+			x + width*k/2,
+			y + width*k/2,
+			width - width*k,
+			width - width*k);
+	}
+
+	int x = 2;
+	int y = 1;
+	int size = 2;
+	int disposition = 0; // vertical
+	draw_ship(graphics, x, y, size, disposition);
+
+	x = 4;
+	y = 2;
+	size = 3;
+	disposition = 1; // horizontal
+	draw_ship(graphics, x, y, size, disposition);
 }
 
 
@@ -37,9 +79,9 @@ public:
 		PAINTSTRUCT ps; 
 		HDC hdc = BeginPaint(m_hwnd, &ps); 
 
-		RECT rc; 
-		GetClientRect(m_hwnd, &rc);
-		FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
+		//RECT rc; 
+		//GetClientRect(m_hwnd, &rc);
+		//FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW+1));
 
 		draw_radar_grid(hdc);
 		//draw_map_grid(hdc);
