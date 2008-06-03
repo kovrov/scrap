@@ -6,6 +6,9 @@
 #include <gdiplus.h>
 using namespace Gdiplus;
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 
 int width = 40;
 float corner = width - width / 3.0f;
@@ -18,23 +21,30 @@ const Color shipColor1(      0x2F, 0x53, 0x7C);
 const Color shipColor2(      0x53, 0x79, 0xA4);
 
 
-void draw_ship(Graphics* graphics, int x, int y, int size, int disposition)
+void DrawShip(Graphics* graphics, board::Ship& ship)
 {
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
+
+	board::ShipSegment front = ship.segments.front();
+	board::ShipSegment back = ship.segments.back();
+
 	Pen pen(shipColor1, corner);
 	pen.SetLineJoin(LineJoinRound);
 	graphics->DrawRectangle(&pen,
-				x*width + corner/2, y*width + corner/2,
-				width*(disposition==1?size:1) - corner, width*(disposition==0?size:1) - corner);
+				front.pos.x*width + corner/2,
+				front.pos.y*width + corner/2,
+				(back.pos.x - front.pos.x + 1)*width - corner,
+				(back.pos.y - front.pos.y + 1)*width - corner);
+
 	SolidBrush brush(shipColor2);
 	float k = 1.0f - 0.4f;
-	for (int i=0; i < size; i++)
+	foreach (board::ShipSegment s, ship.segments)
 	{
 		graphics->FillEllipse(&brush,
-			i * (disposition==1?width:0) + x*width + width*k/2,
-			i * (disposition==1?0:width) + y*width + width*k/2,
-			width - width*k,
-			width - width*k);
+					s.pos.x*width + width*k/2,
+					s.pos.y*width + width*k/2,
+					width - width*k,
+					width - width*k);
 	}
 	graphics->SetSmoothingMode(SmoothingModeDefault);
 }
@@ -54,17 +64,16 @@ void draw_map_grid(Graphics* graphics)
 	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
 
 	// ships
-	int x = 2;
-	int y = 1;
-	int size = 2;
-	int disposition = 0; // vertical
-	draw_ship(graphics, x, y, size, disposition);
+	board::Ship ship;
+	ship.segments.push_back(board::ShipSegment(2,1));
+	ship.segments.push_back(board::ShipSegment(2,2));
+	DrawShip(graphics, ship);
 
-	x = 4;
-	y = 2;
-	size = 3;
-	disposition = 1; // horizontal
-	draw_ship(graphics, x, y, size, disposition);
+	ship.segments.clear();
+	ship.segments.push_back(board::ShipSegment(4,2));
+	ship.segments.push_back(board::ShipSegment(5,2));
+	ship.segments.push_back(board::ShipSegment(6,2));
+	DrawShip(graphics, ship);
 
 	// grid
 	SolidBrush brush2(seaColor2);
