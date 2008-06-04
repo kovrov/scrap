@@ -15,42 +15,74 @@ float corner = width - width / 3.0f;
 const int gridBorder = 2;
 const int gridPadding = width / 4;
 const int gridWidth = width*10 + gridBorder*2 + gridPadding*2;
-const Color  seaColor1(      0xEE, 0xF6, 0xFF);
-const Color  seaColor2(0x7F, 0x99, 0xAE, 0xC6);
-const Color shipColor1(      0x2F, 0x53, 0x7C);
-const Color shipColor2(      0x53, 0x79, 0xA4);
+const Color  seaColor1(0xEE, 0xF6, 0xFF);
+const Color  seaColor2(0x99, 0xAE, 0xC6);
+const Color shipColor1(0x30, 0x58, 0x80);
+const Color shipColor2(0x53, 0x79, 0xA4);
+const Color hitColor1( 0xE0, 0x90, 0x70);
+const Color hitColor2( 0x90, 0x50, 0x40);
+
+#define COLOR_ALPHA(color, alpha) Color((color).GetValue()&0x00FFFFFF|(DWORD)((alpha) << 24))
 
 
-void DrawShip(Graphics* graphics, board::Ship& ship)
+void DrawShips(Graphics* graphics, const std::vector<board::Ship>& ships)
 {
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
 
-	board::ShipSegment front = ship.segments.front();
-	board::ShipSegment back = ship.segments.back();
-
-	Pen pen(shipColor1, corner);
-	pen.SetLineJoin(LineJoinRound);
-	graphics->DrawRectangle(&pen,
-				front.pos.x*width + corner/2,
-				front.pos.y*width + corner/2,
-				(back.pos.x - front.pos.x + 1)*width - corner,
-				(back.pos.y - front.pos.y + 1)*width - corner);
-
-	SolidBrush brush(shipColor2);
-	float k = 1.0f - 0.4f;
-	foreach (board::ShipSegment s, ship.segments)
+	foreach (board::Ship ship, ships)
 	{
-		graphics->FillEllipse(&brush,
-					s.pos.x*width + width*k/2,
-					s.pos.y*width + width*k/2,
-					width - width*k,
-					width - width*k);
+		board::ShipSegment front = ship.segments.front();
+		board::ShipSegment back = ship.segments.back();
+
+		Pen pen(shipColor1, corner);
+		pen.SetLineJoin(LineJoinRound);
+		graphics->DrawRectangle(&pen,
+					front.pos.x*width + corner/2,
+					front.pos.y*width + corner/2,
+					(back.pos.x - front.pos.x + 1)*width - corner,
+					(back.pos.y - front.pos.y + 1)*width - corner);
+
+		SolidBrush brush(shipColor2);
+		SolidBrush hitBrush1(hitColor1);
+		Pen hitPen1(hitColor2, 2);
+		HatchBrush hbrush(HatchStyleWideUpwardDiagonal,
+			COLOR_ALPHA(seaColor1, 0x70),
+			COLOR_ALPHA(seaColor1, 0x50));
+		float k = 1.0f - 0.4f;
+		float k2 = 1.0f - 0.5f;
+		foreach (board::ShipSegment s, ship.segments)
+		{
+			if (s.active)
+				graphics->FillEllipse(&brush,
+							s.pos.x*width + width*k/2,
+							s.pos.y*width + width*k/2,
+							width - width*k,
+							width - width*k);
+			else
+			{
+				graphics->FillRectangle(&hbrush,
+							s.pos.x*width,
+							s.pos.y*width,
+							width,
+							width);
+				graphics->FillEllipse(&hitBrush1,
+							s.pos.x*width + width*k2/2,
+							s.pos.y*width + width*k2/2,
+							width - width*k2,
+							width - width*k2);
+				graphics->DrawEllipse(&hitPen1,
+					s.pos.x*width + width*k2/2,
+					s.pos.y*width + width*k2/2,
+					width - width*k2,
+					width - width*k2);
+			}
+		}
 	}
 	graphics->SetSmoothingMode(SmoothingModeDefault);
 }
 
 
-void draw_map_grid(Graphics* graphics)
+void draw_map_grid(Graphics* graphics, const std::vector<board::Ship>& ships)
 {
 	// border
 	SolidBrush brush1(shipColor1);
@@ -64,26 +96,17 @@ void draw_map_grid(Graphics* graphics)
 	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
 
 	// ships
-	board::Ship ship;
-	ship.segments.push_back(board::ShipSegment(2,1));
-	ship.segments.push_back(board::ShipSegment(2,2));
-	DrawShip(graphics, ship);
-
-	ship.segments.clear();
-	ship.segments.push_back(board::ShipSegment(4,2));
-	ship.segments.push_back(board::ShipSegment(5,2));
-	ship.segments.push_back(board::ShipSegment(6,2));
-	DrawShip(graphics, ship);
+	DrawShips(graphics, ships);
 
 	// grid
-	SolidBrush brush2(seaColor2);
+	SolidBrush seaBrush2(COLOR_ALPHA(seaColor2, 0x80));
 	float k = 1.0f - 0.2f;
 	for (int i=0; i < 11*11; i++)
 	{
 		int x = i % 11 * width;
 		int y = i / 11 * width;
-		graphics->FillRectangle(&brush2, x-3, y, 7, 1);
-		graphics->FillRectangle(&brush2, x, y-3, 1, 7);
+		graphics->FillRectangle(&seaBrush2, x-3, y, 7, 1);
+		graphics->FillRectangle(&seaBrush2, x, y-3, 1, 7);
 	}
 
 	graphics->ResetTransform();
@@ -100,16 +123,18 @@ public:
 		m_mapGraphics = Graphics::FromImage(&m_mapBitmap);
 		m_radarGraphics = Graphics::FromImage(&m_radarBitmap);
 		m_hwnd = hwnd;
+
 		// temp
 		board::Ship ship;
 		ship.segments.push_back(board::ShipSegment(2,1));
 		ship.segments.push_back(board::ShipSegment(2,2));
 		m_mapShips.push_back(ship);
-
 		ship.segments.clear();
 		ship.segments.push_back(board::ShipSegment(4,2));
 		ship.segments.push_back(board::ShipSegment(5,2));
 		ship.segments.push_back(board::ShipSegment(6,2));
+		ship.segments[1].active = false;
+		ship.segments[2].active = false;
 		m_mapShips.push_back(ship);
 	}
 	~BattleshipView(void)
@@ -123,7 +148,7 @@ public:
 
 		Graphics graphics(hdc);
 
-		draw_map_grid(m_mapGraphics);
+		draw_map_grid(m_mapGraphics, m_mapShips);
 		//draw_radar_grid(hdc);
 
 		graphics.DrawImage(&m_mapBitmap, 0, 0, m_mapBitmap.GetWidth(), m_mapBitmap.GetHeight());
@@ -171,13 +196,13 @@ BOOL InitView()
 
 LRESULT WINAPI ViewWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	BattleshipView* ptv = (BattleshipView*)GetWindowLong(hwnd, 0);
+	BattleshipView* ptv = (BattleshipView*)GetWindowLongPtr(hwnd, 0);
 
 	switch (msg)
 	{
 	case WM_NCCREATE:
 		ptv = new BattleshipView(hwnd);
-		SetWindowLong(hwnd, 0, (LONG)ptv);
+		SetWindowLongPtr(hwnd, 0, (LONG)ptv);
 		return TRUE;
 
 	case WM_NCDESTROY:
