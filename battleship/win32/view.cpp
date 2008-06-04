@@ -100,6 +100,17 @@ public:
 		m_mapGraphics = Graphics::FromImage(&m_mapBitmap);
 		m_radarGraphics = Graphics::FromImage(&m_radarBitmap);
 		m_hwnd = hwnd;
+		// temp
+		board::Ship ship;
+		ship.segments.push_back(board::ShipSegment(2,1));
+		ship.segments.push_back(board::ShipSegment(2,2));
+		m_mapShips.push_back(ship);
+
+		ship.segments.clear();
+		ship.segments.push_back(board::ShipSegment(4,2));
+		ship.segments.push_back(board::ShipSegment(5,2));
+		ship.segments.push_back(board::ShipSegment(6,2));
+		m_mapShips.push_back(ship);
 	}
 	~BattleshipView(void)
 	{
@@ -130,7 +141,7 @@ private:
 	void* m_radarShips;
 	void* m_radarShots;
 	bool m_radarShotActive;
-	void* m_mapShips;
+	std::vector<board::Ship> m_mapShips;
 	void* m_mapShots;
 	bool m_mapShotActive;
 };

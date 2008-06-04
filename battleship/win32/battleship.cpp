@@ -124,8 +124,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	PAINTSTRUCT ps;
-	HDC hdc;
 
 	switch (message)
 	{
@@ -145,11 +143,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
-	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
-		// TODO: Add any drawing code here...
-		EndPaint(hWnd, &ps);
-		break;
 	case WM_CREATE:
 		hwndView = CreateWindowEx(NULL, 
 			VIEW_CLASS, _T(""), 
@@ -167,11 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SIZE:
-		{
-		short width  = (short)LOWORD(lParam);
-		short height = (short)HIWORD(lParam);
-		MoveWindow(hwndView, 0, 0, width, height, TRUE);
-		}
+		MoveWindow(hwndView, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		return 0;
 
 	default:
