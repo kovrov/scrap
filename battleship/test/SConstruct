@@ -1,0 +1,3 @@
+Import("env")
+e = env.Copy(LIBS = ['game'])
+e.Program('test', ['main.cpp'])

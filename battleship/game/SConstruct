@@ -1,0 +1,2 @@
+Import("env")
+env.Library('game', ['ai.cpp', 'board.cpp', 'logic.cpp'])

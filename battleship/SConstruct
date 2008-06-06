@@ -1,0 +1,4 @@
+env = Environment(tools=['mingw'], CPPPATH='C:/soft/boost')
+Export("env")
+SConscript('game/SConstruct')
+SConscript('test/SConstruct')
