@@ -36,8 +36,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_BATTLESHIP, szWindowClass, MAX_LOADSTRING);
 	RegisterMainWindowClass(hInstance);
-	// register view class
-	InitView();
 
 	// Perform application initialization:
 	if (!InitInstance(hInstance, nCmdShow))
@@ -134,37 +132,46 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wmId)
 		{
 		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+			::DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		case IDM_EXIT:
-			DestroyWindow(hWnd);
+			::DestroyWindow(hWnd);
 			break;
 		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			return ::DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
 	case WM_CREATE:
-		hwndView = CreateWindowEx(NULL, 
-			VIEW_CLASS, _T(""), 
-			WS_CHILD | WS_VISIBLE,
-			0, 0, 0, 0, 
-			hWnd,  // hwndParent
-			0, 
-			GetModuleHandle(0), 
-			0);
+		hwndView = CreateMapWidget(hWnd);
 		assert (hwndView);
+		// temp
+		{
+		std::vector<board::Ship> ships;
+		board::Ship ship;
+		ship.segments.push_back(board::ShipSegment(2,1));
+		ship.segments.push_back(board::ShipSegment(2,2));
+		ships.push_back(ship);
+		ship.segments.clear();
+		ship.segments.push_back(board::ShipSegment(4,2));
+		ship.segments.push_back(board::ShipSegment(5,2));
+		ship.segments.push_back(board::ShipSegment(6,2));
+		ship.segments[1].active = false;
+		ship.segments[2].active = false;
+		ships.push_back(ship);
+		SetMapWidgetData(hwndView, ships);
+		}
 		return 0;
 
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		::PostQuitMessage(0);
 		break;
 
 	case WM_SIZE:
-		MoveWindow(hwndView, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+		::MoveWindow(hwndView, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		return 0;
 
 	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		return ::DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;
 }

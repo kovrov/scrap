@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "view.h"
+
 #include "../game/board.h"
 
 #include <comdef.h>
@@ -15,17 +16,34 @@ float corner = width - width / 3.0f;
 const int gridBorder = 2;
 const int gridPadding = width / 4;
 const int gridWidth = width*10 + gridBorder*2 + gridPadding*2;
-const Color  seaColor1(0xEE, 0xF6, 0xFF);
-const Color  seaColor2(0x99, 0xAE, 0xC6);
+const Color  seaColor1(0xE8, 0xF0, 0xF8);
+const Color  seaColor2(0xB0, 0xC0, 0xE0);
 const Color shipColor1(0x30, 0x58, 0x80);
-const Color shipColor2(0x53, 0x79, 0xA4);
+const Color shipColor2(0x58, 0x80, 0xA8);
 const Color hitColor1( 0xE0, 0x90, 0x70);
 const Color hitColor2( 0x90, 0x50, 0x40);
 
 #define COLOR_ALPHA(color, alpha) Color((color).GetValue()&0x00FFFFFF|(DWORD)((alpha) << 24))
 
 
-void DrawShips(Graphics* graphics, const std::vector<board::Ship>& ships)
+struct MapWidgetState
+{
+	MapWidgetState()
+	  : bitmap (gridWidth, gridWidth)
+	{
+		graphics = Graphics::FromImage(&bitmap);
+	}
+	~MapWidgetState(void)
+	{
+		delete graphics;
+	}
+
+	Bitmap bitmap;
+	Graphics* graphics;
+};
+
+
+void draw_ships(Graphics* graphics, const std::vector<board::Ship>& ships)
 {
 	graphics->SetSmoothingMode(SmoothingModeAntiAlias);
 
@@ -96,7 +114,7 @@ void draw_map_grid(Graphics* graphics, const std::vector<board::Ship>& ships)
 	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
 
 	// ships
-	DrawShips(graphics, ships);
+	draw_ships(graphics, ships);
 
 	// grid
 	SolidBrush seaBrush2(COLOR_ALPHA(seaColor2, 0x80));
@@ -113,108 +131,80 @@ void draw_map_grid(Graphics* graphics, const std::vector<board::Ship>& ships)
 }
 
 
-class BattleshipView
+void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>& ships)
 {
-public:
-	BattleshipView(HWND hwnd)
-	  : m_mapBitmap (gridWidth, gridWidth)
-	  , m_radarBitmap (gridWidth, gridWidth)
-	{
-		m_mapGraphics = Graphics::FromImage(&m_mapBitmap);
-		m_radarGraphics = Graphics::FromImage(&m_radarBitmap);
-		m_hwnd = hwnd;
-
-		// temp
-		board::Ship ship;
-		ship.segments.push_back(board::ShipSegment(2,1));
-		ship.segments.push_back(board::ShipSegment(2,2));
-		m_mapShips.push_back(ship);
-		ship.segments.clear();
-		ship.segments.push_back(board::ShipSegment(4,2));
-		ship.segments.push_back(board::ShipSegment(5,2));
-		ship.segments.push_back(board::ShipSegment(6,2));
-		ship.segments[1].active = false;
-		ship.segments[2].active = false;
-		m_mapShips.push_back(ship);
-	}
-	~BattleshipView(void)
-	{
-		delete m_mapGraphics;
-	}
-	LONG OnPaint()
-	{
-		PAINTSTRUCT ps; 
-		HDC hdc = BeginPaint(m_hwnd, &ps); 
-
-		Graphics graphics(hdc);
-
-		draw_map_grid(m_mapGraphics, m_mapShips);
-		//draw_radar_grid(hdc);
-
-		graphics.DrawImage(&m_mapBitmap, 0, 0, m_mapBitmap.GetWidth(), m_mapBitmap.GetHeight());
-
-		EndPaint(m_hwnd, &ps); 
-		return 0;
-	}
-private:
-	HWND m_hwnd;
-	Graphics* m_mapGraphics;
-	Bitmap m_mapBitmap;
-	Graphics* m_radarGraphics;
-	Bitmap m_radarBitmap;
-	// drawing state
-	void* m_radarShips;
-	void* m_radarShots;
-	bool m_radarShotActive;
-	std::vector<board::Ship> m_mapShips;
-	void* m_mapShots;
-	bool m_mapShotActive;
-};
-
-
-
-
-
-BOOL InitView()
-{
-	// Initialize GDI+.
-	ULONG_PTR gdiplusToken;
-	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	// register class
-	WNDCLASSEX	wcx;
-	memset(&wcx, 0, sizeof(wcx));
-	wcx.cbSize        = sizeof(wcx);
-	wcx.lpfnWndProc   = &ViewWndProc;
-	wcx.cbWndExtra    = sizeof(void*);
-	wcx.hInstance     = GetModuleHandle(NULL);
-	wcx.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wcx.lpszClassName = VIEW_CLASS;	
-	return RegisterClassEx(&wcx) ? TRUE : FALSE;
+	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+	draw_map_grid(pState->graphics, ships);
 }
 
 
-LRESULT WINAPI ViewWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	BattleshipView* ptv = (BattleshipView*)GetWindowLongPtr(hwnd, 0);
+	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
 	switch (msg)
 	{
 	case WM_NCCREATE:
-		ptv = new BattleshipView(hwnd);
-		SetWindowLongPtr(hwnd, 0, (LONG)ptv);
+		pState = new MapWidgetState();
+		::SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pState));
 		return TRUE;
 
 	case WM_NCDESTROY:
-		delete ptv;
+		::SetWindowLongPtr(hwnd, GWLP_USERDATA, NULL);
+		delete pState;
 		return 0;
 
 	case WM_PAINT:
-		return ptv->OnPaint();
+	{
+	PAINTSTRUCT ps; 
+	HDC hdc = ::BeginPaint(hwnd, &ps);
+	Graphics graphics(hdc);
+	graphics.DrawImage(&pState->bitmap, 0, 0, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
+	::EndPaint(hwnd, &ps); 
+	}
+	return 0;
 
 	default:
 		break;
 	}
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+
+LPCTSTR InitMapWidget()
+{
+	// Initialize GDI+.
+	ULONG_PTR gdiplusToken;
+	GdiplusStartupInput gdiplusStartupInput;
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	// register class
+	WNDCLASS wc;
+	memset(&wc, 0, sizeof(wc));
+	wc.lpszClassName = _T("MapWidget");
+	wc.lpfnWndProc = &MapWidgetWindowProc;
+	wc.hInstance = ::GetModuleHandle(NULL);
+	wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+	//wc.cbWndExtra = sizeof(LONG_PTR);  // for passing state pointer
+	//wc.hbrBackground = ::GetStockObject(WHITE_BRUSH);
+	ATOM res = ::RegisterClass(&wc);
+	assert (0 != res);
+	return (LPCTSTR)MAKELONG(res, 0);
+}
+
+
+HWND CreateMapWidget(HWND hWndParent)
+{
+	static LPCTSTR registred_class = NULL;
+	if (NULL == registred_class)
+		registred_class = InitMapWidget();
+
+	return ::CreateWindow(registred_class,
+		_T(""),
+		WS_CHILD|WS_VISIBLE,
+		0,0,0,0,
+		hWndParent,
+		NULL,
+		::GetModuleHandle(NULL),
+		NULL);
 }
