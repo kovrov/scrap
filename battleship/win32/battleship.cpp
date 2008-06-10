@@ -103,8 +103,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+   ::SetWindowPos(hWnd, NULL,0,0,0,0, SWP_NOMOVE|SWP_NOZORDER);  // hack to update MINMAXINFO
+   //::SetWindowPos();
+   ::ShowWindow(hWnd, nCmdShow);
+   ::UpdateWindow(hWnd);
 
    return TRUE;
 }
@@ -175,6 +177,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 		::MoveWindow(hwndView, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+		return 0;
+
+	//case WM_WINDOWPOSCHANGING:
+	//	return 0;  // to skip WM_GETMINMAXINFO message generation
+
+	case WM_GETMINMAXINFO:
+		{
+		RECT rect;
+		if (::GetClientRect(hwndView, &rect))
+		{
+			int menu_y = ::GetSystemMetrics(SM_CYMENU);
+			int frame_y = ::GetSystemMetrics(SM_CYSIZEFRAME);
+			int frame_x = ::GetSystemMetrics(SM_CXSIZEFRAME);
+			int caption_y = ::GetSystemMetrics(SM_CYCAPTION);
+			MINMAXINFO* minmaxinfo = (MINMAXINFO*)lParam;
+			minmaxinfo->ptMaxTrackSize.x = minmaxinfo->ptMinTrackSize.x = rect.right + frame_x*2;
+			minmaxinfo->ptMaxTrackSize.y = minmaxinfo->ptMinTrackSize.y = rect.bottom + frame_y*2 + menu_y + caption_y;
+			minmaxinfo = NULL;
+		}
+		}
 		return 0;
 
 	default:

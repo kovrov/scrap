@@ -140,6 +140,7 @@ void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>& ships)
 LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+	int test;
 
 	switch (msg)
 	{
@@ -154,14 +155,66 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		return 0;
 
 	case WM_PAINT:
-	{
-	PAINTSTRUCT ps; 
-	HDC hdc = ::BeginPaint(hwnd, &ps);
-	Gdiplus::Graphics graphics(hdc);
-	graphics.DrawImage(&pState->bitmap, 0, 0, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
-	::EndPaint(hwnd, &ps); 
-	}
-	return 0;
+		{
+		PAINTSTRUCT ps; 
+		HDC hdc = ::BeginPaint(hwnd, &ps);
+		Gdiplus::Graphics graphics(hdc);
+		graphics.DrawImage(&pState->bitmap, 0, 0, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
+		::EndPaint(hwnd, &ps); 
+		}
+		return 0;
+
+	case WM_GETMINMAXINFO:
+		{
+		MINMAXINFO* minmaxinfo = (MINMAXINFO*)lParam;
+		test = 0;
+		}
+		return 0;
+
+	case WM_WINDOWPOSCHANGING:
+		{
+		WINDOWPOS* pos = (WINDOWPOS*)lParam;
+		test = 0;
+		return 0;
+		}
+
+	case WM_WINDOWPOSCHANGED:
+		test = 0;
+		break;
+
+	case WM_MOVE:
+		{
+		int x = LOWORD(lParam);   // horizontal position 
+		int y = HIWORD(lParam);   // vertical position 
+		test = 0;
+		}
+		break;
+
+	case WM_SIZE:
+		{
+		int nWidth = LOWORD(lParam);
+		int nHeight = HIWORD(lParam);
+		test = 0;
+		}
+		break;
+
+	case WM_NCCALCSIZE:
+		if (!wParam)
+		{
+			RECT* rect = (RECT*)lParam;
+			rect->bottom = rect->top + gridWidth;
+			rect->right = rect->left + gridWidth;
+			return 0;
+		}
+		else
+		{
+			NCCALCSIZE_PARAMS* size_param = (NCCALCSIZE_PARAMS*)lParam;
+			size_param->rgrc[0].right = gridWidth;
+			size_param->rgrc[0].bottom = gridWidth;
+			size_param->lppos->cx = gridWidth;
+			size_param->lppos->cy = gridWidth;
+			return 0;
+		}
 
 	default:
 		break;
