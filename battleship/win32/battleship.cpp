@@ -134,13 +134,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_ABOUT:
 			::DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
+
 		case IDM_EXIT:
 			::DestroyWindow(hWnd);
 			break;
+
+		case IDM_NEWGAME:
+			assert (false);
+			break;
+
 		default:
 			return ::DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
+
 	case WM_CREATE:
 		hwndView = CreateMapWidget(hWnd);
 		assert (hwndView);

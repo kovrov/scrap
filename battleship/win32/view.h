@@ -5,6 +5,10 @@
 HWND CreateMapWidget(HWND hWndParent);
 void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>& ships);
 
+// notifications
+#define BSN_FIRST                   WM_USER
+#define BSN_SQUARESELECTED			BSN_FIRST+1
+
 /*
 class MapWidget
 {
