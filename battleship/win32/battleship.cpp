@@ -79,16 +79,7 @@ ATOM RegisterMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex);
 }
 
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
+
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
@@ -98,29 +89,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+   assert (hWnd);
 
    ::SetWindowPos(hWnd, NULL,0,0,0,0, SWP_NOMOVE|SWP_NOZORDER);  // hack to update MINMAXINFO
-   //::SetWindowPos();
+
    ::ShowWindow(hWnd, nCmdShow);
    ::UpdateWindow(hWnd);
 
    return TRUE;
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_COMMAND	- process the application menu
-//  WM_PAINT	- Paint the main window
-//  WM_DESTROY	- post a quit message and return
-//
-//
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -149,6 +128,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return ::DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
+
+	case WM_NOTIFY:
+		switch (reinterpret_cast<NMHDR*>(lParam)->code )
+		{
+		case BSN_SQUARESELECTED:
+			{
+			BSNSquareInfo* si = reinterpret_cast<BSNSquareInfo*>(lParam);
+			si->pos;
+			}
+			break; 
+		}
+		break; 
 
 	case WM_CREATE:
 		hwndView = CreateMapWidget(hWnd);
@@ -179,9 +170,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		::MoveWindow(hwndView, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		return 0;
 
-	//case WM_WINDOWPOSCHANGING:
-	//	return 0;  // to skip WM_GETMINMAXINFO message generation
-
 	case WM_GETMINMAXINFO:
 		{
 		RECT rect;
@@ -204,6 +192,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
 
 // Message handler for about box.
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
