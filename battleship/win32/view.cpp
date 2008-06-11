@@ -6,6 +6,8 @@
 #include <comdef.h>
 #include <gdiplus.h>
 
+#include <assert.h>
+
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
@@ -42,11 +44,12 @@ struct MapWidgetState
 };
 
 
-void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>& ships)
+void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships)
 {
+	assert (ships != NULL);
 	graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
-	foreach (board::Ship ship, ships)
+	foreach (board::Ship ship, *ships)
 	{
 		board::ShipSegment front = ship.segments.front();
 		board::ShipSegment back = ship.segments.back();
@@ -99,7 +102,7 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>& shi
 }
 
 
-void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>& ships)
+void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships)
 {
 	// border
 	Gdiplus::SolidBrush brush1(shipColor1);
@@ -113,7 +116,8 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>& 
 	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
 
 	// ships
-	draw_ships(graphics, ships);
+	if (ships != NULL)
+		draw_ships(graphics, ships);
 
 	// grid
 	Gdiplus::SolidBrush seaBrush2(COLOR_ALPHA(seaColor2, 0x80));
@@ -130,10 +134,11 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>& 
 }
 
 
-void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>& ships)
+void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships)
 {
 	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
 	draw_map_grid(pState->graphics, ships);
+	::InvalidateRgn(hwnd, NULL, FALSE);  // force redraw
 }
 
 
@@ -146,6 +151,7 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_NCCREATE:
 		pState = new MapWidgetState();
 		::SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pState));
+		SetMapWidgetData(hwnd, NULL);
 		return TRUE;
 
 	case WM_NCDESTROY:
@@ -182,8 +188,14 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 	case WM_LBUTTONUP:
 		{
+		int x = LOWORD(lParam) - gridBorder - gridPadding;
+		int y = HIWORD(lParam) - gridBorder - gridPadding;
+		if (x < 0 || y < 0)
+			return 0;
+		if (x / width > 9 || y / width > 9)
+			return 0;
 		BSNSquareInfo si = { { hwnd, ::GetWindowLong(hwnd, GWL_ID), BSN_SQUARESELECTED },
-							board::Pos(LOWORD(lParam), HIWORD(lParam)) };
+							board::Pos(x / width, y / width) };
 		::SendMessage(::GetParent(hwnd), WM_NOTIFY, (WPARAM)hwnd, (LPARAM)&si.hdr);
 		}
 		break;
@@ -206,7 +218,6 @@ LPCTSTR InitMapWidget()
 	wc.lpfnWndProc = &MapWidgetWindowProc;
 	wc.hInstance = ::GetModuleHandle(NULL);
 	wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	//wc.cbWndExtra = sizeof(LONG_PTR);  // for passing state pointer
 	//wc.hbrBackground = ::GetStockObject(WHITE_BRUSH);
 	ATOM res = ::RegisterClass(&wc);
 	assert (0 != res);
@@ -220,7 +231,7 @@ HWND CreateMapWidget(HWND hWndParent)
 	if (NULL == registred_class)
 		registred_class = InitMapWidget();
 
-	return ::CreateWindow(registred_class,
+	HWND hwnd = ::CreateWindow(registred_class,
 				_T(""),
 				WS_CHILD|WS_VISIBLE,
 				0,0,0,0,
@@ -228,4 +239,5 @@ HWND CreateMapWidget(HWND hWndParent)
 				NULL,
 				::GetModuleHandle(NULL),
 				NULL);
+	return hwnd;
 }

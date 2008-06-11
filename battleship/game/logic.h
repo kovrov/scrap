@@ -40,9 +40,10 @@ public:
 	void Setup(PLAYER_HANDLE player, const std::vector<board::ShipAnchor>& ships);
 	board::SHOT Shoot(PLAYER_HANDLE player, const board::Pos& shot);
 	PLAYER_HANDLE GetCurrentPlayer();
-	const std::vector<board::Ship> GetOpponentShips(PLAYER_HANDLE player);
-	const std::vector<board::Pos> GetPlayerShots(PLAYER_HANDLE player);
-	const std::vector<FleetConf> GetConfig() { return m_config; }
+	std::vector<board::Ship> GetOpponentShips(PLAYER_HANDLE player);
+	std::vector<board::Ship> GetPlayerShips(PLAYER_HANDLE player);
+	std::vector<board::Pos> GetPlayerShots(PLAYER_HANDLE player);
+	std::vector<FleetConf> GetConfig() { return m_config; }
 private:
 	std::vector<FleetConf> m_config;
 	GameContext* m_context;

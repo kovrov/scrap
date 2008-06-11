@@ -6,6 +6,17 @@
 #include "view.h"
 #include <assert.h>
 
+// game stuff
+#include "../game/logic.h"
+#include "../game/ai.h"
+#include "../game/board.h"
+// support
+#include <vector>
+#include <map>
+#include <exception>
+#include <stdlib.h>
+#include <time.h>
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -13,6 +24,43 @@ HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 HWND hwndView;
+
+
+// game stuff (temp)
+logic::PLAYER_HANDLE g_PLAYER1 = 0;
+logic::PLAYER_HANDLE g_PLAYER2 = 1;
+logic::Game g_game(g_PLAYER1, g_PLAYER2);
+std::map<logic::PLAYER_HANDLE, ai::ComputerPlayer> g_players;
+std::map<logic::PLAYER_HANDLE, int> g_shots_made;
+
+void on_new_game() // state == logic::BATTLE_STARTED
+{
+	// setup ships
+	g_game.Setup(g_PLAYER1, ai::setup_ships(10, g_game.GetConfig()));
+	g_game.Setup(g_PLAYER2, ai::setup_ships(10, g_game.GetConfig()));
+	// reset state
+	g_players[g_PLAYER1] = ai::ComputerPlayer(10, g_game.GetConfig());
+	g_players[g_PLAYER2] = ai::ComputerPlayer(10, g_game.GetConfig());
+	g_shots_made[g_PLAYER1] = g_shots_made[g_PLAYER2] = 0;
+	// temp
+	assert (logic::PLAYER_TURN == g_game.GetState());
+	// update widget
+	SetMapWidgetData(hwndView, &g_game.GetPlayerShips(g_PLAYER1));
+}
+
+void shot() // state == logic::PLAYER_TURN
+{
+	logic::PLAYER_HANDLE current_player_id = g_game.GetCurrentPlayer();
+	ai::ComputerPlayer& current_player = g_players[current_player_id];
+	board::Pos shot = current_player.Shot();
+	board::SHOT res = g_game.Shoot(current_player_id, shot);
+	current_player.Track(shot, res);
+	g_shots_made[current_player_id] += 1;
+	//print_sea(g_game, current_player_id, shot, res);
+}
+
+
+
 
 // Forward declarations of functions included in this code module:
 ATOM				RegisterMainWindowClass(HINSTANCE hInstance);
@@ -121,7 +169,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDM_NEWGAME:
-			assert (false);
+			on_new_game();
 			break;
 
 		default:
@@ -144,22 +192,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		hwndView = CreateMapWidget(hWnd);
 		assert (hwndView);
-		// temp
-		{
-		std::vector<board::Ship> ships;
-		board::Ship ship;
-		ship.segments.push_back(board::ShipSegment(2,1));
-		ship.segments.push_back(board::ShipSegment(2,2));
-		ships.push_back(ship);
-		ship.segments.clear();
-		ship.segments.push_back(board::ShipSegment(4,2));
-		ship.segments.push_back(board::ShipSegment(5,2));
-		ship.segments.push_back(board::ShipSegment(6,2));
-		ship.segments[1].active = false;
-		ship.segments[2].active = false;
-		ships.push_back(ship);
-		SetMapWidgetData(hwndView, ships);
-		}
 		return 0;
 
 	case WM_DESTROY:

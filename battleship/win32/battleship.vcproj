@@ -33,8 +33,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="gdiplus.lib"
+				AdditionalDependencies="game.lib gdiplus.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -50,17 +51,17 @@
 			>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="gdiplus.lib"
+				AdditionalDependencies="game.lib gdiplus.lib"
 				LinkIncremental="1"
-				GenerateDebugInformation="true"
+				AdditionalLibraryDirectories="$(OutDir)"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

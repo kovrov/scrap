@@ -141,10 +141,10 @@ bool player_shoot(GameContext* context, const EventData& input)  // event input
 
 Game::Game(PLAYER_HANDLE player1, PLAYER_HANDLE player2)
 {
-	m_config.push_back(FleetConf(1, 4));  // one battleship
-	m_config.push_back(FleetConf(2, 3));  // two cruisers
-	m_config.push_back(FleetConf(3, 2));  // three destroyers
 	m_config.push_back(FleetConf(4, 1));  // four boats
+	m_config.push_back(FleetConf(3, 2));  // three destroyers
+	m_config.push_back(FleetConf(2, 3));  // two cruisers
+	m_config.push_back(FleetConf(1, 4));  // one battleship
 	m_context = new GameContext(player1, player2);
 	std::map<int, fsm::State<GameContext, EventData> > states;
 
@@ -208,13 +208,18 @@ PLAYER_HANDLE Game::GetCurrentPlayer()
 	return m_context->current;
 }
 
-const std::vector<board::Ship> Game::GetOpponentShips(PLAYER_HANDLE player)
+std::vector<board::Ship> Game::GetOpponentShips(PLAYER_HANDLE player)
 {
 	PLAYER_HANDLE opponent = m_context->players[player].opponent;
 	return m_context->players[opponent].sea->ships;
 }
 
-const std::vector<board::Pos> Game::GetPlayerShots(PLAYER_HANDLE player)
+std::vector<board::Ship> Game::GetPlayerShips(PLAYER_HANDLE player)
+{
+	return m_context->players[player].sea->ships;
+}
+
+std::vector<board::Pos> Game::GetPlayerShots(PLAYER_HANDLE player)
 {
 	PLAYER_HANDLE opponent = m_context->players[player].opponent;
 	return m_context->players[opponent].sea->shots;
