@@ -44,6 +44,25 @@ struct MapWidgetState
 };
 
 
+void draw_shots(Gdiplus::Graphics* graphics, const std::vector<board::Pos>* shots)
+{
+	assert (shots != NULL);
+	graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
+	Gdiplus::SolidBrush brush(shipColor2);
+	float k = 1.0f - 0.3f;
+	foreach (board::Pos shot, *shots)
+	{
+		graphics->FillEllipse(&brush,
+					shot.x*width + width*k/2,
+					shot.y*width + width*k/2,
+					width - width*k,
+					width - width*k);
+	}
+	graphics->SetSmoothingMode(Gdiplus::SmoothingModeDefault);
+}
+
+
 void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships)
 {
 	assert (ships != NULL);
@@ -66,8 +85,8 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 		Gdiplus::SolidBrush hitBrush1(hitColor1);
 		Gdiplus::Pen hitPen1(hitColor2, 2);
 		Gdiplus::HatchBrush hbrush(Gdiplus::HatchStyleWideUpwardDiagonal,
-			COLOR_ALPHA(seaColor1, 0x70),
-			COLOR_ALPHA(seaColor1, 0x50));
+			COLOR_ALPHA(seaColor1, 0x80),
+			COLOR_ALPHA(seaColor1, 0x60));
 		float k = 1.0f - 0.4f;
 		float k2 = 1.0f - 0.5f;
 		foreach (board::ShipSegment s, ship.segments)
@@ -102,7 +121,7 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 }
 
 
-void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships)
+void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships, const std::vector<board::Pos>* shots)
 {
 	// border
 	Gdiplus::SolidBrush brush1(shipColor1);
@@ -115,7 +134,9 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* 
 
 	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
 
-	// ships
+	// ships and shots
+	if (shots != NULL)
+		draw_shots(graphics, shots);
 	if (ships != NULL)
 		draw_ships(graphics, ships);
 
@@ -134,10 +155,10 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* 
 }
 
 
-void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships)
+void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships, const std::vector<board::Pos>* shots)
 {
 	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
-	draw_map_grid(pState->graphics, ships);
+	draw_map_grid(pState->graphics, ships, shots);
 	::InvalidateRgn(hwnd, NULL, FALSE);  // force redraw
 }
 
@@ -151,7 +172,7 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_NCCREATE:
 		pState = new MapWidgetState();
 		::SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pState));
-		SetMapWidgetData(hwnd, NULL);
+		SetMapWidgetData(hwnd, NULL, NULL);
 		return TRUE;
 
 	case WM_NCDESTROY:
@@ -208,9 +229,10 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 LPCTSTR InitMapWidget()
 {
 	// Initialize GDI+.
-	ULONG_PTR gdiplusToken;
-	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	ULONG_PTR token;
+	Gdiplus::GdiplusStartupInput input;
+	//input.SuppressBackgroundThread = TRUE;
+	Gdiplus::GdiplusStartup(&token, &input, NULL);
 	// register class
 	WNDCLASS wc;
 	memset(&wc, 0, sizeof(wc));

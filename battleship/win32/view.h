@@ -3,7 +3,7 @@
 #include "../game/board.h"
 
 HWND CreateMapWidget(HWND hWndParent);
-void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships);
+void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships, const std::vector<board::Pos>* shots);
 
 
 // notifications
