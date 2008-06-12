@@ -83,7 +83,7 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 
 		Gdiplus::SolidBrush brush(shipColor2);
 		Gdiplus::SolidBrush hitBrush1(hitColor1);
-		Gdiplus::Pen hitPen1(hitColor2, 2);
+		Gdiplus::Pen hitPen1(hitColor2, 4);
 		Gdiplus::HatchBrush hbrush(Gdiplus::HatchStyleWideUpwardDiagonal,
 			COLOR_ALPHA(seaColor1, 0x80),
 			COLOR_ALPHA(seaColor1, 0x60));
