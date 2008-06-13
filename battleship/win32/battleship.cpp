@@ -81,7 +81,7 @@ DWORD WINAPI worker(LPVOID lpParameter)
 				SetMapWidgetData(hwndView, &game.GetPlayerShips(player), &game.GetPlayerShots(opponent));
 				logic::PLAYER_HANDLE current_player_id = game.GetCurrentPlayer();
 
-				if (game.GetCurrentPlayer() == opponent)
+				if (current_player_id == opponent)
 					::Sleep(1000);
 				
 				ai::ComputerPlayer& current_player = players[current_player_id];
