@@ -15,6 +15,7 @@
 #include "clock.h"
 
 G_DEFINE_TYPE (EggClockFace, egg_clock_face, GTK_TYPE_DRAWING_AREA);
+
 static gboolean egg_clock_face_expose (GtkWidget *clock, GdkEventExpose *event);
 
 static void
@@ -37,6 +38,7 @@ draw (GtkWidget *clock, cairo_t *cr)
 {
 	double x, y;
 	double radius;
+	int i;
 	
 	x = clock->allocation.x + clock->allocation.width / 2;
 	y = clock->allocation.y + clock->allocation.height / 2;
@@ -49,6 +51,34 @@ draw (GtkWidget *clock, cairo_t *cr)
 	cairo_fill_preserve (cr);
 	cairo_set_source_rgb (cr, 0, 0, 0);
 	cairo_stroke (cr);
+
+	/* clock ticks */
+	for (i = 0; i < 12; i++)
+	{
+		int inset;
+	
+		cairo_save (cr); /* stack-pen-size */
+		
+		if (i % 3 == 0)
+		{
+			inset = 0.2 * radius;
+		}
+		else
+		{
+			inset = 0.1 * radius;
+			cairo_set_line_width (cr, 0.5 *
+					cairo_get_line_width (cr));
+		}
+		
+		cairo_move_to (cr,
+				x + (radius - inset) * cos (i * M_PI / 6),
+				y + (radius - inset) * sin (i * M_PI / 6));
+		cairo_line_to (cr,
+				x + radius * cos (i * M_PI / 6),
+				y + radius * sin (i * M_PI / 6));
+		cairo_stroke (cr);
+		cairo_restore (cr); /* stack-pen-size */
+	}
 }
 
 static gboolean
