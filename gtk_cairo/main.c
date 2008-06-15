@@ -13,6 +13,12 @@
 
 #include "clock.h"
 
+static void
+time_changed_cb (EggClockFace *clock, int hours, int minutes, gpointer data)
+{
+	g_print ("::time-changed - %02i:%02i\n", hours, minutes);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -29,6 +35,9 @@ main (int argc, char **argv)
 	g_signal_connect (window, "destroy",
 			G_CALLBACK (gtk_main_quit), NULL);
 
+	g_signal_connect (clock, "time-changed",
+			G_CALLBACK (time_changed_cb), NULL);
+	
 	gtk_widget_show_all (window);
 
 	gtk_main ();

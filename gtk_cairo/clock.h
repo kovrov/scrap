@@ -20,7 +20,7 @@ G_BEGIN_DECLS
 #define EGG_CLOCK_FACE(obj)		(G_TYPE_CHECK_INSTANCE_CAST ((obj), EGG_TYPE_CLOCK_FACE, EggClockFace))
 #define EGG_CLOCK_FACE_CLASS(obj)	(G_TYPE_CHECK_CLASS_CAST ((obj), EGG_CLOCK_FACE, EggClockFaceClass))
 #define EGG_IS_CLOCK_FACE(obj)		(G_TYPE_CHECK_INSTANCE_TYPE ((obj), EGG_TYPE_CLOCK_FACE))
-#define EGG_IS_CLOCK_FACE_CLASS(obj)	(G_TYPE_CHECK_CLASS_TYPE ((obj), EFF_TYPE_CLOCK_FACE))
+#define EGG_IS_CLOCK_FACE_CLASS(obj)	(G_TYPE_CHECK_CLASS_TYPE ((obj), EGG_TYPE_CLOCK_FACE))
 #define EGG_CLOCK_FACE_GET_CLASS	(G_TYPE_INSTANCE_GET_CLASS ((obj), EGG_TYPE_CLOCK_FACE, EggClockFaceClass))
 
 typedef struct _EggClockFace		EggClockFace;
@@ -36,6 +36,8 @@ struct _EggClockFace
 struct _EggClockFaceClass
 {
 	GtkDrawingAreaClass parent_class;
+
+	void (* time_changed) (EggClockFace *clock, int hours, int minutes);
 };
 
 GtkWidget *egg_clock_face_new (void);

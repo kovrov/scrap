@@ -3,7 +3,7 @@
  *
  * A GTK+ widget that implements a clock face
  *
- * (c) 2005, Davyd Madeley
+ * (c) 2005-2006, Davyd Madeley
  *
  * Authors:
  *   Davyd Madeley  <davyd@madeley.id.au>
@@ -14,12 +14,16 @@
 #include <time.h>
 
 #include "clock.h"
+#include "clock-marshallers.h"
 
 #define EGG_CLOCK_FACE_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), EGG_TYPE_CLOCK_FACE, EggClockFacePrivate))
 
 G_DEFINE_TYPE (EggClockFace, egg_clock_face, GTK_TYPE_DRAWING_AREA);
 
 static gboolean egg_clock_face_expose (GtkWidget *clock, GdkEventExpose *event);
+static gboolean egg_clock_face_button_press (GtkWidget *clock, GdkEventButton *event);
+static gboolean egg_clock_face_button_release (GtkWidget *clock, GdkEventButton *event);
+static gboolean egg_clock_face_motion_notify (GtkWidget *clock, GdkEventMotion *event);
 static gboolean egg_clock_face_update (gpointer data);
 
 typedef struct _EggClockFacePrivate EggClockFacePrivate;
@@ -27,7 +31,18 @@ typedef struct _EggClockFacePrivate EggClockFacePrivate;
 struct _EggClockFacePrivate
 {
 	struct tm time;	/* the time on the clock face */
+	int minute_offset; /* the offset of the minutes hand */
+
+	gboolean dragging; /* true if the interface is being dragged */
 };
+
+enum
+{
+	TIME_CHANGED,
+	LAST_SIGNAL
+};
+
+static guint egg_clock_face_signals[LAST_SIGNAL] = { 0 };
 
 static void
 egg_clock_face_class_init (EggClockFaceClass *class)
@@ -38,7 +53,23 @@ egg_clock_face_class_init (EggClockFaceClass *class)
 	obj_class = G_OBJECT_CLASS (class);
 	widget_class = GTK_WIDGET_CLASS (class);
 
+	/* GtkWidget signals */
 	widget_class->expose_event = egg_clock_face_expose;
+	widget_class->button_press_event = egg_clock_face_button_press;
+	widget_class->button_release_event = egg_clock_face_button_release;
+	widget_class->motion_notify_event = egg_clock_face_motion_notify;
+
+	/* EggClockFace signals */
+	egg_clock_face_signals[TIME_CHANGED] = g_signal_new (
+			"time-changed",
+			G_OBJECT_CLASS_TYPE (obj_class),
+			G_SIGNAL_RUN_FIRST,
+			G_STRUCT_OFFSET (EggClockFaceClass, time_changed),
+			NULL, NULL,
+			_clock_marshal_VOID__INT_INT,
+			G_TYPE_NONE, 2,
+			G_TYPE_INT,
+			G_TYPE_INT);
 
 	g_type_class_add_private (obj_class, sizeof (EggClockFacePrivate));
 }
@@ -46,6 +77,10 @@ egg_clock_face_class_init (EggClockFaceClass *class)
 static void
 egg_clock_face_init (EggClockFace *clock)
 {
+	gtk_widget_add_events (GTK_WIDGET (clock),
+			GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+			GDK_POINTER_MOTION_MASK);
+
 	egg_clock_face_update (clock);
 
 	/* update the clock once a second */
@@ -63,8 +98,8 @@ draw (GtkWidget *clock, cairo_t *cr)
 
 	priv = EGG_CLOCK_FACE_GET_PRIVATE (clock);
 	
-	x = clock->allocation.x + clock->allocation.width / 2;
-	y = clock->allocation.y + clock->allocation.height / 2;
+	x = clock->allocation.width / 2;
+	y = clock->allocation.height / 2;
 	radius = MIN (clock->allocation.width / 2,
 		      clock->allocation.height / 2) - 5;
 
@@ -105,7 +140,7 @@ draw (GtkWidget *clock, cairo_t *cr)
 
 	/* clock hands */
 	hours = priv->time.tm_hour;
-	minutes = priv->time.tm_min;
+	minutes = priv->time.tm_min + priv->minute_offset;
 	seconds = priv->time.tm_sec;
 	/* hour hand:
 	 * the hour hand is rotated 30 degrees (pi/6 r) per hour +
@@ -159,6 +194,41 @@ egg_clock_face_expose (GtkWidget *clock, GdkEventExpose *event)
 	return FALSE;
 }
 
+static gboolean
+egg_clock_face_button_press (GtkWidget *clock, GdkEventButton *event)
+{
+	EggClockFacePrivate *priv;
+	int minutes;
+	double lx, ly;
+	double px, py;
+	double u, d2;
+	
+	priv = EGG_CLOCK_FACE_GET_PRIVATE (clock);
+
+	minutes = priv->time.tm_min + priv->minute_offset;
+
+	/* From
+	 * http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+	 */
+	px = event->x - clock->allocation.width / 2;
+	py = clock->allocation.height / 2 - event->y;
+	lx = sin (M_PI / 30 * minutes); ly = cos (M_PI / 30 * minutes);
+	u = lx * px + ly * py;
+
+	/* on opposite side of origin */
+	if (u < 0) return FALSE;
+
+	d2 = pow (px - u * lx, 2) + pow (py - u * ly, 2);
+
+	if (d2 < 25) /* 5 pixels away from the line */
+	{
+		priv->dragging = TRUE;
+		g_print ("got minute hand\n");
+	}
+	
+	return FALSE;
+}
+
 static void
 egg_clock_face_redraw_canvas (EggClockFace *clock)
 {
@@ -175,6 +245,71 @@ egg_clock_face_redraw_canvas (EggClockFace *clock)
 	gdk_window_process_updates (widget->window, TRUE);
 
 	gdk_region_destroy (region);
+}
+
+static emit_time_changed_signal (EggClockFace *clock, int x, int y)
+{
+	EggClockFacePrivate *priv;
+	double phi;
+	int hour, minute;
+	
+	priv = EGG_CLOCK_FACE_GET_PRIVATE (clock);
+	
+	/* decode the minute hand */
+	/* normalise the coordinates around the origin */
+	x -= GTK_WIDGET (clock)->allocation.width / 2;
+	y -= GTK_WIDGET (clock)->allocation.height / 2;
+
+	/* phi is a bearing from north clockwise, use the same geometry as we
+	 * did to position the minute hand originally */
+	phi = atan2 (x, -y);
+	if (phi < 0)
+		phi += M_PI * 2;
+
+	hour = priv->time.tm_hour;
+	minute = phi * 30 / M_PI;
+	
+	/* update the offset */
+	priv->minute_offset = minute - priv->time.tm_min;
+	egg_clock_face_redraw_canvas (clock);
+
+	g_signal_emit (clock,
+			egg_clock_face_signals[TIME_CHANGED],
+			0,
+			hour, minute);
+}
+
+static gboolean
+egg_clock_face_motion_notify (GtkWidget *clock, GdkEventMotion *event)
+{
+	EggClockFacePrivate *priv;
+	int x, y;
+
+	priv = EGG_CLOCK_FACE_GET_PRIVATE (clock);
+
+	if (priv->dragging)
+	{
+		emit_time_changed_signal (EGG_CLOCK_FACE (clock),
+				event->x, event->y);
+	}
+}
+
+static gboolean
+egg_clock_face_button_release (GtkWidget *clock, GdkEventButton *event)
+{
+	EggClockFacePrivate *priv;
+
+	priv = EGG_CLOCK_FACE_GET_PRIVATE (clock);
+	
+	if (priv->dragging)
+	{
+		priv = EGG_CLOCK_FACE_GET_PRIVATE (clock);
+		priv->dragging = FALSE;
+		emit_time_changed_signal (EGG_CLOCK_FACE (clock),
+				event->x, event->y);
+	}
+
+	return FALSE;
 }
 
 static gboolean

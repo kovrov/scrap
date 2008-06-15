@@ -1,0 +1,15 @@
+import os
+
+# a hack to generate clock marshallers
+env_x = Environment(ENV = {'PATH' : os.environ['PATH']})
+env_x.Command('clock-marshallers.c',
+			'clock-marshallers.list',
+			'glib-genmarshal --body --prefix=_clock_marshal $SOURCE > $TARGET')
+env_x.Command('clock-marshallers.h',
+			'clock-marshallers.list',
+			'glib-genmarshal --header --prefix=_clock_marshal $SOURCE > $TARGET')
+
+# actual build script
+env = Environment(tools=['mingw'])
+env.ParseConfig('pkg-config --cflags --libs gtk+-2.0')
+env.Program('clock', ['main.c', 'clock.c', 'clock-marshallers.c'])
