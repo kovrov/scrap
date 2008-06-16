@@ -132,7 +132,7 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* 
 	graphics->FillRectangle(&brush, gridBorder, gridBorder,
 				gridWidth-gridBorder*2, gridWidth-gridBorder*2);
 
-	graphics->TranslateTransform(gridBorder+gridPadding, gridBorder+gridPadding);
+	graphics->TranslateTransform((Gdiplus::REAL)(gridBorder+gridPadding), (Gdiplus::REAL)(gridBorder+gridPadding));
 
 	// ships and shots
 	if (shots != NULL)
@@ -185,27 +185,35 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		PAINTSTRUCT ps; 
 		HDC hdc = ::BeginPaint(hwnd, &ps);
 		Gdiplus::Graphics graphics(hdc);
-		graphics.DrawImage(&pState->bitmap, 0, 0, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
+		RECT rect;
+		::GetClientRect(hwnd, &rect);
+		graphics.DrawImage(&pState->bitmap, rect.left, rect.top, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
 		::EndPaint(hwnd, &ps); 
 		}
 		return 0;
 
-	case WM_NCCALCSIZE:
+	case WM_NCCALCSIZE:  // at which point this info is asked?
 		if (wParam)
 		{
-			NCCALCSIZE_PARAMS* size_param = (NCCALCSIZE_PARAMS*)lParam;
-			size_param->rgrc[0].right = gridWidth;
-			size_param->rgrc[0].bottom = gridWidth;
+			NCCALCSIZE_PARAMS* size_param = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
+			size_param->rgrc[0].right = size_param->rgrc[0].left + gridWidth;
+			size_param->rgrc[0].bottom = size_param->rgrc[0].top + gridWidth;
 			size_param->lppos->cx = gridWidth;
 			size_param->lppos->cy = gridWidth;
 		}
 		else
 		{
-			RECT* rect = (RECT*)lParam;
+			RECT* rect = reinterpret_cast<RECT*>(lParam);
 			rect->bottom = rect->top + gridWidth;
 			rect->right = rect->left + gridWidth;
 		}
 		return 0;
+
+	case WM_WINDOWPOSCHANGING: {  // in case parent ask for an invalid window size...
+		WINDOWPOS* pos = reinterpret_cast<WINDOWPOS*>(lParam);
+		pos->cx = gridWidth;
+		pos->cy = gridWidth;
+		} break;
 
 	case WM_LBUTTONUP:
 		{
