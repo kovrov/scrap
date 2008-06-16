@@ -146,7 +146,7 @@ std::vector<int> diagonal_squares(size_t index, short side)
 {
 	std::vector<int> res;
 	res.reserve(4);
-	unsigned length = side * side;
+	int length = side * side;
 	int pos = index - side + 1;  // upper-right
 	if (pos % side != 0 && pos >= 0 && pos < length)
 	{
@@ -182,7 +182,7 @@ std::vector<int> horizontal_neighbor_squares(size_t index, short side)
 {
 	std::vector<int> res;
 	res.reserve(4);
-	size_t length = side * side;
+	int length = side * side;
 	int pos = index - 1;  // left
 	if (index % side != 0 && pos >= 0 && pos < length)
 		res.push_back(pos);
@@ -196,7 +196,7 @@ std::vector<int> vertical_neighbor_squares(size_t index, short side)
 {
 	std::vector<int> res;
 	res.reserve(4);
-	size_t length = side * side;
+	int length = side * side;
 	int pos = index - side;  // up
 	if (pos >= 0 && pos < length)
 		res.push_back(pos);

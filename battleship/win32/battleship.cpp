@@ -35,6 +35,7 @@ board::Pos g_SquareSelected(0,0); // FIXME
 
 void on_new_game()
 {
+	//g_game.Reset();
 	// HACK!!! TODO: implement state change notification in game library
 	::PostMessage(hwndMain, WM_GAME_STATE_CHANGED, 0, 0);
 }
