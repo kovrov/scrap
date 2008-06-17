@@ -139,6 +139,16 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* 
 		draw_shots(graphics, shots);
 	if (ships != NULL)
 		draw_ships(graphics, ships);
+	if (shots != NULL && shots->size() > 0)
+	{
+		const board::Pos& pos = shots->back();
+		Gdiplus::SolidBrush brush_red(0x20FF0000);
+		graphics->FillRectangle(&brush_red,
+			pos.x * width,
+			pos.y * width,
+			width + 1,
+			width + 1);
+	}
 
 	// grid
 	Gdiplus::SolidBrush seaBrush2(COLOR_ALPHA(seaColor2, 0x80));
@@ -184,10 +194,10 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		{
 		PAINTSTRUCT ps; 
 		HDC hdc = ::BeginPaint(hwnd, &ps);
+
 		Gdiplus::Graphics graphics(hdc);
-		RECT rect;
-		::GetClientRect(hwnd, &rect);
-		graphics.DrawImage(&pState->bitmap, rect.left, rect.top, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
+		graphics.DrawImage(&pState->bitmap, 0, 0, pState->bitmap.GetWidth(), pState->bitmap.GetHeight());
+
 		::EndPaint(hwnd, &ps); 
 		}
 		return 0;

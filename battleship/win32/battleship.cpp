@@ -5,6 +5,7 @@
 #include "battleship.h"
 #include "view.h"
 #include <assert.h>
+#include <cstdlib>
 
 // game stuff
 #include "../game/logic.h"
@@ -37,9 +38,7 @@ enum { UI_PLAYERMOVE, UI_NEWGAME, UI_QUIT };
 
 void on_new_game()
 {
-	//g_game.Reset();
-	// HACK!!! TODO: implement state change notification in game library
-	::PostThreadMessage(g_worker_thread_id, MSG_GAME_STATE_CHANGED, 0, 0);
+	::PostThreadMessage(g_worker_thread_id, MSG_USER_INPUT, UI_NEWGAME, 0);
 }
 
 DWORD WINAPI game_thread(LPVOID lpParameter)
@@ -48,6 +47,8 @@ DWORD WINAPI game_thread(LPVOID lpParameter)
 	logic::PLAYER_HANDLE opponent = 1;
 	logic::Game game(player, opponent);
 	std::map<logic::PLAYER_HANDLE, ai::ComputerPlayer> players;
+
+	srand((unsigned)time(NULL));
 
 	MSG msg;
 	while (::GetMessage(&msg, NULL, 0, 0))
@@ -100,7 +101,7 @@ DWORD WINAPI game_thread(LPVOID lpParameter)
 		}
 		else if (MSG_USER_INPUT == msg.message)
 		{
-			if (msg.wParam == UI_PLAYERMOVE)
+			if (UI_PLAYERMOVE == msg.wParam)
 			{
 				if (game.GetState() == logic::PLAYER_TURN && game.GetCurrentPlayer() == player)
 				{
@@ -108,6 +109,11 @@ DWORD WINAPI game_thread(LPVOID lpParameter)
 					// HACK!!! TODO: implement state change notification in game library
 					::PostThreadMessage(g_worker_thread_id, MSG_GAME_STATE_CHANGED, 0, 0);
 				}
+			}
+			else if (UI_NEWGAME == msg.wParam)
+			{
+				// HACK!!! TODO: implement state change notification in game library
+				::PostThreadMessage(g_worker_thread_id, MSG_GAME_STATE_CHANGED, 0, 0);
 			}
 		}
 	}
