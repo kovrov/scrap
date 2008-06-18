@@ -79,7 +79,7 @@ DWORD WINAPI game_thread(LPVOID lpParameter)
 				logic::PLAYER_HANDLE current_player_id = game.GetCurrentPlayer();
 
 				//if (current_player_id == opponent)
-					::Sleep(1000);
+				//	::Sleep(1000);
 				
 				ai::ComputerPlayer& current_player = players[current_player_id];
 				board::Pos shot = current_player.Shot();
@@ -251,6 +251,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		assert (hwndMapView);
 		hwndRadarView = CreateMapWidget(hWnd);
 		assert (hwndRadarView);
+		SetMapWidgetThemeColor(hwndRadarView, SEA_BACKGROUND_COLOR,  0xFFb4edb4);
+		SetMapWidgetThemeColor(hwndRadarView, SEA_FOREROUND_COLOR,   0xFFa5cda5);
+		SetMapWidgetThemeColor(hwndRadarView, SHIP_FOREROUND_COLOR,  0x00000000);
+		SetMapWidgetThemeColor(hwndRadarView, SHIP_BACKGROUND_COLOR, 0x00000000);
+		SetMapWidgetThemeColor(hwndRadarView, HIT_FOREGROUND_COLOR,  0xFF4cb84c);
+		SetMapWidgetThemeColor(hwndRadarView, HIT_BACKGROUND_COLOR,  0xFF7cef7c);
 		break;
 
 	case WM_DESTROY:
