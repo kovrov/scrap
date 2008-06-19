@@ -42,7 +42,7 @@ public:
 	PLAYER_HANDLE GetCurrentPlayer();
 	std::vector<board::Ship> GetOpponentShips(PLAYER_HANDLE player);
 	std::vector<board::Ship> GetPlayerShips(PLAYER_HANDLE player);
-	std::vector<board::Pos> GetPlayerShots(PLAYER_HANDLE player);
+	std::vector<board::Shot> GetPlayerShots(PLAYER_HANDLE player);
 	std::vector<FleetConf> GetConfig() { return m_config; }
 private:
 	std::vector<FleetConf> m_config;

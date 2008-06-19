@@ -111,9 +111,13 @@ bool is_active(const ShipSegment& s)
 
 SHOT SeaGrid::ShootSquare(Pos& coords)
 {
-	if (0 != std::count(shots.begin(), shots.end(), coords))
-		throw std::exception();  // can't shoot twice
-	shots.push_back(coords);
+	//if (0 != std::count(shots.begin(), shots.end(), coords))
+	//	throw std::exception();  // can't shoot twice
+	shots.push_back(Shot());
+	Shot& shot = shots.back();
+	shot.result = MISS;
+	shot.x = coords.x;
+	shot.y = coords.y;
 	for (std::vector<Ship>::iterator i=ships.begin(); i != ships.end(); i++)
 	{
 		Ship& ship = *i;
@@ -126,17 +130,18 @@ SHOT SeaGrid::ShootSquare(Pos& coords)
 				segment.active = false;
 				if (std::count_if(ship.segments.begin(), ship.segments.end(), is_active))
 				{
-					return HIT;
+					shot.result = HIT;
 				}
 				else
 				{
 					active_ships--;
-					return SUNK;
+					shot.result = SUNK;
 				}
+				return shot.result;
 			}
 		}
 	}
-	return MISS;
+	return shot.result;
 }
 
 

@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -40,6 +43,28 @@ void on_new_game()
 {
 	::PostThreadMessage(g_worker_thread_id, MSG_USER_INPUT, UI_NEWGAME, 0);
 }
+
+std::vector<board::Ship> filter_inactive(const std::vector<board::Ship>& ships)
+{
+	std::vector<board::Ship> inactive_ships;
+	inactive_ships.reserve(ships.size());
+	foreach (const board::Ship& ship, ships)
+	{
+		bool active = false;
+		foreach (const board::ShipSegment& segment, ship.segments)
+		{
+			if (segment.active)
+			{
+				active = true;
+				break;
+			}
+		}
+		if (!active)
+			inactive_ships.push_back(ship);
+	}
+	return inactive_ships;
+}
+
 
 DWORD WINAPI game_thread(LPVOID lpParameter)
 {
@@ -75,11 +100,11 @@ DWORD WINAPI game_thread(LPVOID lpParameter)
 			case logic::PLAYER_TURN: {
 				// update widget
 				SetMapWidgetData(hwndMapView, &game.GetPlayerShips(player), &game.GetPlayerShots(opponent));
-				SetMapWidgetData(hwndRadarView, &game.GetPlayerShips(opponent), &game.GetPlayerShots(player));
+				SetMapWidgetData(hwndRadarView, &filter_inactive(game.GetPlayerShips(opponent)), &game.GetPlayerShots(player));
 				logic::PLAYER_HANDLE current_player_id = game.GetCurrentPlayer();
 
 				//if (current_player_id == opponent)
-				//	::Sleep(1000);
+					::Sleep(500);
 				
 				ai::ComputerPlayer& current_player = players[current_player_id];
 				board::Pos shot = current_player.Shot();
@@ -251,12 +276,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		assert (hwndMapView);
 		hwndRadarView = CreateMapWidget(hWnd);
 		assert (hwndRadarView);
-		SetMapWidgetThemeColor(hwndRadarView, SEA_BACKGROUND_COLOR,  0xFFb4edb4);
-		SetMapWidgetThemeColor(hwndRadarView, SEA_FOREROUND_COLOR,   0xFFa5cda5);
-		SetMapWidgetThemeColor(hwndRadarView, SHIP_FOREROUND_COLOR,  0x00000000);
-		SetMapWidgetThemeColor(hwndRadarView, SHIP_BACKGROUND_COLOR, 0x00000000);
-		SetMapWidgetThemeColor(hwndRadarView, HIT_FOREGROUND_COLOR,  0xFF4cb84c);
-		SetMapWidgetThemeColor(hwndRadarView, HIT_BACKGROUND_COLOR,  0xFF7cef7c);
+		SetMapWidgetThemeColor(hwndRadarView, SEA_FOREROUND_COLOR,   0xFF60A060);
+		SetMapWidgetThemeColor(hwndRadarView, SEA_BACKGROUND_COLOR,  0xFF80C080);
+		SetMapWidgetThemeColor(hwndRadarView, SHIP_FOREGROUND_COLOR, 0xFFC0F0C0);
+		SetMapWidgetThemeColor(hwndRadarView, SHIP_BACKGROUND_COLOR, 0xFFB0E0B0);
+		SetMapWidgetThemeColor(hwndRadarView, HIT_FOREGROUND_COLOR,  0xFFC0F0C0);
+		SetMapWidgetThemeColor(hwndRadarView, HIT_BACKGROUND_COLOR,  0xFFF0FFF0);
 		break;
 
 	case WM_DESTROY:
@@ -273,8 +298,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		} return 0;
 
 	case WM_GETMINMAXINFO: {
-		RECT rect;
-		if (::GetClientRect(hwndMapView, &rect))
+		RECT rectMapView, rectRadarView;
+		if (::GetClientRect(hwndMapView, &rectMapView) && ::GetClientRect(hwndRadarView, &rectRadarView))
 		{
 			int menu_y = ::GetSystemMetrics(SM_CYMENU);
 			int frame_y = ::GetSystemMetrics(SM_CYFIXEDFRAME); // SM_CYSIZEFRAME
@@ -282,10 +307,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			int caption_y = ::GetSystemMetrics(SM_CYCAPTION);
 			MINMAXINFO* minmaxinfo = reinterpret_cast<MINMAXINFO*>(lParam);
 
-			minmaxinfo->ptMinTrackSize.x = rect.right + frame_x*2;
-			minmaxinfo->ptMinTrackSize.y = rect.bottom + frame_y*2 + menu_y + caption_y;
-			// temp hack
-			minmaxinfo->ptMinTrackSize.x += rect.right;
+			minmaxinfo->ptMinTrackSize.x = rectMapView.right + frame_x*2 + rectRadarView.right;
+			minmaxinfo->ptMinTrackSize.y = rectMapView.bottom + frame_y*2 + menu_y + caption_y;
 
 			minmaxinfo->ptMaxTrackSize.x = minmaxinfo->ptMinTrackSize.x;
 			minmaxinfo->ptMaxTrackSize.y = minmaxinfo->ptMinTrackSize.y;

@@ -219,7 +219,7 @@ std::vector<board::Ship> Game::GetPlayerShips(PLAYER_HANDLE player)
 	return m_context->players[player].sea->ships;
 }
 
-std::vector<board::Pos> Game::GetPlayerShots(PLAYER_HANDLE player)
+std::vector<board::Shot> Game::GetPlayerShots(PLAYER_HANDLE player)
 {
 	PLAYER_HANDLE opponent = m_context->players[player].opponent;
 	return m_context->players[opponent].sea->shots;

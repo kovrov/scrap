@@ -24,6 +24,12 @@ struct Pos
 	}
 };
 
+struct Shot
+{
+	short x,y;
+	SHOT result;
+};
+
 struct ShipAnchor
 {
 	ShipAnchor(short x, short y, short size, bool horiz)
@@ -68,7 +74,7 @@ public:
 	SHOT ShootSquare(Pos& coords);
 	std::vector<Ship> ships;
 	unsigned int active_ships;
-	std::vector<Pos> shots;
+	std::vector<Shot> shots;
 	short side;
 };
 

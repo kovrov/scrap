@@ -14,9 +14,8 @@
 
 int width = 40;
 float corner = width - width / 3.0f;
-const int gridBorder = 2;
 const int gridPadding = width / 4;
-const int gridWidth = width*10 + gridBorder*2 + gridPadding*2;
+const int gridWidth = width*10 + gridPadding*2;
 
 #define COLOR_ALPHA(color, alpha) ((color) & 0x00FFFFFF|(DWORD)((alpha) << 24))
 
@@ -29,7 +28,7 @@ struct MapWidgetState
 		graphics = Gdiplus::Graphics::FromImage(&bitmap);
 		theme[SEA_BACKGROUND_COLOR]  = 0xFFE8F0F8;
 		theme[SEA_FOREROUND_COLOR]   = 0xFFB0C0E0;
-		theme[SHIP_FOREROUND_COLOR]  = 0xFF305880;
+		theme[SHIP_FOREGROUND_COLOR]  = 0xFF305880;
 		theme[SHIP_BACKGROUND_COLOR] = 0xFF5880A8;
 		theme[HIT_FOREGROUND_COLOR]   = 0xFF905040;
 		theme[HIT_BACKGROUND_COLOR]  = 0xFFE09070;
@@ -46,20 +45,39 @@ struct MapWidgetState
 };
 
 
-void draw_shots(Gdiplus::Graphics* graphics, const std::vector<board::Pos>* shots, Gdiplus::ARGB* theme)
+void draw_shots(Gdiplus::Graphics* graphics, const std::vector<board::Shot>* shots, Gdiplus::ARGB* theme)
 {
 	assert (shots != NULL);
 	graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
-	Gdiplus::SolidBrush brush(COLOR_ALPHA(theme[HIT_FOREGROUND_COLOR], 0x80));
+	Gdiplus::SolidBrush hitForegroundBrush(COLOR_ALPHA(theme[HIT_FOREGROUND_COLOR], 0x60));
+	Gdiplus::SolidBrush hitBackgroundBrush(theme[HIT_BACKGROUND_COLOR]);
+	Gdiplus::Pen hitForegroundPen(theme[HIT_FOREGROUND_COLOR], 4);
 	float k = 1.0f - 0.3f;
-	foreach (board::Pos shot, *shots)
+	float k2 = 1.0f - 0.5f;
+	foreach (board::Shot shot, *shots)
 	{
-		graphics->FillEllipse(&brush,
-					shot.x*width + width*k/2,
-					shot.y*width + width*k/2,
-					width - width*k,
-					width - width*k);
+		if (board::MISS == shot.result)
+		{
+			graphics->FillEllipse(&hitForegroundBrush,
+						shot.x*width + width*k/2,
+						shot.y*width + width*k/2,
+						width - width*k,
+						width - width*k);
+		}
+		else
+		{
+			graphics->FillEllipse(&hitBackgroundBrush,
+						shot.x*width + width*k2/2,
+						shot.y*width + width*k2/2,
+						width - width*k2,
+						width - width*k2);
+			graphics->DrawEllipse(&hitForegroundPen,
+						shot.x*width + width*k2/2,
+						shot.y*width + width*k2/2,
+						width - width*k2,
+						width - width*k2);
+		}
 	}
 	graphics->SetSmoothingMode(Gdiplus::SmoothingModeDefault);
 }
@@ -75,7 +93,7 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 		board::ShipSegment front = ship.segments.front();
 		board::ShipSegment back = ship.segments.back();
 
-		Gdiplus::Pen pen(theme[SHIP_FOREROUND_COLOR], corner);
+		Gdiplus::Pen pen(theme[SHIP_FOREGROUND_COLOR], corner);
 		pen.SetLineJoin(Gdiplus::LineJoinRound);
 		graphics->DrawRectangle(&pen,
 					front.pos.x*width + corner/2,
@@ -84,13 +102,10 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 					(back.pos.y - front.pos.y + 1)*width - corner);
 
 		Gdiplus::SolidBrush brush(theme[SHIP_BACKGROUND_COLOR]);
-		Gdiplus::SolidBrush hitBrush1(theme[HIT_BACKGROUND_COLOR]);
-		Gdiplus::Pen hitPen1(theme[HIT_FOREGROUND_COLOR], 4);
 		Gdiplus::HatchBrush hbrush(Gdiplus::HatchStyleWideUpwardDiagonal,
-			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0x80),
-			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0x60));
+			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0xA0),
+			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0x80));
 		float k = 1.0f - 0.4f;
-		float k2 = 1.0f - 0.5f;
 		bool ship_active = false;
 		foreach (board::ShipSegment s, ship.segments)
 		{
@@ -105,65 +120,32 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 			}
 			else
 			{
+				graphics->SetSmoothingMode(Gdiplus::SmoothingModeDefault);
 				graphics->FillRectangle(&hbrush,
 							s.pos.x*width,
 							s.pos.y*width,
 							width,
 							width);
-				graphics->FillEllipse(&hitBrush1,
-							s.pos.x*width + width*k2/2,
-							s.pos.y*width + width*k2/2,
-							width - width*k2,
-							width - width*k2);
-				graphics->DrawEllipse(&hitPen1,
-							s.pos.x*width + width*k2/2,
-							s.pos.y*width + width*k2/2,
-							width - width*k2,
-							width - width*k2);
+				graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 			}
-		}
-		if (!ship_active)
-		{
-			Gdiplus::Pen pen(theme[HIT_FOREGROUND_COLOR]);
-			graphics->DrawRectangle(&pen,
-						front.pos.x*width,
-						front.pos.y*width,
-						(back.pos.x - front.pos.x + 1)*width,
-						(back.pos.y - front.pos.y + 1)*width);
 		}
 	}
 	graphics->SetSmoothingMode(Gdiplus::SmoothingModeDefault);
 }
 
 
-void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships, const std::vector<board::Pos>* shots, Gdiplus::ARGB* theme)
+void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* ships, const std::vector<board::Shot>* shots, Gdiplus::ARGB* theme)
 {
 	// border
-	Gdiplus::SolidBrush brush1(theme[SHIP_FOREROUND_COLOR]);
+	Gdiplus::SolidBrush brush1(theme[SHIP_FOREGROUND_COLOR]);
 	graphics->FillRectangle(&brush1, 0, 0, gridWidth, gridWidth);
 
 	// background
 	Gdiplus::SolidBrush brush(theme[SEA_BACKGROUND_COLOR]);
-	graphics->FillRectangle(&brush, gridBorder, gridBorder,
-				gridWidth-gridBorder*2, gridWidth-gridBorder*2);
+	graphics->FillRectangle(&brush, 0, 0,
+				gridWidth, gridWidth);
 
-	graphics->TranslateTransform((Gdiplus::REAL)(gridBorder+gridPadding), (Gdiplus::REAL)(gridBorder+gridPadding));
-
-	// ships and shots
-	if (shots != NULL)
-		draw_shots(graphics, shots, theme);
-	if (ships != NULL)
-		draw_ships(graphics, ships, theme);
-	if (shots != NULL && shots->size() > 0)
-	{
-		const board::Pos& pos = shots->back();
-		Gdiplus::SolidBrush brush_red(0x20FF0000);
-		graphics->FillRectangle(&brush_red,
-			pos.x * width,
-			pos.y * width,
-			width + 1,
-			width + 1);
-	}
+	graphics->TranslateTransform((Gdiplus::REAL)(gridPadding), (Gdiplus::REAL)(gridPadding));
 
 	// grid
 	Gdiplus::SolidBrush seaBrush2(COLOR_ALPHA(theme[SEA_FOREROUND_COLOR], 0x80));
@@ -176,13 +158,33 @@ void draw_map_grid(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* 
 		graphics->FillRectangle(&seaBrush2, x, y-3, 1, 7);
 	}
 
+	// ships and shots
+	if (ships != NULL)
+		draw_ships(graphics, ships, theme);
+	if (shots != NULL)
+		draw_shots(graphics, shots, theme);
+	if (shots != NULL && shots->size() > 0)
+	{
+		const board::Shot& pos = shots->back();
+		Gdiplus::SolidBrush brush_red(COLOR_ALPHA(theme[HIT_BACKGROUND_COLOR], 0x20));
+		graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+		graphics->FillEllipse(&brush_red,
+			pos.x * width - width/5,
+			pos.y * width - width/5,
+			width + width/5*2,
+			width + width/5*2);
+		graphics->SetSmoothingMode(Gdiplus::SmoothingModeDefault);
+	}
+
 	graphics->ResetTransform();
 }
 
 
-void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships, const std::vector<board::Pos>* shots)
+void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships, const std::vector<board::Shot>* shots)
 {
 	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+	if (NULL == pState)  // assert
+		return;
 	draw_map_grid(pState->graphics, ships, shots, pState->theme);
 	::InvalidateRgn(hwnd, NULL, FALSE);  // force redraw
 }
@@ -191,6 +193,8 @@ void SetMapWidgetData(HWND hwnd, const std::vector<board::Ship>* ships, const st
 void SetMapWidgetThemeColor(HWND hwnd, int color, DWORD value)
 {
 	MapWidgetState* pState = reinterpret_cast<MapWidgetState*>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
+	if (NULL == pState)  // assert
+		return;
 	pState->theme[color] = value;
 	SetMapWidgetData(hwnd, NULL, NULL);
 }
@@ -250,8 +254,8 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 	case WM_LBUTTONUP:
 		{
-		int x = LOWORD(lParam) - gridBorder - gridPadding;
-		int y = HIWORD(lParam) - gridBorder - gridPadding;
+		int x = LOWORD(lParam) - gridPadding;
+		int y = HIWORD(lParam) - gridPadding;
 		if (x < 0 || y < 0)
 			return 0;
 		if (x / width > 9 || y / width > 9)
