@@ -23,6 +23,8 @@
 
 #define MAX_LOADSTRING 100
 
+#define WIDGET_MARGIN 3
+
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
@@ -220,7 +222,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   hwndMain = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX, // WS_OVERLAPPEDWINDOW
+   hwndMain = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, // WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
    assert (hwndMain);
@@ -288,13 +290,69 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		::PostQuitMessage(0);
 		break;
 
+	case WM_PAINT: {
+		PAINTSTRUCT ps; 
+		HDC hdc = ::BeginPaint(hWnd, &ps);
+
+		RECT clientRect;
+		::GetClientRect(hWnd, &clientRect);
+
+		HBRUSH hbr = ::GetSysColorBrush(COLOR_APPWORKSPACE);
+
+		RECT rect = clientRect;
+		rect.bottom = WIDGET_MARGIN;
+		::FillRect(hdc, &rect, hbr);
+
+		rect = clientRect;
+		rect.top = rect.bottom - WIDGET_MARGIN;
+		::FillRect(hdc, &rect, hbr);
+
+		rect = clientRect;
+		rect.right = WIDGET_MARGIN;
+		::FillRect(hdc, &rect, hbr);
+
+		rect = clientRect;
+		rect.left = rect.right - WIDGET_MARGIN;
+		::FillRect(hdc, &rect, hbr);
+
+		rect = clientRect;
+		rect.left = rect.right / 2 - WIDGET_MARGIN/2;
+		rect.right = rect.left + WIDGET_MARGIN;
+		::FillRect(hdc, &rect, hbr);
+
+		::EndPaint(hWnd, &ps); 
+		} return 0;
+
 	case WM_SIZE: {
 		int width = LOWORD(lParam);
 		int height = HIWORD(lParam);
-		::MoveWindow(hwndMapView, 0, 0, width, height, TRUE);
+
+		MINMAXINFO mminfo;
+		::SendMessage(hwndMapView, WM_GETMINMAXINFO, 0, (LPARAM)&mminfo);
+
+		int min_size = WIDGET_MARGIN*3 + mminfo.ptMinTrackSize.x*2;
+		int max_size = WIDGET_MARGIN*3 + mminfo.ptMaxTrackSize.x*2;
+		int left_margin = WIDGET_MARGIN;
+		int right_margin = WIDGET_MARGIN;
+
+		if (width < min_size)  // window too small
+		{
+			assert (false);
+		}
+		else if (width > max_size)  // window too big
+		{
+			left_margin = (width - max_size)/2 + WIDGET_MARGIN;
+			right_margin = width - left_margin + WIDGET_MARGIN;
+		}
+
+		::MoveWindow(hwndMapView,
+					left_margin, WIDGET_MARGIN,
+					width, height, TRUE);
 		RECT rect;
 		::GetClientRect(hwndMapView, &rect);
-		::MoveWindow(hwndRadarView, rect.right, 0, width, height, TRUE);
+		::MoveWindow(hwndRadarView,
+					left_margin + rect.right + WIDGET_MARGIN, WIDGET_MARGIN,
+					width, height, TRUE);
 		} return 0;
 
 	case WM_GETMINMAXINFO: {
@@ -302,16 +360,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (::GetClientRect(hwndMapView, &rectMapView) && ::GetClientRect(hwndRadarView, &rectRadarView))
 		{
 			int menu_y = ::GetSystemMetrics(SM_CYMENU);
-			int frame_y = ::GetSystemMetrics(SM_CYFIXEDFRAME); // SM_CYSIZEFRAME
-			int frame_x = ::GetSystemMetrics(SM_CXFIXEDFRAME); // SM_CXSIZEFRAME
+			int frame_y = ::GetSystemMetrics(SM_CYSIZEFRAME); // SM_CYFIXEDFRAME
+			int frame_x = ::GetSystemMetrics(SM_CXSIZEFRAME); // SM_CXFIXEDFRAME
 			int caption_y = ::GetSystemMetrics(SM_CYCAPTION);
 			MINMAXINFO* minmaxinfo = reinterpret_cast<MINMAXINFO*>(lParam);
 
-			minmaxinfo->ptMinTrackSize.x = rectMapView.right + frame_x*2 + rectRadarView.right;
-			minmaxinfo->ptMinTrackSize.y = rectMapView.bottom + frame_y*2 + menu_y + caption_y;
+			minmaxinfo->ptMinTrackSize.x = rectMapView.right + frame_x*2 + rectRadarView.right + WIDGET_MARGIN*3;
+			minmaxinfo->ptMinTrackSize.y = rectMapView.bottom + frame_y*2 + menu_y + caption_y + WIDGET_MARGIN*2;
 
-			minmaxinfo->ptMaxTrackSize.x = minmaxinfo->ptMinTrackSize.x;
-			minmaxinfo->ptMaxTrackSize.y = minmaxinfo->ptMinTrackSize.y;
+			//minmaxinfo->ptMaxTrackSize.x = minmaxinfo->ptMinTrackSize.x;
+			//minmaxinfo->ptMaxTrackSize.y = minmaxinfo->ptMinTrackSize.y;
 		}
 	}	break;
 

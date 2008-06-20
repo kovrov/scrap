@@ -103,8 +103,8 @@ void draw_ships(Gdiplus::Graphics* graphics, const std::vector<board::Ship>* shi
 
 		Gdiplus::SolidBrush brush(theme[SHIP_BACKGROUND_COLOR]);
 		Gdiplus::HatchBrush hbrush(Gdiplus::HatchStyleWideUpwardDiagonal,
-			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0xA0),
-			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0x80));
+			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0xC0),
+			COLOR_ALPHA(theme[SEA_BACKGROUND_COLOR], 0xA0));
 		float k = 1.0f - 0.4f;
 		bool ship_active = false;
 		foreach (board::ShipSegment s, ship.segments)
@@ -228,6 +228,12 @@ LRESULT WINAPI MapWidgetWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		::EndPaint(hwnd, &ps); 
 		}
 		return 0;
+
+	case WM_GETMINMAXINFO: {
+		MINMAXINFO* minmaxinfo = reinterpret_cast<MINMAXINFO*>(lParam);
+		minmaxinfo->ptMinTrackSize.x = minmaxinfo->ptMinTrackSize.y = gridWidth;
+		minmaxinfo->ptMaxTrackSize.y = minmaxinfo->ptMaxTrackSize.x = gridWidth;
+		} break;
 
 	case WM_NCCALCSIZE:  // at which point this info is asked?
 		if (wParam)
