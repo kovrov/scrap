@@ -1,0 +1,277 @@
+Answer for Question 1:
+
+Of cource in Python we could just write:
+	(llist[n], llist[m]) = (llist[m], llist[n])
+assuming llist is a built-in list. This will swap llist[n] and llist[m], but i guess this is not what you expect...
+
+Ok, I have skip implementation of linked list and list node, but they are obvious... In theory. A node just have 'value' and 'next' fields, and llist just have 'first_node'.
+
+There are two variants of function - by id (swap) and by value (swap_values)
+
+
+python code:
+
+	def get_nodes_by_value(llist, val1, val2):
+		n = llist.first_node
+		n1 = None
+		n2 = None
+		pren1 = None
+		pren2 = None
+		while n.next:
+			prev = n
+			n = n.next
+			if n.value == val1:
+				pren1 = prev
+				n1 = n
+			if n.value == val2:
+				pren2 = prev
+				n2 = n
+			if n1 and n2:
+				break
+		return (pren1, n1, pren2, n2)
+
+	def get_nodes_by_index(llist, id1, id2):
+		n = llist.first_node
+		n1 = None
+		n2 = None
+		pren1 = None
+		pren2 = None
+		i = 0
+		while n.next:
+			prev = n
+			n = n.next
+			if i == id2:
+				pren1 = prev
+				n1 = n
+			if i == id2:
+				pren2 = prev
+				n2 = n
+			if n1 and n2:
+				break
+		return (pren1, n1, pren2, n2)
+
+	def swap_nodes_internal(pren1, n1, pren2, n2)
+		assert n1 and pren2 and n2 # simpliest check
+		# this is similar to:
+		#  pren1.next = n2
+		#  pren2.next = n1
+		#  n1.next = n2.next
+		#  n2.next = n1.next
+		# but with temporary copies, to preserve values
+		if pren1:
+			(pren1.next, pren2.next, n1.next, n2.next) = (n2, n1, n2.next, n1.next)
+		else
+			(pren2.next, n1.next, n2.next) = (n1, n2.next, n1.next)
+
+	def swap(llist, id1, id1):
+		pren1, n1, pren2, n2 = get_nodes_by_index(llist, id1, id2)
+		swap_nodes_internal(pren1, n1, pren2, n2)
+
+	def swap_values(llist, val1, val2):
+		pren1, n1, pren2, n2 = get_nodes_by_value(llist, val1, val2)
+		swap_nodes_internal(pren1, n1, pren2, n2)
+
+	# TODO: tests
+
+Good Pyton amd C++ implementations would have operator [] overloaded (instead of get_nodes_by_index), though.
+
+
+Answer for Question 2:
+
+Note: the decision who should win made by simple `random.random() < 0.7` expession. This probably could be done better - I am not a math guru =(
+
+On the seconnd thought, we could play fair for first n rounds, before switcing to "predefined" behaviour...
+
+python code:
+
+	import random
+
+	def roll_dice():
+		return random.randint(1, 6)
+
+
+	def simulate_turn():
+		player_dices = roll_dice(), roll_dice()
+		ai_dices = roll_dice(), roll_dice()
+
+		player_double = player_dices[0] == player_dices[1]
+		ai_double = ai_dices[0] == ai_dices[1]
+
+		# as defined by "rules"
+		if player_double and ai_double:
+			if player_dices[0] < ai_dices[0]:
+				winner = "ai"
+			elif player_dices[0] > ai_dices[0]:
+				winner = "player"
+			else:
+				winner = None
+		elif player_double:
+			winner = "player"
+		elif ai_double:
+			winner = "ai"
+		else:
+			player_sum = player_dices[0] + player_dices[1]
+			ai_sum = ai_dices[0] + ai_dices[1]
+			if player_sum < ai_sum:
+				winner = "ai"
+			elif player_sum > ai_sum:
+				winner = "player"
+			else:
+				winner = None
+
+		return winner, player_dices, ai_dices
+
+	#main
+	player_want_play = True
+	player_score = 0
+	ai_score = 0
+	while player_want_play:
+		if random.random() < 0.7:  # this could be twiked
+			predefined_winner = "ai"
+			ai_score += 1
+		else:
+			predefined_winner = "player"
+			player_score += 1
+		
+		winner, player_dices, ai_dices = simulate_turn()
+		while winner and winner != predefined_winner: # cheating...
+			winner, player_dices, ai_dices = simulate_turn()
+
+		print winner, "wins (p:", player_dices, "ai:", ai_dices, ")"
+
+		playrer_said = raw_input("continue? (y/n)")
+		player_want_play = playrer_said != 'n'
+
+
+
+Answer for Question 3:
+
+python code:
+
+	#wapons
+	class WeaponBase:
+		def __init__(self):
+			self.attached_gadget = None
+		def fire(self):
+			print self.__class__.__name__, "fired:", self.rounds_per_shot
+			print "sound:", self.sound
+			print "speed:", self.speed
+		def attach(self, gadget):
+			assert self.__class__ in gadget.compatible  # TODO: better check
+			self.sound = gadget.getSound(self.ammo) + "_" + self.sound_default
+			self.attached_gadget = gadget
+		def reload(self, ammo):
+			assert self.__class__ in ammo.compatible  # TODO: better check
+			if self.attached_gadget:
+				self.sound = self.attached_gadget.getSound(ammo) + "_" + self.sound_default
+			else:
+				self.sound = ammo.getSound() + "_" + self.sound_default
+			self.ammo = ammo
+
+	class ProjectileWeaponBase (WeaponBase):
+		pass # TODO: refactor projectile weapon constructors here
+
+	class Pistol (ProjectileWeaponBase):
+		def __init__(self, ammo):
+			ProjectileWeaponBase.__init__(self) # super
+			self.ammo = ammo
+			self.rounds_per_shot = 1
+			self.speed = 10
+			self.sound_default = "pistol"
+			self.sound = ammo.getSound() + "_" + self.sound_default
+
+	class Rifle (ProjectileWeaponBase):
+		def __init__(self, ammo):
+			ProjectileWeaponBase.__init__(self) # super
+			self.ammo = ammo
+			self.rounds_per_shot = 3
+			self.speed = 15
+			self.sound_default = "rifle"
+			self.sound = ammo.getSound() + "_" + self.sound_default
+
+	# The Knife is a hack - it is both weapon and ammo
+	class Knife(WeaponBase):
+		def __init__(self):
+			WeaponBase.__init__(self) # super
+			self.rounds_per_shot = 1
+			self.speed = 1
+			self.sound_default = "knife"
+			self.sound = "knife_hiss"
+			self.ammo = self
+		def getSound(self):
+			return "hiss"
+
+	# ammo
+	class AmmoBase:
+		def __init__(self, q):
+			self.quantity = q
+
+	class PistolHPAmmo (AmmoBase):
+		compatible = [Pistol]
+		def getSound(self):
+			return "HP"
+
+	class PistolAPAmmo (AmmoBase):
+		compatible = [Pistol]
+		def getSound(self):
+			return "AP"
+
+	class RifleAPAmmo (AmmoBase):
+		compatible = [Rifle]
+		def getSound(self):
+			return "AP"
+
+	class RifleHEAmmo (AmmoBase):
+		compatible = [Rifle]
+		def getSound(self):
+			return "HE"
+
+	# addons
+	class PistolSilencer:
+		compatible = [Pistol]
+		def getSound(self, ammo):
+			return "silinced_" + ammo.getSound()
+
+	class RifleSilencer:
+		compatible = [Rifle]
+		def getSound(self, ammo):
+			return "silinced_" + ammo.getSound()
+
+	class Poison:
+		compatible = [Knife]
+		def getSound(self, ammo):
+			return "poisoned_" + ammo.getSound()
+
+
+	#main
+	#TODO: real tests with assertions
+
+	print "knife test"
+	knife = Knife()
+	knife.fire()
+	print "\npoisoned knife test"
+	knife.attach(Poison())
+	knife.fire()
+
+	print "\npistol HP test"
+	pistol = Pistol(PistolHPAmmo(7))
+	pistol.fire()
+	print "\npistol AP test"
+	pistol.reload(PistolAPAmmo(7))
+	pistol.fire()
+	print "\npistol AP silinced test"
+	pistol.attach(PistolSilencer())
+	pistol.fire()
+
+	print "\nrifle AP test"
+	rifle = Rifle(RifleAPAmmo(30))
+	rifle.fire()
+	print "\nrifle AP silinced test"
+	rifle.attach(RifleSilencer())
+	rifle.fire()
+	print "\nrifle HE test"
+	rifle.reload(RifleHEAmmo(30))
+	rifle.fire()
+
+I still not happy with results, but it working more or less according to requirements..
+Just a minor features missed (like altering speed) and some refactoring need to be done.
