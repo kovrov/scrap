@@ -28,9 +28,9 @@ struct MapWidgetState
 		graphics = Gdiplus::Graphics::FromImage(&bitmap);
 		theme[SEA_BACKGROUND_COLOR]  = 0xFFE8F0F8;
 		theme[SEA_FOREROUND_COLOR]   = 0xFFB0C0E0;
-		theme[SHIP_FOREGROUND_COLOR]  = 0xFF305880;
+		theme[SHIP_FOREGROUND_COLOR] = 0xFF305880;
 		theme[SHIP_BACKGROUND_COLOR] = 0xFF5880A8;
-		theme[HIT_FOREGROUND_COLOR]   = 0xFF905040;
+		theme[HIT_FOREGROUND_COLOR]  = 0xFF905040;
 		theme[HIT_BACKGROUND_COLOR]  = 0xFFE09070;
 	}
 	~MapWidgetState(void)
