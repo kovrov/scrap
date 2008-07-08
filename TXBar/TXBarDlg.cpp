@@ -95,16 +95,9 @@ CTXBarDlg::CTXBarDlg(CWnd* pParent /*=NULL*/)
 
 
 BEGIN_MESSAGE_MAP(CTXBarDlg, CDialog)
-	//{{AFX_MSG_MAP(CTXBarDlg)
-	ON_WM_SYSCOMMAND()
-	ON_WM_PAINT()
-	ON_WM_QUERYDRAGICON()
-	ON_WM_ERASEBKGND()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_TIMER()
-	ON_WM_LBUTTONUP()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -135,14 +128,6 @@ BOOL CTXBarDlg::OnInitDialog()
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
-}
-
-
-
-BOOL CTXBarDlg::OnEraseBkgnd(CDC* pDC)
-{
-	pDC->SetBkMode(TRANSPARENT);
-	return TRUE; 
 }
 
 
