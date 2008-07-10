@@ -2,6 +2,7 @@
 
 #define CELLSIZE 24
 #define BORDERSIZE CELLSIZE/2
+#define ROWPADDING CELLSIZE*2
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -13,7 +14,7 @@ void InitInstance(HINSTANCE hInstance, int nCmdShow)
 	wcex.lpfnWndProc	= &WndProc;
 	wcex.hInstance		= hInstance;
 	wcex.hCursor		= ::LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW + 1);
+	//wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszClassName	= _T("txbarwindow");
 	::RegisterClassEx(&wcex);
 
@@ -68,7 +69,10 @@ Row row;
 Gdiplus::Rect rcTool[6];
 Gdiplus::Rect rcBack[6];
 RECT rcRange[6];
-BLENDFUNCTION g_Blend;
+BLENDFUNCTION g_Blend = {AC_SRC_OVER,  // the only blend operation defined
+                         0,  // reserved?
+                         0xFF,  // use per-pixel alpha values
+                         AC_SRC_ALPHA};  // AlphaFormat
 
 
 void DrawTXBar(HWND hwnd)
@@ -165,32 +169,36 @@ void DrawTXBar(HWND hwnd)
 		graphics.DrawImage(&m_Tool5, rcTool[5]);
 	}
 */
-	Gdiplus::Pen window_pen(0x60FF0000, 10);
-	window_pen.SetAlignment(Gdiplus::PenAlignmentInset);
-	graphics.DrawRectangle(&window_pen, 0, 0, sizeWindow.cx, sizeWindow.cy);
+	Gdiplus::SolidBrush window_brush(0x60FF0000);
+	//window_pen.SetAlignment(Gdiplus::PenAlignmentInset);
+	graphics.FillRectangle(&window_brush, 0, 0, sizeWindow.cx, sizeWindow.cy);
+	Gdiplus::SolidBrush cell_brush(0xA00000FF);
 	Gdiplus::SolidBrush current_cell_brush(0x600000FF);
 	Gdiplus::SolidBrush back_cell_brush(0x6000FF00);
 	Gdiplus::SolidBrush forw_cell_brush(0x6000FFFF);
 
-	Gdiplus::REAL last_x = row.pos; // FIXME
-	Gdiplus::REAL last_cell_size = CELLSIZE;
+	Gdiplus::REAL shift_right = 0.0f;
+	Gdiplus::REAL shift_left = 0.0f;
 	if (row.focus != -1)
 	{
 		Cell& cell = row.cells[row.focus];
 		Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-		last_x = row.pos + cell.center - cell_size / 2.0f;
-		graphics.FillRectangle(&current_cell_brush,
-					last_x, 0.0f,
+		Gdiplus::REAL x = row.pos + cell.center - cell_size / 2.0f;
+		graphics.FillRectangle(&cell_brush, //current_cell_brush,
+					x, 0.0f,
 					cell_size, cell_size);
+		shift_right += (cell_size - CELLSIZE) / 2;
+		shift_left += (cell_size - CELLSIZE) / 2;
 
 		for (int i=row.focus-1; i > -1; i--) // backward
 		{
 			Cell& cell = row.cells[i];
 			Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-			last_x = row.pos + cell.center - cell_size / 2.0f;
-			graphics.FillRectangle(&back_cell_brush,
-						last_x, 0.0f,
+			Gdiplus::REAL x = row.pos + cell.center - cell_size / 2.0f - shift_left;
+			graphics.FillRectangle(&cell_brush, //back_cell_brush,
+						x, 0.0f,
 						cell_size, cell_size);
+			shift_left += (cell_size - CELLSIZE) / 2;
 		}
 	}
 
@@ -198,17 +206,13 @@ void DrawTXBar(HWND hwnd)
 	{
 		Cell& cell = row.cells[i];
 		Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-		last_x = row.pos + cell.center - cell_size / 2.0f;
-		graphics.FillRectangle(&forw_cell_brush,
-					last_x, 0.0f,
+		Gdiplus::REAL x = row.pos + cell.center - cell_size / 2.0f + shift_right;
+		graphics.FillRectangle(&cell_brush, //forw_cell_brush,
+					x, 0.0f,
 					cell_size, cell_size);
+		shift_right += (cell_size - CELLSIZE) / 2;
 	}
-/*
-	Gdiplus::SolidBrush client_brush(0x4000FF00);
-	graphics.FillRectangle(&client_brush,
-				ptClientPos.x, ptClientPos.y,
-				rcClient.right, rcClient.bottom);
-*/
+
 	POINT ptSrc = {0, 0};
 	BOOL bRet = ::UpdateLayeredWindow(hwnd, hdcScreen, &ptWinPos, &sizeWindow,
 	                                  hdcMemory, &ptSrc, 0, &g_Blend, 2);
@@ -345,10 +349,10 @@ BOOL OnCreate(HWND hwnd)
 	::GetWindowRect(hwnd, &r);
 	::MoveWindow(hwnd,
 	             r.left, r.top,
-	             (CELLSIZE + BORDERSIZE) * 6 + CELLSIZE / 2, CELLSIZE * 2,
+	             (CELLSIZE + BORDERSIZE) * 6 + ROWPADDING * 2, CELLSIZE * 2,
 	             FALSE);
 
-	row.pos = CELLSIZE/2;
+	row.pos = ROWPADDING;
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
@@ -356,12 +360,6 @@ BOOL OnCreate(HWND hwnd)
 		cell.magnification = 1.0f;
 	}
 	row.focus = -1;
-
-	// Initialize GDI+.
-	g_Blend.BlendOp = AC_SRC_OVER;  // the only blend operation defined
-	g_Blend.BlendFlags = 0;  // reserved?
-	g_Blend.SourceConstantAlpha = 0xFF;  // use per-pixel alpha values
-	g_Blend.AlphaFormat = AC_SRC_ALPHA;
 
 	DrawTXBar(hwnd);
 
