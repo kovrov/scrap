@@ -3,6 +3,7 @@
 #define CELLSIZE 24
 #define BORDERSIZE CELLSIZE/2
 #define ROWPADDING CELLSIZE*2
+#define SCALE 3.0f
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -172,10 +173,11 @@ void DrawTXBar(HWND hwnd)
 	Gdiplus::SolidBrush window_brush(0x60FF0000);
 	//window_pen.SetAlignment(Gdiplus::PenAlignmentInset);
 	graphics.FillRectangle(&window_brush, 0, 0, sizeWindow.cx, sizeWindow.cy);
-	Gdiplus::SolidBrush cell_brush(0xA00000FF);
+	Gdiplus::SolidBrush cell_brush(0x800000FF);
 	Gdiplus::SolidBrush current_cell_brush(0x600000FF);
 	Gdiplus::SolidBrush back_cell_brush(0x6000FF00);
 	Gdiplus::SolidBrush forw_cell_brush(0x6000FFFF);
+	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
 
 	Gdiplus::REAL shift_right = 0.0f;
 	Gdiplus::REAL shift_left = 0.0f;
@@ -194,11 +196,11 @@ void DrawTXBar(HWND hwnd)
 		{
 			Cell& cell = row.cells[i];
 			Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-			Gdiplus::REAL x = row.pos + cell.center - cell_size / 2.0f - shift_left;
+			Gdiplus::REAL center = cell.center - shift_left - (cell_size - CELLSIZE) / 2.0f;
 			graphics.FillRectangle(&cell_brush, //back_cell_brush,
-						x, 0.0f,
+						row.pos + center - cell_size / 2.0f, 0.0f,
 						cell_size, cell_size);
-			shift_left += (cell_size - CELLSIZE) / 2;
+			shift_left += cell_size - CELLSIZE;
 		}
 	}
 
@@ -206,11 +208,20 @@ void DrawTXBar(HWND hwnd)
 	{
 		Cell& cell = row.cells[i];
 		Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-		Gdiplus::REAL x = row.pos + cell.center - cell_size / 2.0f + shift_right;
+		Gdiplus::REAL center = cell.center + shift_right + (cell_size - CELLSIZE) / 2.0f;
 		graphics.FillRectangle(&cell_brush, //forw_cell_brush,
-					x, 0.0f,
+					row.pos + center - cell_size / 2.0f, 0.0f,
 					cell_size, cell_size);
-		shift_right += (cell_size - CELLSIZE) / 2;
+		shift_right += cell_size - CELLSIZE;
+	}
+
+	for (int i=0; i < 6; i++)
+	{
+		Cell& cell = row.cells[i];
+		Gdiplus::REAL x = row.pos + cell.center - CELLSIZE / 2.0f - BORDERSIZE/2;
+		graphics.DrawRectangle(&debug_cell_pen,
+					x, 0.0f,
+					(float)(CELLSIZE + BORDERSIZE), (float)CELLSIZE);
 	}
 
 	POINT ptSrc = {0, 0};
@@ -349,7 +360,7 @@ BOOL OnCreate(HWND hwnd)
 	::GetWindowRect(hwnd, &r);
 	::MoveWindow(hwnd,
 	             r.left, r.top,
-	             (CELLSIZE + BORDERSIZE) * 6 + ROWPADDING * 2, CELLSIZE * 2,
+	             (CELLSIZE + BORDERSIZE) * 6 + ROWPADDING * 2, (int)(CELLSIZE * SCALE),
 	             FALSE);
 
 	row.pos = ROWPADDING;
@@ -494,9 +505,13 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 	{
 		Cell& cell = row.cells[i];
 		float distance = (float)abs(row.pos + cell.center - point.x);
-		cell.magnification = 1.0f;
-		if (distance < cursor_radius)
-			cell.magnification += 1.0f - distance / cursor_radius;
+
+		// magnification is scaled from 1.0f (no magnification) to SCALE (full magnification)
+		if (distance > cursor_radius)
+			cell.magnification = 1.0f;
+		else
+			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / cursor_radius);
+
 		if (distance < CELLSIZE / 2 + BORDERSIZE / 2)
 			row.focus = i;
 	}
