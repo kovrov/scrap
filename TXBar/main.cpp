@@ -1,10 +1,11 @@
 ﻿#include "stdafx.h"
 
+#define SCALE 2.0f
 #define PICSIZE 24
 #define BORDERSIZE 12
-#define ROWPADDING 100
-#define SCALE 2.0f
+
 #define CURSOR_RADIUS ((PICSIZE+BORDERSIZE)*2)
+#define ROWPADDING (CURSOR_RADIUS - (PICSIZE+BORDERSIZE)/2)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -184,7 +185,7 @@ void DrawTXBar(HWND hwnd)
 		Gdiplus::REAL icon_size = cell_size - BORDERSIZE;
 		Gdiplus::REAL center = cell.center + (cell_size - (PICSIZE+BORDERSIZE)) / 2.0f + shift;
 		graphics.FillRectangle(&cell_brush,
-					row.pos + center - cell_size / 2.0f, 0.0f,
+					row.pos + center - icon_size / 2.0f, 0.0f,
 					icon_size, icon_size);
 		shift += cell_size - (PICSIZE+BORDERSIZE);
 	}
@@ -196,7 +197,7 @@ void DrawTXBar(HWND hwnd)
 		Gdiplus::REAL x = row.pos + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
 		graphics.DrawRectangle(&debug_cell_pen,
 					x, 0.0f,
-					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE));
+					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE/2));
 	}
 
 	POINT ptSrc = {0, 0};
@@ -335,7 +336,7 @@ BOOL OnCreate(HWND hwnd)
 	::GetWindowRect(hwnd, &r);
 	::MoveWindow(hwnd,
 	             r.left, r.top,
-	             (int)((PICSIZE+BORDERSIZE) * 6 + ROWPADDING * 2), (int)((PICSIZE+BORDERSIZE) * SCALE),
+	             (int)((PICSIZE+BORDERSIZE) * 6 + ROWPADDING * 2), (int)((PICSIZE+BORDERSIZE) * SCALE - BORDERSIZE),
 	             FALSE);
 
 	row.pos = ROWPADDING;
