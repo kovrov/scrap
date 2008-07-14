@@ -1,9 +1,10 @@
 ﻿#include "stdafx.h"
 
-#define CELLSIZE 24
-#define BORDERSIZE CELLSIZE/2
-#define ROWPADDING CELLSIZE*3
+#define PICSIZE 24
+#define BORDERSIZE 12
+#define ROWPADDING 100
 #define SCALE 2.0f
+#define CURSOR_RADIUS ((PICSIZE+BORDERSIZE)*2)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -173,31 +174,29 @@ void DrawTXBar(HWND hwnd)
 	Gdiplus::SolidBrush window_brush(0x60FF0000);
 	//window_pen.SetAlignment(Gdiplus::PenAlignmentInset);
 	graphics.FillRectangle(&window_brush, 0, 0, sizeWindow.cx, sizeWindow.cy);
-	Gdiplus::SolidBrush cell_brush(0x800000FF);
-	Gdiplus::SolidBrush current_cell_brush(0x600000FF);
-	Gdiplus::SolidBrush back_cell_brush(0x6000FF00);
-	Gdiplus::SolidBrush forw_cell_brush(0x6000FFFF);
-	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
 
+	Gdiplus::SolidBrush cell_brush(0x800000FF);
 	Gdiplus::REAL shift = (-row.offset);
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
-		Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-		Gdiplus::REAL center = cell.center + (cell_size - CELLSIZE) / 2.0f + shift;
-		graphics.FillRectangle(&cell_brush, //forw_cell_brush,
+		Gdiplus::REAL cell_size = (PICSIZE+BORDERSIZE) * cell.magnification;
+		Gdiplus::REAL icon_size = cell_size - BORDERSIZE;
+		Gdiplus::REAL center = cell.center + (cell_size - (PICSIZE+BORDERSIZE)) / 2.0f + shift;
+		graphics.FillRectangle(&cell_brush,
 					row.pos + center - cell_size / 2.0f, 0.0f,
-					cell_size, cell_size);
-		shift += cell_size - CELLSIZE;
+					icon_size, icon_size);
+		shift += cell_size - (PICSIZE+BORDERSIZE);
 	}
 
+	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
-		Gdiplus::REAL x = row.pos + cell.center - CELLSIZE / 2.0f - BORDERSIZE/2;
+		Gdiplus::REAL x = row.pos + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
 		graphics.DrawRectangle(&debug_cell_pen,
 					x, 0.0f,
-					(float)(CELLSIZE + BORDERSIZE), (float)CELLSIZE);
+					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE));
 	}
 
 	POINT ptSrc = {0, 0};
@@ -336,14 +335,14 @@ BOOL OnCreate(HWND hwnd)
 	::GetWindowRect(hwnd, &r);
 	::MoveWindow(hwnd,
 	             r.left, r.top,
-	             (CELLSIZE + BORDERSIZE) * 6 + ROWPADDING * 2, (int)(CELLSIZE * SCALE),
+	             (int)((PICSIZE+BORDERSIZE) * 6 + ROWPADDING * 2), (int)((PICSIZE+BORDERSIZE) * SCALE),
 	             FALSE);
 
 	row.pos = ROWPADDING;
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
-		cell.center = i * (CELLSIZE + BORDERSIZE) + CELLSIZE/2;
+		cell.center = (PICSIZE+BORDERSIZE) * i + (PICSIZE+BORDERSIZE) / 2;
 		cell.magnification = 1.0f;
 	}
 	row.offset = 0.0f;
@@ -473,10 +472,9 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		}
 	}
 */
-	if (point.x - row.pos > (CELLSIZE + BORDERSIZE) * 6 - CELLSIZE/2 || point.y > CELLSIZE)
-		return;
+	//if (point.x - row.pos > (PICSIZE+BORDERSIZE) * 6 - (PICSIZE+BORDERSIZE)/2 || point.y > PICSIZE)
+	//	return;
 
-	float cursor_radius = 48.0f;
 	row.offset = 0.0f;
 	for (int i=0; i < 6; i++)
 	{
@@ -484,12 +482,12 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		float distance = (float)abs(row.pos + cell.center - point.x);
 
 		// magnification is scaled from 1.0f (no magnification) to SCALE (full magnification)
-		if (distance > cursor_radius)
+		if (distance > CURSOR_RADIUS)
 			cell.magnification = 1.0f;
 		else
 		{
-			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / cursor_radius);
-			row.offset += (CELLSIZE * cell.magnification - CELLSIZE) / 2.0f;
+			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / CURSOR_RADIUS);
+			row.offset += ((PICSIZE+BORDERSIZE) * cell.magnification - (PICSIZE+BORDERSIZE)) / 2.0f;
 		}
 	}
 
