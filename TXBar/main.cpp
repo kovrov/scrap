@@ -2,8 +2,8 @@
 
 #define CELLSIZE 24
 #define BORDERSIZE CELLSIZE/2
-#define ROWPADDING CELLSIZE*2
-#define SCALE 3.0f
+#define ROWPADDING CELLSIZE*3
+#define SCALE 2.0f
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -63,7 +63,7 @@ struct Row
 {
 	int pos;
 	Cell cells[6];
-	int focus;
+	float offset;
 };
 Row row;
 
@@ -179,40 +179,16 @@ void DrawTXBar(HWND hwnd)
 	Gdiplus::SolidBrush forw_cell_brush(0x6000FFFF);
 	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
 
-	Gdiplus::REAL shift_right = 0.0f;
-	Gdiplus::REAL shift_left = 0.0f;
-	if (row.focus != -1)
-	{
-		Cell& cell = row.cells[row.focus];
-		Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-		Gdiplus::REAL x = row.pos + cell.center - cell_size / 2.0f;
-		graphics.FillRectangle(&cell_brush, //current_cell_brush,
-					x, 0.0f,
-					cell_size, cell_size);
-		shift_right += (cell_size - CELLSIZE) / 2;
-		shift_left += (cell_size - CELLSIZE) / 2;
-
-		for (int i=row.focus-1; i > -1; i--) // backward
-		{
-			Cell& cell = row.cells[i];
-			Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-			Gdiplus::REAL center = cell.center - shift_left - (cell_size - CELLSIZE) / 2.0f;
-			graphics.FillRectangle(&cell_brush, //back_cell_brush,
-						row.pos + center - cell_size / 2.0f, 0.0f,
-						cell_size, cell_size);
-			shift_left += cell_size - CELLSIZE;
-		}
-	}
-
-	for (int i=(row.focus != -1) ? row.focus+1 : 0; i < 6; i++) // forward
+	Gdiplus::REAL shift = (-row.offset);
+	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
 		Gdiplus::REAL cell_size = CELLSIZE * cell.magnification;
-		Gdiplus::REAL center = cell.center + shift_right + (cell_size - CELLSIZE) / 2.0f;
+		Gdiplus::REAL center = cell.center + (cell_size - CELLSIZE) / 2.0f + shift;
 		graphics.FillRectangle(&cell_brush, //forw_cell_brush,
 					row.pos + center - cell_size / 2.0f, 0.0f,
 					cell_size, cell_size);
-		shift_right += cell_size - CELLSIZE;
+		shift += cell_size - CELLSIZE;
 	}
 
 	for (int i=0; i < 6; i++)
@@ -367,10 +343,10 @@ BOOL OnCreate(HWND hwnd)
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
-		cell.center = i * (CELLSIZE + CELLSIZE/2) + BORDERSIZE;
+		cell.center = i * (CELLSIZE + BORDERSIZE) + CELLSIZE/2;
 		cell.magnification = 1.0f;
 	}
-	row.focus = -1;
+	row.offset = 0.0f;
 
 	DrawTXBar(hwnd);
 
@@ -501,6 +477,7 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		return;
 
 	float cursor_radius = 48.0f;
+	row.offset = 0.0f;
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
@@ -510,10 +487,10 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		if (distance > cursor_radius)
 			cell.magnification = 1.0f;
 		else
+		{
 			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / cursor_radius);
-
-		if (distance < CELLSIZE / 2 + BORDERSIZE / 2)
-			row.focus = i;
+			row.offset += (CELLSIZE * cell.magnification - CELLSIZE) / 2.0f;
+		}
 	}
 
 	DrawTXBar(hwnd);
