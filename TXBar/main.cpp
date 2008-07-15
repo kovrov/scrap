@@ -1,5 +1,7 @@
 ﻿#include "stdafx.h"
 
+#define ITEMS 9
+
 #define SCALE 2.0f
 #define PICSIZE 24
 #define BORDERSIZE 12
@@ -63,8 +65,8 @@ struct Cell
 
 struct Row
 {
-	int pos;
-	Cell cells[6];
+	int left;
+	Cell cells[ITEMS];
 	float offset;
 };
 Row row;
@@ -96,7 +98,8 @@ void DrawTXBar(HWND hwnd)
 	::SelectObject(hdcMemory, hBitMap);
 	
 	Gdiplus::Graphics graphics(hdcMemory);
-	graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+	//graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+	;
 /*
 	Gdiplus::Image m_Title(L"toolbarbktop.png");
 	graphics.DrawImage(&m_Title, rcClient.left+50, rcClient.top,
@@ -172,29 +175,32 @@ void DrawTXBar(HWND hwnd)
 		graphics.DrawImage(&m_Tool5, rcTool[5]);
 	}
 */
-	Gdiplus::SolidBrush window_brush(0x60FF0000);
+	Gdiplus::SolidBrush window_brush(0x40FF8080);
 	//window_pen.SetAlignment(Gdiplus::PenAlignmentInset);
 	graphics.FillRectangle(&window_brush, 0, 0, sizeWindow.cx, sizeWindow.cy);
 
-	Gdiplus::SolidBrush cell_brush(0x800000FF);
-	Gdiplus::REAL shift = row.offset / 2.0f;
-	for (int i=0; i < 6; i++)
+	graphics.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
+	Gdiplus::SolidBrush cell_brush(0x80202080);
+	Gdiplus::REAL half_shift = row.offset / 2.0f;
+	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
 		Gdiplus::REAL cell_size = (PICSIZE+BORDERSIZE) * cell.magnification;
 		Gdiplus::REAL icon_size = cell_size - BORDERSIZE;
-		Gdiplus::REAL center = cell.center + (cell_size - (PICSIZE+BORDERSIZE)) / 2.0f - shift;
+		Gdiplus::REAL diff = cell_size - (PICSIZE+BORDERSIZE);
+		Gdiplus::REAL center = cell.center + diff / 2.0f - half_shift;
 		graphics.FillRectangle(&cell_brush,
-					row.pos + center - icon_size / 2.0f, 0.0f,
+					row.left + center - icon_size / 2.0f, 0.0f,
 					icon_size, icon_size);
-		shift -= cell_size - (PICSIZE+BORDERSIZE);
+		half_shift -= diff;
 	}
+	graphics.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
 
 	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
-	for (int i=0; i < 6; i++)
+	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
-		Gdiplus::REAL x = row.pos + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
+		Gdiplus::REAL x = row.left + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
 		graphics.DrawRectangle(&debug_cell_pen,
 					x, 0.0f,
 					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE/2));
@@ -335,12 +341,14 @@ BOOL OnCreate(HWND hwnd)
 	RECT r;
 	::GetWindowRect(hwnd, &r);
 	::MoveWindow(hwnd,
-	             r.left, r.top,
-	             (int)((PICSIZE+BORDERSIZE) * 6 + ROWPADDING * 2), (int)((PICSIZE+BORDERSIZE) * SCALE - BORDERSIZE),
+	             1280/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + ROWPADDING * 2)/2
+				 , 0,
+	             (int)((PICSIZE+BORDERSIZE) * ITEMS + ROWPADDING * 2),
+				 (int)((PICSIZE+BORDERSIZE) * SCALE - BORDERSIZE),
 	             FALSE);
 
-	row.pos = ROWPADDING;
-	for (int i=0; i < 6; i++)
+	row.left = ROWPADDING;
+	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
 		cell.center = (PICSIZE+BORDERSIZE) * i + (PICSIZE+BORDERSIZE) / 2;
@@ -477,10 +485,10 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 	//	return;
 
 	row.offset = 0.0f;
-	for (int i=0; i < 6; i++)
+	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
-		float distance = (float)abs(row.pos + cell.center - point.x);
+		float distance = (float)abs(row.left + cell.center - point.x);
 
 		// magnification is scaled from 1.0f (no magnification) to SCALE (full magnification)
 		if (distance > CURSOR_RADIUS)
@@ -488,16 +496,18 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		else
 		{
 			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / CURSOR_RADIUS);
-			float real_size = (PICSIZE+BORDERSIZE) * cell.magnification;
-			float diff = real_size - (PICSIZE+BORDERSIZE);
-			row.offset += diff;
-			if (distance < (PICSIZE+BORDERSIZE)/2)
+			if (point.x < row.left + CURSOR_RADIUS) // 1.5 cells
 			{
-				float k = distance * 2.0f / (PICSIZE+BORDERSIZE);
-				float x = real_size * k - distance * 2.0f;
-				//wtf?
+				float real_size = (PICSIZE+BORDERSIZE) * cell.magnification;
+				float diff = real_size - (PICSIZE+BORDERSIZE);
+				row.offset += diff;
 			}
 		}
+	}
+
+	if (!(row.offset > 0.0f))
+	{
+		row.offset = (PICSIZE+BORDERSIZE) * SCALE; // 72
 	}
 
 	DrawTXBar(hwnd);
