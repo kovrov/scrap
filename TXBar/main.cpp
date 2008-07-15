@@ -177,17 +177,17 @@ void DrawTXBar(HWND hwnd)
 	graphics.FillRectangle(&window_brush, 0, 0, sizeWindow.cx, sizeWindow.cy);
 
 	Gdiplus::SolidBrush cell_brush(0x800000FF);
-	Gdiplus::REAL shift = (-row.offset);
+	Gdiplus::REAL shift = row.offset / 2.0f;
 	for (int i=0; i < 6; i++)
 	{
 		Cell& cell = row.cells[i];
 		Gdiplus::REAL cell_size = (PICSIZE+BORDERSIZE) * cell.magnification;
 		Gdiplus::REAL icon_size = cell_size - BORDERSIZE;
-		Gdiplus::REAL center = cell.center + (cell_size - (PICSIZE+BORDERSIZE)) / 2.0f + shift;
+		Gdiplus::REAL center = cell.center + (cell_size - (PICSIZE+BORDERSIZE)) / 2.0f - shift;
 		graphics.FillRectangle(&cell_brush,
 					row.pos + center - icon_size / 2.0f, 0.0f,
 					icon_size, icon_size);
-		shift += cell_size - (PICSIZE+BORDERSIZE);
+		shift -= cell_size - (PICSIZE+BORDERSIZE);
 	}
 
 	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
@@ -488,7 +488,15 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		else
 		{
 			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / CURSOR_RADIUS);
-			row.offset += ((PICSIZE+BORDERSIZE) * cell.magnification - (PICSIZE+BORDERSIZE)) / 2.0f;
+			float real_size = (PICSIZE+BORDERSIZE) * cell.magnification;
+			float diff = real_size - (PICSIZE+BORDERSIZE);
+			row.offset += diff;
+			if (distance < (PICSIZE+BORDERSIZE)/2)
+			{
+				float k = distance * 2.0f / (PICSIZE+BORDERSIZE);
+				float x = real_size * k - distance * 2.0f;
+				//wtf?
+			}
 		}
 	}
 
