@@ -1,13 +1,14 @@
 ﻿#include "stdafx.h"
 
-#define ITEMS 9
+#define ITEMS 6
 
 #define SCALE 2.0f
 #define PICSIZE 24
 #define BORDERSIZE 12
+#define CURSOR_SIZE 2
 
-#define CURSOR_RADIUS ((PICSIZE+BORDERSIZE)*2)
-#define ROWPADDING (CURSOR_RADIUS - (PICSIZE+BORDERSIZE)/2)
+#define CURSOR_RADIUS ((PICSIZE+BORDERSIZE)*CURSOR_SIZE)
+#define MAX_OFFSET ((PICSIZE+BORDERSIZE) * (SCALE-1) * CURSOR_SIZE)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -265,89 +266,18 @@ int GetMoreInt(int x, int nBack)
 }
 
 
-BOOL OnCreate(HWND hwnd)
+LRESULT OnCreate(HWND hwnd)
 {
-/*
-	rcTool[0].X = 59;
-	rcTool[0].Y = 45;
-	rcTool[0].Width = 24;
-	rcTool[0].Height = 24;
-
-	rcTool[1].X = 95;
-	rcTool[1].Y = 45;
-	rcTool[1].Width = 24;
-	rcTool[1].Height = 24;
-
-	rcTool[2].X = 131;
-	rcTool[2].Y = 45;
-	rcTool[2].Width = 24;
-	rcTool[2].Height = 24;
-
-	rcTool[3].X = 167;
-	rcTool[3].Y = 45;
-	rcTool[3].Width = 24;
-	rcTool[3].Height = 24;
-
-	rcTool[4].X = 203;
-	rcTool[4].Y = 45;
-	rcTool[4].Width = 24;
-	rcTool[4].Height = 24;
-
-	rcTool[5].X = 239;
-	rcTool[5].Y = 45;
-	rcTool[5].Width = 24;
-	rcTool[5].Height = 24;
-
-	rcBack[0].X = 59;
-	rcBack[0].Y = 45;
-	rcBack[0].Width = 24;
-	rcBack[0].Height = 24;
-	
-	rcBack[1].X = 95;
-	rcBack[1].Y = 45;
-	rcBack[1].Width = 24;
-	rcBack[1].Height = 24;
-	
-	rcBack[2].X = 131;
-	rcBack[2].Y = 45;
-	rcBack[2].Width = 24;
-	rcBack[2].Height = 24;
-	
-	rcBack[3].X = 167;
-	rcBack[3].Y = 45;
-	rcBack[3].Width = 24;
-	rcBack[3].Height = 24;
-	
-	rcBack[4].X = 203;
-	rcBack[4].Y = 45;
-	rcBack[4].Width = 24;
-	rcBack[4].Height = 24;
-	
-	rcBack[5].X = 239;
-	rcBack[5].Y = 45;
-	rcBack[5].Width = 24;
-	rcBack[5].Height = 24;
-
-	for (int i=0; i<6; i++)
-	{
-		rcRange[i].left = 53+i*36;
-		rcRange[i].top = 40;
-		rcRange[i].right = 53+(i+1)*36;
-		rcRange[i].bottom = 45+5+5+24;
-	}
-*/
-
-//---------------------------------------------------------------
 	RECT r;
 	::GetWindowRect(hwnd, &r);
 	::MoveWindow(hwnd,
-	             1280/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + ROWPADDING * 2)/2
+	             1280/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET)/2
 				 , 0,
-	             (int)((PICSIZE+BORDERSIZE) * ITEMS + ROWPADDING * 2),
+	             (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET),
 				 (int)((PICSIZE+BORDERSIZE) * SCALE - BORDERSIZE),
 	             FALSE);
 
-	row.left = ROWPADDING;
+	row.left = MAX_OFFSET/2;
 	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
@@ -358,133 +288,26 @@ BOOL OnCreate(HWND hwnd)
 
 	DrawTXBar(hwnd);
 
-	return TRUE;  // return TRUE  unless you set the focus to a control
+	return 0;
 }
 
 
 void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 {
-/*
-	POINT pt = {point.x, point.y};
-	int nBack;
-	for (int i=0; i<6; i++)
+	if (point.x < row.left || point.x > row.left + (PICSIZE+BORDERSIZE)*ITEMS)
 	{
-		if (::PtInRect(&(rcRange[i]), pt))
+		row.offset = 0.0f;
+		for (int i=0; i < ITEMS; i++)
 		{
-			rcTool[i].X = rcBack[i].X + rcBack[i].Width/2 - 24 + ((rcBack[i].X + rcBack[i].Width/2) - point.x);
-			rcTool[i].Y = rcBack[i].Y;	
-			rcTool[i].Width = 48;
-			rcTool[i].Height = 48;
-
-			nBack = (rcRange[i].right - rcRange[i].left)/2;
-				
-			rcRange[i].left = rcTool[i].X - 12;
-			rcRange[i].top = rcTool[i].Y;
-			rcRange[i].right = rcTool[i].X - 12+72;
-			rcRange[i].bottom = rcTool[i].Y+53;
-
-			int nLen = 66;
-			int x = point.x - (rcTool[i].X+24);
-
-			int nN = GetMoreInt(x, 36);
-	
-			for (int m=i+1;m<6;m++)
-			{
-				rcTool[m].X = rcTool[i].X+nLen;
-				rcTool[m].Y = rcTool[m].Y;
-				if ((m-i) == 1)
-				{
-					rcTool[m].Width = 36+nN;
-					rcTool[m].Height = 36+nN;
-
-					nLen += rcTool[m].Width+12;
-
-				}
-				else if ((m-i) == 2)
-				{
-					if ((24+nN)>24)
-					{
-						rcTool[m].Width = 24+nN;
-						rcTool[m].Height = 24+nN;
-					}
-					else
-					{
-						rcTool[m].Width = 24;
-						rcTool[m].Height = 24;
-					}
-					
-					nLen += rcTool[m].Width +12;
-				}
-				else
-				{
-					rcTool[m].Width = 24;
-					rcTool[m].Height = 24;
-
-					nLen += 24+12;
-				}
-
-				rcRange[m].left = rcTool[m].X - 6;
-				rcRange[m].top = rcTool[m].Y-5;
-				rcRange[m].right = rcTool[m].X + rcTool[m].Width+6;
-				rcRange[m].bottom = rcTool[m].Y+ rcTool[m].Height +5;
-			}
-			
-			nLen = 0;
-			for (int k=i; k>=0; k--)
-			{
-				if (k != i)
-				{				
-				if ((i-k) == 1)
-				{
-					rcTool[k].Width = 36-nN;
-					rcTool[k].Height = 36-nN;
-					
-					nLen += rcTool[k].Width+18;
-					
-				}
-				else if ((i-k) == 2)
-				{
-					if ((24-nN)>24)
-					{
-						rcTool[k].Width = 24-nN;
-						rcTool[k].Height = 24-nN;
-					}
-					else
-					{
-						rcTool[k].Width = 24;
-						rcTool[k].Height = 24;
-					}
-										
-					nLen += rcTool[k].Width +12;
-				}
-				else
-				{
-					rcTool[k].Width = 24;
-					rcTool[k].Height = 24;
-					
-					nLen += 24+12;
-				}
-				
-				rcTool[k].X = rcTool[i].X - nLen;
-				rcTool[k].Y = rcTool[k].Y;
-
-				rcRange[k].left = rcTool[k].X - 6;
-				rcRange[k].top = rcTool[k].Y - 5;
-				rcRange[k].right = rcTool[k].X + rcTool[k].Width + 6;
-				rcRange[k].bottom = rcTool[k].Y+ rcTool[k].Height + 5;
-				}
-			}
-
-			DrawTXBar(hwnd);
-			::SetTimer(hwnd, 1, 10, NULL);
-			break;
+			Cell& cell = row.cells[i];
+			cell.magnification = 1.0f;
 		}
+		DrawTXBar(hwnd);
+		return;
 	}
-*/
-	//if (point.x - row.pos > (PICSIZE+BORDERSIZE) * 6 - (PICSIZE+BORDERSIZE)/2 || point.y > PICSIZE)
-	//	return;
 
-	row.offset = 0.0f;
+	row.offset = -MAX_OFFSET;
+	bool offset_needed = true;
 	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
@@ -496,19 +319,17 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		else
 		{
 			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / CURSOR_RADIUS);
-			if (point.x < row.left + CURSOR_RADIUS) // 1.5 cells
+			if (point.x < row.left + CURSOR_RADIUS)
 			{
 				float real_size = (PICSIZE+BORDERSIZE) * cell.magnification;
-				float diff = real_size - (PICSIZE+BORDERSIZE);
-				row.offset += diff;
+				row.offset += (real_size - (PICSIZE+BORDERSIZE))*2;
+				offset_needed = false;
 			}
 		}
 	}
 
-	if (!(row.offset > 0.0f))
-	{
-		row.offset = (PICSIZE+BORDERSIZE) * SCALE; // 72
-	}
+	if (offset_needed)
+		row.offset = MAX_OFFSET;
 
 	DrawTXBar(hwnd);
 }
@@ -575,8 +396,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_CREATE:
-		OnCreate(hWnd);
-		break;
+		return OnCreate(hWnd);
 
 	case WM_MOUSEMOVE:
 		OnMouseMove(hWnd, wParam, MAKEPOINTS(lParam));
