@@ -8,7 +8,7 @@
 #define CURSOR_SIZE 2
 
 #define CURSOR_RADIUS ((PICSIZE+BORDERSIZE)*CURSOR_SIZE)
-#define MAX_OFFSET ((PICSIZE+BORDERSIZE) * (SCALE-1) * CURSOR_SIZE)
+#define MAX_OFFSET ((PICSIZE * (SCALE-1)) * CURSOR_SIZE)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -113,7 +113,8 @@ void DrawTXBar(HWND hwnd)
 	::SelectObject(hdcMemory, hBitMap);
 	
 	Gdiplus::Graphics graphics(hdcMemory);
-	//graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+	graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+	graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
 
 	Gdiplus::Image title_img(_T("toolbarbktop.png"));
 	graphics.DrawImage(&title_img,
@@ -126,31 +127,36 @@ void DrawTXBar(HWND hwnd)
 		title_img.GetWidth(), toolbar_img.GetHeight());
 
 	Gdiplus::REAL half_shift = row.offset / 2.0f;
+//	Gdiplus::Pen debug_icon_pen(0xFF0000FF);
 	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
-		Gdiplus::REAL cell_size = (PICSIZE+BORDERSIZE) * cell.magnification;
-		Gdiplus::REAL icon_size = cell_size - BORDERSIZE;
-		Gdiplus::REAL diff = cell_size - (PICSIZE+BORDERSIZE);
+		Gdiplus::REAL icon_size = PICSIZE * cell.magnification;
+		Gdiplus::REAL diff = icon_size - PICSIZE;
 		Gdiplus::REAL center = cell.center + diff / 2.0f - half_shift;
 
 		Gdiplus::Image img((icon_size > 24) ? cell.img_big : cell.img_normal);
 		graphics.DrawImage(&img,
-					row.left + center - icon_size / 2.0f, title_img.GetHeight() + BORDERSIZE/2,
+					row.left + center - icon_size / 2.0f, title_img.GetHeight() + 6,
 					icon_size, icon_size);
+
+//		graphics.DrawRectangle(&debug_icon_pen,
+//					row.left + center - icon_size / 2.0f, title_img.GetHeight() + 6,
+//					icon_size, icon_size);
+
 		half_shift -= diff;
 	}
-/*
-	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
-	for (int i=0; i < ITEMS; i++)
-	{
-		Cell& cell = row.cells[i];
-		Gdiplus::REAL x = row.left + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
-		graphics.DrawRectangle(&debug_cell_pen,
-					x, 0.0f,
-					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE/2));
-	}
-*/
+
+//	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
+//	for (int i=0; i < ITEMS; i++)
+//	{
+//		Cell& cell = row.cells[i];
+//		Gdiplus::REAL x = row.left + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
+//		graphics.DrawRectangle(&debug_cell_pen,
+//					x, 0.0f,
+//					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE/2));
+//	}
+
 	POINT ptSrc = {0, 0};
 	BOOL bRet = ::UpdateLayeredWindow(hwnd, hdcScreen, &ptWinPos, &sizeWindow,
 	                                  hdcMemory, &ptSrc, 0, &g_Blend, 2);
@@ -218,8 +224,8 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / CURSOR_RADIUS);
 			if (point.x < row.left + CURSOR_RADIUS)
 			{
-				float real_size = (PICSIZE+BORDERSIZE) * cell.magnification;
-				row.offset += (real_size - (PICSIZE+BORDERSIZE))*2;
+				float real_size = PICSIZE * cell.magnification;
+				row.offset += (real_size - PICSIZE) * 2;
 				offset_needed = false;
 			}
 		}

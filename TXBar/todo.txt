@@ -1,0 +1,4 @@
+* messages
+* scroll smarter
+* animate scroll/scale
+* separate logic (refactor)
