@@ -62,6 +62,8 @@ struct Cell
 {
 	int center;
 	float magnification;
+	TCHAR* img_normal;
+	TCHAR* img_big;
 };
 
 struct Row
@@ -72,9 +74,21 @@ struct Row
 };
 Row row;
 
-Gdiplus::Rect rcTool[6];
-Gdiplus::Rect rcBack[6];
-RECT rcRange[6];
+TCHAR* img_24[ITEMS] = {
+		_T("intomain_24.png"),
+		_T("intomini_24.png"),
+		_T("todolist_24.png"),
+		_T("mini_newevent_small.png"),
+		_T("setting_24.png"),
+		_T("exit_24.png")};
+TCHAR* img_48[ITEMS] = {
+		_T("intomain_48.png"),
+		_T("intomini_48.png"),
+		_T("todolist_48.png"),
+		_T("newevent_big.png"),
+		_T("setting_48.png"),
+		_T("exit_48.png"),};
+
 BLENDFUNCTION g_Blend = {AC_SRC_OVER,  // the only blend operation defined
                          0,  // reserved?
                          0xFF,  // use per-pixel alpha values
@@ -100,88 +114,17 @@ void DrawTXBar(HWND hwnd)
 	
 	Gdiplus::Graphics graphics(hdcMemory);
 	//graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-	;
-/*
-	Gdiplus::Image m_Title(L"toolbarbktop.png");
-	graphics.DrawImage(&m_Title, rcClient.left+50, rcClient.top,
-	                             m_Title.GetWidth(), m_Title.GetHeight());
-	
-	Gdiplus::Image m_ToolBK(L"toolbarbkbottom.png");
-	graphics.DrawImage(&m_ToolBK, rcClient.left+50, rcClient.top+m_Title.GetHeight()-4,
-	                              m_Title.GetWidth(), m_ToolBK.GetHeight());
-	
-	if (rcTool[0].Width > 24)
-	{
-		Gdiplus::Image m_Tool0_1(L"intomain_48.png");
-		graphics.DrawImage(&m_Tool0_1, rcTool[0]);
-	}
-	else
-	{
-		Gdiplus::Image m_Tool0(L"intomain_24.png");
-		graphics.DrawImage(&m_Tool0, rcTool[0]);
-	}
 
-	if (rcTool[1].Width > 24)
-	{
-		Gdiplus::Image m_Tool1_1(L"intomini_48.png");
-		graphics.DrawImage(&m_Tool1_1, rcTool[1]);
-	}
-	else
-	{
-		Gdiplus::Image m_Tool1(L"intomini_24.png");
-		graphics.DrawImage(&m_Tool1, rcTool[1]);
-	}
+	Gdiplus::Image title_img(_T("toolbarbktop.png"));
+	graphics.DrawImage(&title_img,
+		sizeWindow.cx/2 - title_img.GetWidth()/2, rcClient.top,
+		title_img.GetWidth(), title_img.GetHeight());
+	
+	Gdiplus::Image toolbar_img(_T("toolbarbkbottom.png"));
+	graphics.DrawImage(&toolbar_img,
+		(int)(sizeWindow.cx/2 - title_img.GetWidth()/2), rcClient.top+title_img.GetHeight()-4,
+		title_img.GetWidth(), toolbar_img.GetHeight());
 
-	if (rcTool[2].Width > 24)
-	{
-		Gdiplus::Image m_Tool2_1(L"todolist_48.png");
-		graphics.DrawImage(&m_Tool2_1, rcTool[2]);
-	}
-	else
-	{
-		Gdiplus::Image m_Tool2(L"todolist_24.png");
-		graphics.DrawImage(&m_Tool2, rcTool[2]);
-	}
-	
-	if (rcTool[3].Width > 24)
-	{
-		Gdiplus::Image m_Tool3_1(L"newevent_big.png");
-		graphics.DrawImage(&m_Tool3_1, rcTool[3]);
-	}
-	else
-	{
-		Gdiplus::Image m_Tool3(L"mini_newevent_small.png");
-		graphics.DrawImage(&m_Tool3, rcTool[3]);
-	}
-	
-	if (rcTool[4].Width > 24)
-	{
-		Gdiplus::Image m_Tool4_1(L"setting_48.png");
-		graphics.DrawImage(&m_Tool4_1, rcTool[4]);
-	}
-	else
-	{
-		Gdiplus::Image m_Tool4(L"setting_24.png");
-		graphics.DrawImage(&m_Tool4, rcTool[4]);
-	}
-	
-	if (rcTool[5].Width > 24)
-	{
-		Gdiplus::Image m_Tool5_1(L"exit_48.png");
-		graphics.DrawImage(&m_Tool5_1, rcTool[5]);
-	}
-	else
-	{
-		Gdiplus::Image m_Tool5(L"exit_24.png");
-		graphics.DrawImage(&m_Tool5, rcTool[5]);
-	}
-*/
-	Gdiplus::SolidBrush window_brush(0x40FF8080);
-	//window_pen.SetAlignment(Gdiplus::PenAlignmentInset);
-	graphics.FillRectangle(&window_brush, 0, 0, sizeWindow.cx, sizeWindow.cy);
-
-	graphics.SetCompositingMode(Gdiplus::CompositingModeSourceCopy);
-	Gdiplus::SolidBrush cell_brush(0x80202080);
 	Gdiplus::REAL half_shift = row.offset / 2.0f;
 	for (int i=0; i < ITEMS; i++)
 	{
@@ -190,13 +133,14 @@ void DrawTXBar(HWND hwnd)
 		Gdiplus::REAL icon_size = cell_size - BORDERSIZE;
 		Gdiplus::REAL diff = cell_size - (PICSIZE+BORDERSIZE);
 		Gdiplus::REAL center = cell.center + diff / 2.0f - half_shift;
-		graphics.FillRectangle(&cell_brush,
-					row.left + center - icon_size / 2.0f, 0.0f,
+
+		Gdiplus::Image img((icon_size > 24) ? cell.img_big : cell.img_normal);
+		graphics.DrawImage(&img,
+					row.left + center - icon_size / 2.0f, title_img.GetHeight() + BORDERSIZE/2,
 					icon_size, icon_size);
 		half_shift -= diff;
 	}
-	graphics.SetCompositingMode(Gdiplus::CompositingModeSourceOver);
-
+/*
 	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
 	for (int i=0; i < ITEMS; i++)
 	{
@@ -206,7 +150,7 @@ void DrawTXBar(HWND hwnd)
 					x, 0.0f,
 					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE/2));
 	}
-
+*/
 	POINT ptSrc = {0, 0};
 	BOOL bRet = ::UpdateLayeredWindow(hwnd, hdcScreen, &ptWinPos, &sizeWindow,
 	                                  hdcMemory, &ptSrc, 0, &g_Blend, 2);
@@ -217,64 +161,16 @@ void DrawTXBar(HWND hwnd)
 }
 
 
-int GetMoreInt(int x, int nBack)
-{
-	int ret = 0;
-	BOOL bJian = FALSE;
-
-	if (x < 0)
-	{
-		x = -x;
-		bJian = TRUE;
-	}
-
-	if (x>=0 && x<(nBack/6))
-	{
-		ret = 2;
-	}
-	else if ((x >= (nBack/6)) && (x < (2*nBack/6)))
-	{
-		ret = 4;
-	}
-	else if ((x >= (2*nBack/6)) && (x < (3*nBack/6)))
-	{
-		ret = 6;
-	}
-	else if ((x >= (3*nBack/6)) && (x < (4*nBack/6)))
-	{
-		ret = 8;
-	}
-	else if ((x >= (4*nBack/6)) && (x < (5*nBack/6)))
-	{
-		ret = 10;
-	}
-	else if ((x >= (5*nBack/6)) && (x < (6*nBack/6)))
-	{
-		ret = 12;
-	}
-	else if (x >= (6*nBack/6))
-	{
-		ret = 12;
-	}
-
-	if (bJian)
-	{
-		ret = - ret;
-	}
-
-	return ret;
-}
-
-
 LRESULT OnCreate(HWND hwnd)
 {
 	RECT r;
 	::GetWindowRect(hwnd, &r);
+	int screen_width = ::GetSystemMetrics(SM_CXSCREEN);
 	::MoveWindow(hwnd,
-	             1280/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET)/2
+	             screen_width/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET)/2
 				 , 0,
 	             (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET),
-				 (int)((PICSIZE+BORDERSIZE) * SCALE - BORDERSIZE),
+				 100,
 	             FALSE);
 
 	row.left = MAX_OFFSET/2;
@@ -283,11 +179,12 @@ LRESULT OnCreate(HWND hwnd)
 		Cell& cell = row.cells[i];
 		cell.center = (PICSIZE+BORDERSIZE) * i + (PICSIZE+BORDERSIZE) / 2;
 		cell.magnification = 1.0f;
+		cell.img_normal = img_24[i];
+		cell.img_big = img_48[i];
 	}
 	row.offset = 0.0f;
 
 	DrawTXBar(hwnd);
-
 	return 0;
 }
 
@@ -337,57 +234,6 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 
 void OnTimer(HWND hwnd)
 {
-	POINT pt;
-	::GetCursorPos(&pt);
-	::ScreenToClient(hwnd, &pt);
-
-	for (int i=0; i<6; i++)
-	{
-		if (::PtInRect(&(rcRange[i]), pt))
-			return;
-	}
-	
-	::KillTimer(hwnd, 1);
-
-	rcTool[0].X = 59;
-	rcTool[0].Y = 45;
-	rcTool[0].Width = 24;
-	rcTool[0].Height = 24;
-	
-	rcTool[1].X = 95;
-	rcTool[1].Y = 45;
-	rcTool[1].Width = 24;
-	rcTool[1].Height = 24;
-	
-	rcTool[2].X = 131;
-	rcTool[2].Y = 45;
-	rcTool[2].Width = 24;
-	rcTool[2].Height = 24;
-	
-	rcTool[3].X = 167;
-	rcTool[3].Y = 45;
-	rcTool[3].Width = 24;
-	rcTool[3].Height = 24;
-	
-	rcTool[4].X = 203;
-	rcTool[4].Y = 45;
-	rcTool[4].Width = 24;
-	rcTool[4].Height = 24;
-	
-	rcTool[5].X = 239;
-	rcTool[5].Y = 45;
-	rcTool[5].Width = 24;
-	rcTool[5].Height = 24;
-
-	for (int k=0; k<6; k++)
-	{
-		rcRange[k].left = 53+k*36;
-		rcRange[k].top = 40;
-		rcRange[k].right = 53+(k+1)*36;
-		rcRange[k].bottom = 45+5+5+24;
-	}
-
-	DrawTXBar(hwnd);
 }
 
 
