@@ -1,4 +1,21 @@
-﻿#include "stdafx.h"
+﻿
+#define WIN32_LEAN_AND_MEAN  // Exclude rarely-used stuff from Windows headers
+// Windows Header Files:
+#include <windows.h>
+#include <windowsx.h>
+#include <comdef.h>
+#include <gdiplus.h>
+
+// C/C++ RunTime Header Files
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <tchar.h>
+
+#include <assert.h>
+
+
+
 
 #define ITEMS 6
 
@@ -12,6 +29,8 @@
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+HWND hwnd_main;
+
 void InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	WNDCLASSEX wcex;
@@ -24,14 +43,63 @@ void InitInstance(HINSTANCE hInstance, int nCmdShow)
 	wcex.lpszClassName	= _T("txbarwindow");
 	::RegisterClassEx(&wcex);
 
-	HWND hWnd = ::CreateWindowEx(WS_EX_LAYERED|WS_EX_TOPMOST|WS_EX_TOOLWINDOW,  // don't appear in the task bar 
+	hwnd_main = ::CreateWindowEx(WS_EX_LAYERED|WS_EX_TOPMOST|WS_EX_TOOLWINDOW,  // don't appear in the task bar 
 	                             _T("txbarwindow"), _T("txbar"),
 	                             WS_VISIBLE,
 	                             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 								 NULL, NULL, hInstance, NULL);
-	assert (hWnd);
+	assert (hwnd_main);
 }
 
+/* TODO: move to dll
+LRESULT CALLBACK LLMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode < 0)
+		return ::CallNextHookEx(NULL, nCode, wParam, lParam);
+	assert (nCode == HC_ACTION);
+
+	if (wParam == WM_MOUSEMOVE)
+	{
+		MSLLHOOKSTRUCT* mouse_data = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam);
+		::PostMessage(hwnd_main, WM_MOUSEMOVE,
+				0, MAKELPARAM(mouse_data->pt.x, mouse_data->pt.y));
+	}
+
+	return ::CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+*/
+
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode < 0)
+		return ::CallNextHookEx(NULL, nCode, wParam, lParam);
+	assert (nCode == HC_ACTION);
+
+	if (wParam == WM_MOUSEMOVE)
+	{
+		MOUSEHOOKSTRUCT* mouse_data = reinterpret_cast<MOUSEHOOKSTRUCT*>(lParam);
+		::PostMessage(hwnd_main, WM_MOUSEMOVE,
+				0, MAKELPARAM(mouse_data->pt.x+10, mouse_data->pt.y));
+	}
+
+	return ::CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
+
+void install_mouse_hook(HINSTANCE hInstance)
+{
+	DWORD dwThreadId = ::GetCurrentThreadId();
+/*
+	HINSTANCE hMod = ; // for dll only - global scope hook
+	HHOOK hhook = ::SetWindowsHookEx(WH_MOUSE_LL, &LLMouseProc, hInstance, 0);
+	DWORD err = ::GetLastError();
+*/
+	HINSTANCE hMod = NULL;
+	HHOOK hhook = ::SetWindowsHookEx(WH_MOUSE, &MouseProc, NULL, dwThreadId);
+	DWORD err = ::GetLastError();
+
+	assert (hhook);
+}
 
 int APIENTRY
 _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
@@ -41,6 +109,7 @@ _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nC
 	Gdiplus::GdiplusStartup(&gdiplusToken, &m_gdiplusstartupinput, NULL);
 
 	InitInstance(hInstance, nCmdShow);
+	install_mouse_hook(hInstance);
 
 	MSG msg;
 	while (::GetMessage(&msg, NULL, 0, 0))
