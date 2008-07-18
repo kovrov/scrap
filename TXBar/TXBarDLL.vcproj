@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="docklib"
+	Name="hooks"
 	ProjectGUID="{6BEEB47C-D424-426B-BEF2-8FA8ED7D713A}"
 	Keyword="Win32Proj"
 	>
@@ -11,8 +11,6 @@
 			Name="Win32"
 		/>
 	</Platforms>
-	<ToolFiles>
-	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
@@ -70,7 +68,11 @@
 	</Configurations>
 	<Files>
 		<File
-			RelativePath=".\dllmain.cpp"
+			RelativePath=".\hooksdll.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\hooks.h"
 			>
 		</File>
 	</Files>

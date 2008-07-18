@@ -4,7 +4,6 @@
 	Version="9.00"
 	Name="dock"
 	ProjectGUID="{81A0F8BF-FDDB-4194-A615-9816296D5191}"
-	RootNamespace="TXBar"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -34,8 +33,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="gdiplus.lib"
+				AdditionalDependencies="gdiplus.lib hooks.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -61,8 +61,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="gdiplus.lib"
+				AdditionalDependencies="gdiplus.lib hooks.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -71,14 +72,10 @@
 			/>
 		</Configuration>
 	</Configurations>
-	<References>
-	</References>
 	<Files>
 		<File
 			RelativePath=".\main.cpp"
 			>
 		</File>
 	</Files>
-	<Globals>
-	</Globals>
 </VisualStudioProject>

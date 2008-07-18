@@ -1,9 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "main", "TXBar.vcproj", "{81A0F8BF-FDDB-4194-A615-9816296D5191}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dock", "TXBar.vcproj", "{81A0F8BF-FDDB-4194-A615-9816296D5191}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6BEEB47C-D424-426B-BEF2-8FA8ED7D713A} = {6BEEB47C-D424-426B-BEF2-8FA8ED7D713A}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dll", "TXBarDLL.vcproj", "{6BEEB47C-D424-426B-BEF2-8FA8ED7D713A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hooks", "TXBarDLL.vcproj", "{6BEEB47C-D424-426B-BEF2-8FA8ED7D713A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
