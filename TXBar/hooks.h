@@ -9,10 +9,6 @@
 
 extern "C"
 {
-/*
-	LIBSPEC BOOL setMouseHook(HWND hWnd);
-	LIBSPEC BOOL clearMouseHook(HWND hWnd);
-*/
 	LIBSPEC BOOL setLLMouseHook(HWND hWnd);
 	LIBSPEC BOOL clearLLMouseHook(HWND hWnd);
 }

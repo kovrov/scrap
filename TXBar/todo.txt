@@ -1,4 +1,6 @@
-* messages
-* scroll smarter
-* animate scroll/scale
+* The low-level mouse hook should be installed when mouse enter window/client
+  area, and uninstalled when mouse leave window/client area.
+* Scroll smarter - move cell cursor faster (less precise) at the edges,
+  and slower (more precise) in the the cell body.
+* Animate scroll/scale, reduce cpu usage.
 * separate logic (refactor)

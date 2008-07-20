@@ -12,8 +12,13 @@
 
 
 HINSTANCE g_hModule = NULL;
-//HWND  g_mouse_hwnd = NULL;
-//HHOOK g_mouse_hhook = NULL;
+/*
+As stated in MSDN, the WH_MOUSE_LL (and WH_KEYBOARD_LL) hooks are not injected
+into another process. Instead, the context switches back to the process that
+installed the hook and it is called in its original context.
+So it is ok to use global variables in LowLevelKeyboardProc and
+LowLevelMouseProc.
+*/
 HWND  g_llmouse_hwnd = NULL;
 HHOOK g_llmouse_hhook = NULL;
 
@@ -28,8 +33,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		break;
 
 	case DLL_PROCESS_DETACH:
-//		if (g_mouse_hwnd != NULL)
-//			clearMouseHook(g_mouse_hwnd);
 		if (g_llmouse_hwnd != NULL)
 			clearLLMouseHook(g_llmouse_hwnd);
 		break;
@@ -40,57 +43,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	return TRUE;
 }
 
-
-/*
-LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	if (nCode < 0)
-		return ::CallNextHookEx(NULL, nCode, wParam, lParam);
-
-	if (nCode == HC_ACTION || nCode == HC_NOREMOVE)
-	{
-		if (wParam == WM_MOUSEMOVE)
-		{
-			MOUSEHOOKSTRUCT* mouse_data = reinterpret_cast<MOUSEHOOKSTRUCT*>(lParam);
-			::PostMessage(g_mouse_hwnd, WM_MOUSEMOVE,
-					0, MAKELPARAM(mouse_data->pt.x+10, mouse_data->pt.y));
-		}
-	}
-
-	return ::CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-
-
-__declspec(dllexport)
-BOOL setMouseHook(HWND hWnd)
-{
-	assert (g_mouse_hwnd == NULL);
-	assert (g_mouse_hhook == NULL);
-
-	g_mouse_hhook = ::SetWindowsHookEx(WH_MOUSE, &MouseProc, g_hModule, 0);
-	if (g_mouse_hhook == NULL)
-		return FALSE;
-
-	g_mouse_hwnd = hWnd;
-	return TRUE;
-}
-
-
-__declspec(dllexport)
-BOOL clearMouseHook(HWND hWnd)
-{
-	assert (g_mouse_hwnd == hWnd);
-	assert (g_mouse_hwnd != NULL);
-	assert (g_mouse_hhook != NULL);
-
-	if (0 == ::UnhookWindowsHookEx(g_mouse_hhook))
-		return FALSE;
-
-	g_mouse_hhook = NULL;
-	g_mouse_hwnd = NULL;
-	return TRUE;
-}
-*/
 
 
 LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -109,14 +61,15 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 			::GetWindowRect(g_llmouse_hwnd, &rc);
 			if (::PtInRect(&rc, mouse_data->pt))
 			{
+				POINT pt = mouse_data->pt;
+				::ScreenToClient(g_llmouse_hwnd, &pt);
 				::PostMessage(g_llmouse_hwnd, WM_MOUSEMOVE,
-						0,
-						MAKELPARAM(mouse_data->pt.x - rc.left, mouse_data->pt.y - rc.top));
+						0, MAKELPARAM(pt.x, pt.y));
 			}
 		}
 	}
 
-	return ::CallNextHookEx(NULL, nCode, wParam, lParam);
+	return ::CallNextHookEx(g_llmouse_hhook, nCode, wParam, lParam);
 }
 
 

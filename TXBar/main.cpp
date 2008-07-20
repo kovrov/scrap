@@ -109,11 +109,6 @@ TCHAR* img_48[ITEMS] = {
 		_T("setting_48.png"),
 		_T("exit_48.png"),};
 
-BLENDFUNCTION g_Blend = {AC_SRC_OVER,  // the only blend operation defined
-                         0,  // reserved?
-                         0xFF,  // use per-pixel alpha values
-                         AC_SRC_ALPHA};  // AlphaFormat
-
 
 void DrawTXBar(HWND hwnd)
 {
@@ -124,8 +119,6 @@ void DrawTXBar(HWND hwnd)
 
 	POINT ptWinPos = {rct.left, rct.top};
 	SIZE sizeWindow = {rct.right-rct.left, rct.bottom-rct.top};
-	int border = (sizeWindow.cx - rcClient.right) / 2;
-	POINT ptClientPos = {border, sizeWindow.cy - rcClient.bottom - border};
 
 	HDC hdcScreen = ::GetDC(hwnd);
 	HDC hdcMemory = ::CreateCompatibleDC(hdcScreen);
@@ -178,8 +171,12 @@ void DrawTXBar(HWND hwnd)
 //	}
 
 	POINT ptSrc = {0, 0};
+	BLENDFUNCTION blend_fn = {AC_SRC_OVER,  // the only blend operation defined
+	                          0,  // reserved?
+	                          0xFF,  // use per-pixel alpha values
+	                          AC_SRC_ALPHA};  // AlphaFormat
 	BOOL bRet = ::UpdateLayeredWindow(hwnd, hdcScreen, &ptWinPos, &sizeWindow,
-	                                  hdcMemory, &ptSrc, 0, &g_Blend, 2);
+	                                  hdcMemory, &ptSrc, 0, &blend_fn, 2);
 	graphics.ReleaseHDC(hdcMemory);
 	::ReleaseDC(hwnd, hdcScreen);
 	::DeleteObject(hBitMap);
