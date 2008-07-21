@@ -22,6 +22,7 @@ LowLevelMouseProc.
 HWND  g_llmouse_hwnd = NULL;
 HHOOK g_llmouse_hhook = NULL;
 
+
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD   ul_reason_for_call,
                        LPVOID  lpReserved)
@@ -34,7 +35,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 	case DLL_PROCESS_DETACH:
 		if (g_llmouse_hwnd != NULL)
-			clearLLMouseHook(g_llmouse_hwnd);
+			clearLLMouseHook(g_llmouse_hhook);
 		break;
 
 	//case DLL_THREAD_ATTACH:
@@ -48,6 +49,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	assert (g_llmouse_hwnd != NULL);
+	HHOOK llmouse_hhook = g_llmouse_hhook;
 
 	if (nCode < 0)
 		return ::CallNextHookEx(NULL, nCode, wParam, lParam);
@@ -59,41 +61,39 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 			MSLLHOOKSTRUCT* mouse_data = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam);
 			RECT rc;
 			::GetWindowRect(g_llmouse_hwnd, &rc);
-			if (::PtInRect(&rc, mouse_data->pt))
-			{
-				POINT pt = mouse_data->pt;
-				::ScreenToClient(g_llmouse_hwnd, &pt);
-				::PostMessage(g_llmouse_hwnd, WM_MOUSEMOVE,
-						0, MAKELPARAM(pt.x, pt.y));
-			}
+			POINT pt = mouse_data->pt;
+			::ScreenToClient(g_llmouse_hwnd, &pt);
+			int mousemove_flag = ::PtInRect(&rc, mouse_data->pt) ? MM_IN : MM_OUT;
+			::PostMessage(g_llmouse_hwnd, WM_MOUSEMOVE_GLOBAL,
+					mousemove_flag, MAKELPARAM(pt.x, pt.y));
 		}
 	}
 
-	return ::CallNextHookEx(g_llmouse_hhook, nCode, wParam, lParam);
+	return ::CallNextHookEx(llmouse_hhook, nCode, wParam, lParam);
 }
 
 
 __declspec(dllexport)
-BOOL setLLMouseHook(HWND hWnd)
+HHOOK setLLMouseHook(HWND hWnd)
 {
 	assert (g_llmouse_hwnd == NULL);
 	assert (g_llmouse_hhook == NULL);
 
 	g_llmouse_hhook = ::SetWindowsHookEx(WH_MOUSE_LL, &LowLevelMouseProc, g_hModule, 0);
 	if (g_llmouse_hhook == NULL)
-		return FALSE;
+		return NULL;
 
 	g_llmouse_hwnd = hWnd;
-	return TRUE;
+	return g_llmouse_hhook;
 }
 
 
 __declspec(dllexport)
-BOOL clearLLMouseHook(HWND hWnd)
+BOOL clearLLMouseHook(HHOOK hhook)
 {
-	assert (g_llmouse_hwnd == hWnd);
 	assert (g_llmouse_hwnd != NULL);
 	assert (g_llmouse_hhook != NULL);
+	assert (g_llmouse_hhook == hhook);
 
 	if (0 == ::UnhookWindowsHookEx(g_llmouse_hhook))
 		return FALSE;

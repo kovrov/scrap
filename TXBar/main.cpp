@@ -29,6 +29,7 @@
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+HHOOK g_llmouse_hhook = NULL;
 
 void InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
@@ -48,8 +49,6 @@ void InitInstance(HINSTANCE hInstance, int nCmdShow)
 	                             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 								 NULL, NULL, hInstance, NULL);
 	assert (hwnd_main);
-	// the hook needed to get mouse movement on transparent areas
-	setLLMouseHook(hwnd_main);
 }
 
 
@@ -78,6 +77,15 @@ _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nC
 
 // TXBar stuff...
 
+struct Padding
+{
+	Padding() {top = right = bottom = left = 0;}
+	char top;
+	char right;
+	char bottom;
+	char left;
+};
+
 struct Cell
 {
 	int center;
@@ -88,9 +96,10 @@ struct Cell
 
 struct Row
 {
-	int left;
 	Cell cells[ITEMS];
 	float offset;
+	POINTS position;
+	Padding padding;
 };
 Row row;
 
@@ -126,7 +135,7 @@ void DrawTXBar(HWND hwnd)
 	::SelectObject(hdcMemory, hBitMap);
 	
 	Gdiplus::Graphics graphics(hdcMemory);
-	graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
+	//graphics.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
 	graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
 
 	Gdiplus::Image title_img(_T("toolbarbktop.png"));
@@ -139,8 +148,17 @@ void DrawTXBar(HWND hwnd)
 		(int)(sizeWindow.cx/2 - title_img.GetWidth()/2), rcClient.top+title_img.GetHeight()-4,
 		title_img.GetWidth(), toolbar_img.GetHeight());
 
+// debug
+//	Gdiplus::SolidBrush toolbar_brush(0x8090A0B0);
+//	float dock_width = (float)(PICSIZE * ITEMS + BORDERSIZE * (ITEMS-1) + row.padding.left + row.padding.left);
+//	float dock_height = (float)(row.padding.top + row.padding.bottom + PICSIZE);
+//	float dock_x = sizeWindow.cx/2 - dock_width/2.0f;
+//	graphics.FillRectangle(&toolbar_brush, dock_x, 0.0f, dock_width, dock_height);
+//	Gdiplus::Pen toolbar_pen(0x80405060, 2);
+//	graphics.DrawRectangle(&toolbar_pen, dock_x, 0.0f, dock_width, dock_height);
+
+	Gdiplus::REAL y = (float)(row.padding.top + title_img.GetHeight());
 	Gdiplus::REAL half_shift = row.offset / 2.0f;
-//	Gdiplus::Pen debug_icon_pen(0xFF0000FF);
 	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
@@ -150,21 +168,28 @@ void DrawTXBar(HWND hwnd)
 
 		Gdiplus::Image img((icon_size > 24) ? cell.img_big : cell.img_normal);
 		graphics.DrawImage(&img,
-					row.left + center - icon_size / 2.0f, title_img.GetHeight() + 6.0f,
+					row.position.x + center - icon_size / 2.0f, y,
 					icon_size, icon_size);
 
+// debug
+//		Gdiplus::SolidBrush debug_icon_brush(0x80000080);
+//		graphics.FillRectangle(&debug_icon_brush,
+//					row.position.x + center - icon_size / 2.0f, y,
+//					icon_size, icon_size);
+//		Gdiplus::Pen debug_icon_pen(0xFF000080, 2);
 //		graphics.DrawRectangle(&debug_icon_pen,
-//					row.left + center - icon_size / 2.0f, title_img.GetHeight() + 6,
+//					row.position.x + center - icon_size / 2.0f, y,
 //					icon_size, icon_size);
 
 		half_shift -= diff;
 	}
 
+// debug
 //	Gdiplus::Pen debug_cell_pen(0xFFFF0000);
 //	for (int i=0; i < ITEMS; i++)
 //	{
 //		Cell& cell = row.cells[i];
-//		Gdiplus::REAL x = row.left + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
+//		Gdiplus::REAL x = row.position.x + cell.center - (PICSIZE+BORDERSIZE) / 2.0f;
 //		graphics.DrawRectangle(&debug_cell_pen,
 //					x, 0.0f,
 //					(float)(PICSIZE+BORDERSIZE), (float)(PICSIZE+BORDERSIZE/2));
@@ -186,17 +211,21 @@ void DrawTXBar(HWND hwnd)
 
 LRESULT OnCreate(HWND hwnd)
 {
+	row.padding.top = 6;
+	row.padding.bottom = row.padding.left = row.padding.right = BORDERSIZE/2;
+	row.position.x = (SHORT)(MAX_OFFSET/2);
+	row.offset = 0.0f;
+
 	RECT r;
 	::GetWindowRect(hwnd, &r);
 	int screen_width = ::GetSystemMetrics(SM_CXSCREEN);
 	::MoveWindow(hwnd,
-	             screen_width/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET)/2
-				 , 0,
+	             screen_width/2 - (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET)/2,
+				 0,
 	             (int)((PICSIZE+BORDERSIZE) * ITEMS + MAX_OFFSET),
-				 100,
+				 (int)(row.padding.top + PICSIZE * SCALE + 40),
 	             FALSE);
 
-	row.left = (int)(MAX_OFFSET/2);
 	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
@@ -205,7 +234,6 @@ LRESULT OnCreate(HWND hwnd)
 		cell.img_normal = img_24[i];
 		cell.img_big = img_48[i];
 	}
-	row.offset = 0.0f;
 
 	DrawTXBar(hwnd);
 	return 0;
@@ -214,7 +242,7 @@ LRESULT OnCreate(HWND hwnd)
 
 void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 {
-	if (point.x < row.left || point.x > row.left + (PICSIZE+BORDERSIZE)*ITEMS)
+	if (point.x < row.position.x || point.x > row.position.x + (PICSIZE+BORDERSIZE)*ITEMS)
 	{
 		row.offset = 0.0f;
 		for (int i=0; i < ITEMS; i++)
@@ -231,7 +259,7 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 	for (int i=0; i < ITEMS; i++)
 	{
 		Cell& cell = row.cells[i];
-		float distance = (float)abs(row.left + cell.center - point.x);
+		float distance = (float)abs(row.position.x + cell.center - point.x);
 
 		// magnification is scaled from 1.0f (no magnification) to SCALE (full magnification)
 		if (distance > CURSOR_RADIUS)
@@ -239,7 +267,7 @@ void OnMouseMove(HWND hwnd, UINT nFlags, POINTS point)
 		else
 		{
 			cell.magnification = 1.0f + (SCALE - 1.0f) * (1.0f - distance / CURSOR_RADIUS);
-			if (point.x < row.left + CURSOR_RADIUS)
+			if (point.x < row.position.x + CURSOR_RADIUS)
 			{
 				float real_size = PICSIZE * cell.magnification;
 				row.offset += (real_size - PICSIZE) * 2;
@@ -268,8 +296,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return OnCreate(hWnd);
 
 	case WM_MOUSEMOVE:
-		OnMouseMove(hWnd, wParam, MAKEPOINTS(lParam));
+		// the hook needed to get mouse movement on transparent areas
+		if (NULL == g_llmouse_hhook)
+			g_llmouse_hhook = setLLMouseHook(hWnd);
 		break;
+
+	case WM_MOUSEMOVE_GLOBAL:
+		if (wParam == MM_IN)
+		{
+			OnMouseMove(hWnd, 0, MAKEPOINTS(lParam));
+		}
+		else // MM_OUT
+		{
+			clearLLMouseHook(g_llmouse_hhook);
+			g_llmouse_hhook = NULL;
+		}
+		return 0;
 
 	case WM_TIMER:
 		OnTimer(hWnd);
