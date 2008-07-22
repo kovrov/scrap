@@ -7,6 +7,16 @@ import pyglet
 from pyglet.gl import *
 
 
+class Point:
+	pass
+
+class Color:
+	pass
+
+class Size:
+	pass
+
+
 # convenience function to convert points to OpenGL vertices
 def makeVertex(p):
 	glVertex2f(p.x, p.y)
@@ -117,7 +127,7 @@ win = pyglet.window.Window(resizable=True, vsync=True)
 
 lights = [
 	# this first light will move with the mouse cursor
-	Light(Point(0,0), Color.White, 200, 10),
+	Light(Point(0, 0), Color.White, 200, 10),
 	# stationary lights
 	Light(Point(350,330), Color.Green),
 	Light(Point(270,260), Color.Blue),
@@ -128,35 +138,35 @@ lights = [
 
 lightBlockers = [
 	# small box
-	LightBlocker(Point(225,220), 
-		ConvexPolygon.fromVertices([
+	LightBlocker(Point(225, 220), 
+		ConvexPolygon([
 			Point(-10,-10),
 			Point( 10,-10),
 			Point( 10, 10),
 			Point(-10, 10)])),
 	# some polygon
-	LightBlocker(Point(450,360), 
-		ConvexPolygon.fromVertices([
+	LightBlocker(Point(450, 360), 
+		ConvexPolygon([
 			Point(-20,-20),
 			Point(  0,-30),
 			Point( 20,-20),
 			Point( 20,  0),
-			Point( 0,  20),
+			Point(  0, 20),
 			Point(-15, 10)])),
 	# rectangle that's much longer than wide
-	LightBlocker(Point(150,100), 
-		ConvexPolygon.fromVertices([
+	LightBlocker(Point(150, 100), 
+		ConvexPolygon([
 			Point(-120,-10),
 			Point( 300,-10),
 			Point( 300, 10),
 			Point(-120, 10)])),
 	# diagonal line
-	LightBlocker(Point(300,300), 
-		ConvexPolygon.fromVertices([
-			Point( 80,-80),
-			Point(100,-70),
-			Point(-70,100),
-			Point(-80,80)]))]
+	LightBlocker(Point(300, 300), 
+		ConvexPolygon([
+			Point( 80, -80),
+			Point(100, -70),
+			Point(-70, 100),
+			Point(-80,  80)]))]
 
 
 @win.event
@@ -167,7 +177,7 @@ def on_draw():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	for light in lights:
 		# clear alpha to full visibility
-		glColorMask(false, false, false, true)
+		glColorMask(False, False, False, True)
 		glClear(GL_COLOR_BUFFER_BIT)
 		# write shadow volumes to alpha
 		glBlendFunc(GL_ONE, GL_ONE)
@@ -178,7 +188,10 @@ def on_draw():
 		# draw light
 		glColorMask(True, True, True, False)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE)
-		drawImage(light.texture, light.position, Size(2*light.outerradius, 2*light.outerradius), Point(0,0), 0, light.color)
+
+		#drawImage(light.texture, light.position, Size(2*light.outerradius, 2*light.outerradius), Point(0,0), 0, light.color)
+		light.draw()  # pyglet.sprite.Sprite
+
 	""" copy lighting into texture """
 	glBindTexture(GL_TEXTURE_2D, rendertex)
 	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 0, 0, rendertexsize, rendertexsize, 0)
