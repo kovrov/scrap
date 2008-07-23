@@ -22,18 +22,18 @@
 				 
 module shadow;
 
+//import tango.math.Math;
+//import arc.all; 
+//import derelict.opengl.gl;
 import std.stdio : writefln;
-import std.math : fabs, PI;
-
+import std.math : fabs, PI, abs;
 static import arc.window;
 static import arc.input;
 static import arc.time;
 import arc.texture : Texture;
 import arc.types : Point, Color, Size;
 import arc.draw.image : drawImage;
-
 import derelict.opengl.gl;
-
 //TODO: Hardware pixel buffers would speed things up
 
 /// oriented edge, normal is 'to the right'
@@ -65,7 +65,7 @@ struct ConvexPolygon
 		assert(verts.length > 3, "Polygon needs at least 3 vertices");
 		
 		ConvexPolygon poly;
-		for(size_t i = 1; i < verts.length; ++i)
+		for (size_t i = 1; i < verts.length; ++i)
 			poly.edges ~= Edge(verts[i-1], verts[i]);
 		poly.edges ~= Edge(verts[$-1], verts[0]);
 		
@@ -76,12 +76,12 @@ struct ConvexPolygon
 	/// edges, in ccw order
 	Edge[] edges;
 
-	/**
+	/***
 		Finds the edges that face away from a given location 'src'.
-	
+
 		Returns:
 			A list of indices into 'edges'. In ccw order.
-	**/
+	*/
 	size_t[] getBackfacingEdgeIndices(ref Point src)
 	{
 		assert(isValid());
@@ -94,18 +94,18 @@ struct ConvexPolygon
 		
 		{			
 			bool prev_edge_front, cur_edge_front;
-			foreach(i, ref edge; edges)
+			foreach (i, ref edge; edges)
 			{
-				if(edge.normal.dot(src - edge.src) < 0)
+				if (edge.normal.dot(src - edge.src) < 0)
 					cur_edge_front = true;
 				else
 					cur_edge_front = false;
 				
-				if(i != 0)
+				if (i != 0)
 				{
-					if(cur_edge_front && !prev_edge_front)
+					if (cur_edge_front && !prev_edge_front)
 						firstbackfacing = i;
-					else if(!cur_edge_front && prev_edge_front)
+					else if (!cur_edge_front && prev_edge_front)
 						lastbackfacing = i-1;
 				}
 				
@@ -115,30 +115,30 @@ struct ConvexPolygon
 		
 		// if no change between front and backfacing vertices was found,
 		// we are inside the polygon, consequently all edges face backwards
-		if(firstbackfacing == size_t.max && lastbackfacing == size_t.max)
+		if (firstbackfacing == size_t.max && lastbackfacing == size_t.max)
 		{
-			for(size_t i = 0; i < edges.length; ++i)
+			for (size_t i = 0; i < edges.length; ++i)
 				result ~= i;
 			return result;
 		}
 		// else, if one one of the changes was found, we missed the one at 0
-		else if(firstbackfacing == size_t.max)
+		else if (firstbackfacing == size_t.max)
 			firstbackfacing = 0;
-		else if(lastbackfacing == size_t.max)
+		else if (lastbackfacing == size_t.max)
 			lastbackfacing = edges.length - 1;
 		
 		// if this is true, we can just put the indices in result in order
-		if(firstbackfacing <= lastbackfacing)
+		if (firstbackfacing <= lastbackfacing)
 		{
-			for(size_t i = firstbackfacing; i <= lastbackfacing; ++i)
+			for (size_t i = firstbackfacing; i <= lastbackfacing; ++i)
 				result ~= i;
 		}
 		// else we must go from first to $ and from 0 to last
 		else
 		{
-			for(size_t i = firstbackfacing; i < edges.length; ++i)
+			for (size_t i = firstbackfacing; i < edges.length; ++i)
 				result ~= i;
-			for(size_t i = 0; i <= lastbackfacing; ++i)
+			for (size_t i = 0; i <= lastbackfacing; ++i)
 				result ~= i;
 		}
 		
@@ -148,12 +148,12 @@ struct ConvexPolygon
 	/// returns true if the edges list makes up a convex polygon and are in ccw order
 	bool isValid()
 	{
-		for(size_t i = 0; i < edges.length; ++i)
+		for (size_t i = 0; i < edges.length; ++i)
 		{
 			size_t nexti = i+1 < edges.length ? i+1 : 0;
-			if(edges[i].dst != edges[nexti].src)
+			if (edges[i].dst != edges[nexti].src)
 				return false;
-			if(edges[i].tangent().cross(edges[nexti].tangent()) <= 0)
+			if (edges[i].tangent().cross(edges[nexti].tangent()) <= 0)
 				return false;
 		}
 		
@@ -175,22 +175,22 @@ struct LightBlocker
 		
 		Point[] ret;
 		ret ~= position + shape.edges[edgeIndices[0]].src;
-		foreach(ind; edgeIndices)
+		foreach (ind; edgeIndices)
 			ret ~= position + shape.edges[ind].dst;
 		
 		return ret;
 	}
 	
-	void draw()
+	void draw(Point offset = Point(0,0))
 	{
 		glDisable(GL_TEXTURE_2D);
 		Color.Red.setGLColor();
 		
 		glBegin(GL_TRIANGLE_FAN);
-		foreach(ref edge; shape.edges)
+		foreach (ref edge; shape.edges)
 		{
-			glVertex2f(position.x + edge.src.x, position.y + edge.src.y); 
-			glVertex2f(position.x + edge.dst.x, position.y + edge.dst.y); 
+			glVertex2f(position.x + offset.x + edge.src.x, position.y + offset.y + edge.src.y); 
+			glVertex2f(position.x + offset.x + edge.dst.x, position.y + offset.y + edge.dst.y); 
 		}
 		glEnd();
 	}
@@ -221,7 +221,7 @@ struct Light
 		makeVertex(position);
 		
 		int segments = 20;
-		for(int i = 0; i < segments + 1; ++i)
+		for (int i = 0; i < segments + 1; ++i)
 		{
 			makeVertex(position + Point.fromPolar(sourceradius, 2*PI*i / segments));
 		}
@@ -233,19 +233,20 @@ struct Light
 }
 
 /// convenience function to convert points to OpenGL vertices
-void makeVertex(inout Point p) { 
+void makeVertex(ref Point p) 
+{ 
 	glVertex2f(p.x, p.y); 
 }
 
 
-/**
+/***
 	Penumbrae are the regions of half-shadow generated by voluminous
 	light sources.
 	
 	They are represented by a series of sections, each containing a line
 	and an intensity. The intensity gives the strength of the shadow on
 	that line between 0. (fully lit) and 1. (complete shadow).
-**/
+*/
 struct Penumbra
 {
 	/// line line between 'base' and 'base + direction' has the
@@ -267,7 +268,7 @@ struct Penumbra
 		
 		glBegin(GL_TRIANGLES);
 		
-		foreach(i, ref s; sections[0..$-1])
+		foreach (i, ref s; sections[0..$-1])
 		{
 			glTexCoord2d(0., 1.);
 			makeVertex(s.base);
@@ -286,13 +287,13 @@ struct Penumbra
 	
 	static Texture texture;
 }
-				
+
 /**
 	Umbrae are the regions of full shadow behind light blockers.
 	
 	Represented by a series of lines.
 **/
-struct Umbra 
+struct Umbra
 { 
 	struct Section
 	{
@@ -313,7 +314,7 @@ struct Umbra
 		// once from right to minimize problems
 		
 		glBegin(style);		
-		foreach(ref s; sections[0..$/2+1])
+		foreach (ref s; sections[0..$/2+1])
 		{
 			makeVertex(s.base);
 			makeVertex(s.base + s.direction);
@@ -341,7 +342,6 @@ void main()
 {
 	arc.window.open("2D Shadows", 640, 480, false);
 	arc.input.open();
-	arc.time.open();
 	
 	//
 	// load textures
@@ -367,8 +367,8 @@ void main()
 		glBindTexture(GL_TEXTURE_2D, rendertex);
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, rendertexsize, rendertexsize, 0,
 		             GL_RGBA, GL_UNSIGNED_BYTE, texdata.ptr);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 		delete texdata;	
 	}
 
@@ -386,10 +386,10 @@ void main()
 		//
 		// accumulate lighting in a texture
 		//
-		glClearColor(0., 0., 0., 0.);
-		glViewport(0, 0, rendertexsize, rendertexsize);
+		glClearColor(0.,0.,0.,0.);
+		glViewport(0,0,rendertexsize, rendertexsize);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		foreach (inout light; lights)
+		foreach (ref light; lights)
 		{
 			// clear alpha to full visibility
 			glColorMask(false, false, false, true);
@@ -399,7 +399,7 @@ void main()
 			glBlendFunc(GL_ONE, GL_ONE);
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(0., 0., 0., 1.);
-			foreach (inout blocker; lightBlockers)
+			foreach (ref blocker; lightBlockers)
 			{
 				renderShadow(light, blocker);
 			}
@@ -456,18 +456,20 @@ void main()
 	}
 }
 
-/**
+/***
 	Draws the shadow of 'blocker' under the given 'light'
-**/
+*/
 void renderShadow(ref Light light, ref LightBlocker blocker)
 {
 	// get the line that blocks light for the blocker and light combination
 	// move the light position towards blocker by its sourceradius to avoid
 	// popping of penumbrae
-	Point[] blockerLine = blocker.getBlockedLine(light.position + (blocker.position - light.position).normaliseCopy() * light.sourceradius);
+	Point normal = blocker.position - light.position; normal.normalise; 
+	
+	Point[] blockerLine = blocker.getBlockedLine(light.position + normal * light.sourceradius);
 	
 	// if the light source is completely surrounded by the blocker, don't draw its shadow
-	if(blockerLine.length == blocker.shape.edges.length + 1)
+	if (blockerLine.length == blocker.shape.edges.length + 1)
 		return;
 	
 	/**
@@ -487,7 +489,7 @@ void renderShadow(ref Light light, ref LightBlocker blocker)
 		Point lightdisp = Point.makePerpTo(reference - light.position);
 		lightdisp.normalise();
 		lightdisp *= light.sourceradius;
-		if(lightdisp.dot(reference - blocker.position) < 0.)
+		if (lightdisp.dot(reference - blocker.position) < 0.)
 			lightdisp *= -1.;
 		return lightdisp;
 	}
@@ -511,12 +513,12 @@ void renderShadow(ref Light light, ref LightBlocker blocker)
 			blockerLine[0], 
 			startdir,
 			0.0);
-		for(size_t i = 0; i < blockerLine.length - 1; ++i)
+		for (size_t i = 0; i < blockerLine.length - 1; ++i)
 		{
-			real wanted = fabs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])));
-			real available = fabs(startdir.angle(blockerLine[i+1] - blockerLine[i]));
+			real wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])));
+			real available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]));
 			
-			if(wanted < available)
+			if (wanted < available)
 			{
 				rightpenumbra.sections ~= Penumbra.Section(
 					blockerLine[i], 
@@ -541,12 +543,12 @@ void renderShadow(ref Light light, ref LightBlocker blocker)
 			blockerLine[$-1], 
 			startdir,
 			0.0);
-		for(size_t i = 0; i < blockerLine.length - 1; ++i)
+		for (size_t i = 0; i < blockerLine.length - 1; ++i)
 		{
-			real wanted = fabs(startdir.angle(getTotalShadowStartDirection(blockerLine[$-i-1])));
-			real available = fabs(startdir.angle(blockerLine[$-i-2] - blockerLine[$-i-1]));
+			real wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[$-i-1])));
+			real available = abs(startdir.angle(blockerLine[$-i-2] - blockerLine[$-i-1]));
 			
-			if(wanted < available)
+			if (wanted < available)
 			{
 				leftpenumbra.sections ~= Penumbra.Section(
 					blockerLine[$-i-1], 
@@ -572,7 +574,7 @@ void renderShadow(ref Light light, ref LightBlocker blocker)
 						
 	umbra.sections ~= Umbra.Section(rightpenumbra.sections[$-1].base, rightpenumbra.sections[$-1].direction);
 				
-	foreach(ref vert; blockerLine[rightpenumbra.sections.length-1..$-leftpenumbra.sections.length+1])
+	foreach (ref vert; blockerLine[rightpenumbra.sections.length-1..$-leftpenumbra.sections.length+1])
 		umbra.sections ~= Umbra.Section(vert, extendDir(0.5 * (leftpenumbra.sections[$-1].direction + rightpenumbra.sections[$-1].direction)));
 	
 	umbra.sections ~= Umbra.Section(leftpenumbra.sections[$-1].base, leftpenumbra.sections[$-1].direction);

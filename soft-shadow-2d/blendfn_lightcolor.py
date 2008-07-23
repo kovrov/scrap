@@ -3,6 +3,22 @@ import pyglet
 from pyglet.window import key
 from pyglet.gl import *
 
+gl_symbols = {	GL_CONSTANT_ALPHA: "GL_CONSTANT_ALPHA",
+				GL_CONSTANT_COLOR: "GL_CONSTANT_COLOR",
+				GL_DST_ALPHA: "GL_DST_ALPHA",
+				GL_DST_COLOR: "GL_DST_COLOR",
+				GL_ONE: "GL_ONE",
+				GL_ONE_MINUS_CONSTANT_ALPHA: "GL_ONE_MINUS_CONSTANT_ALPHA",
+				GL_ONE_MINUS_CONSTANT_COLOR: "GL_ONE_MINUS_CONSTANT_COLOR",
+				GL_ONE_MINUS_DST_ALPHA: "GL_ONE_MINUS_DST_ALPHA",
+				GL_ONE_MINUS_DST_COLOR: "GL_ONE_MINUS_DST_COLOR",
+				GL_ONE_MINUS_SRC_ALPHA: "GL_ONE_MINUS_SRC_ALPHA",
+				GL_ONE_MINUS_SRC_COLOR: "GL_ONE_MINUS_SRC_COLOR",
+				GL_SRC_ALPHA: "GL_SRC_ALPHA",
+				GL_SRC_ALPHA_SATURATE: "GL_SRC_ALPHA_SATURATE",
+				GL_SRC_COLOR: "GL_SRC_COLOR",
+				GL_ZERO: "GL_ZERO"}
+
 sfactor = (	GL_ZERO,
 			GL_ONE,
 			GL_SRC_COLOR,
@@ -34,8 +50,10 @@ dfactor = (	GL_ZERO,
 			#GL_ONE_MINUS_CONSTANT_ALPHA
 			)
 factors = [(s,d) for d in dfactor for s in sfactor]
-megafactors = [(i,j) for j in factors for i in factors]
-megafactor = 0
+factor = 0
+selected_factors = ((GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA),
+					(GL_SRC_ALPHA,GL_ONE),
+					(GL_SRC_ALPHA,GL_DST_ALPHA))
 
 win = pyglet.window.Window(resizable=True, vsync=True)
 
@@ -77,28 +95,13 @@ def on_draw():
 	glLoadIdentity()
 	glTranslatef(win.width/2, win.height/2, 0.)
 
-	# enable z-buffer
-	#glEnable(GL_DEPTH_TEST);
-	#glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND)
+	draw_scene()
 
 	glEnable(GL_BLEND)
-	glBlendFunc(*megafactors[megafactor][0])
-	#glColorMask(False, False, False, True)  # disable color buffer
+	glBlendFunc(*selected_factors[factor])
 	draw_light( 50,  50, 200, (1.,0.,0.))
 	draw_light(-50, -50, 200, (0.,0.,1.))
-	#glColorMask(True, True, True, True)  # enable color buffer
-
-	glBlendFunc(*megafactors[megafactor][1])
-	glBegin(GL_TRIANGLES)
-	glColor3f(0., 1., 0.)
-	glVertex2f( 200., -200.)
-	glVertex2f( 200.,  200.)
-	glVertex2f(-200.,  200.)
-	glColor3f(0.5, 0., 0.)
-	glVertex2f(-200.,  200.)
-	glVertex2f(-200., -200.)
-	glVertex2f( 200., -200.)
-	glEnd()
 
 
 def draw_light(x, y, radius, color=(1., 1., 1.), intensity=1., numSubdivisions=32):
@@ -111,21 +114,39 @@ def draw_light(x, y, radius, color=(1., 1., 1.), intensity=1., numSubdivisions=3
 		glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
 	glEnd()
 
+def draw_scene():
+	glBegin(GL_TRIANGLES)
+	glColor3f(0., 1., 0.)
+	glVertex2f( 200., -200.)
+	glVertex2f( 200.,  200.)
+	glVertex2f(-200.,  200.)
+	glColor3f(0.5, 0., 0.)
+	glVertex2f(-200.,  200.)
+	glVertex2f(-200., -200.)
+	glVertex2f( 200., -200.)
+	glEnd()
+
 @win.event
 def on_mouse_motion(x, y, dx, dy):
 	pass
 
 @win.event
 def on_key_press(symbol, modifiers):
-	global megafactor
+	global factor
 	#bf_light
 	if symbol == key.PAGEUP:
-		megafactor += 1
-		if len(megafactors) < megafactor+1:
-			megafactor = 0
+		factor += 1
+		if len(selected_factors) < factor+1:
+			factor = 0
+			print "#"
 	if symbol == key.PAGEDOWN:
-		megafactor -= 1
-		if 0 > megafactor:
-			megafactor = len(megafactors)-1
+		factor -= 1
+		if 0 > factor:
+			factor = len(selected_factors)-1
+			print "#"
+	print gl_symbols[selected_factors[factor][0]], gl_symbols[selected_factors[factor][1]]
+
+# 83 (17, 94)
+# GL_SRC_ALPHA|GL_ONE_MINUS_SRC_ALPHA (GL_SRC_ALPHA|GL_ONE, GL_SRC_ALPHA GL_DST_ALPHA)
 
 pyglet.app.run()
