@@ -3,11 +3,11 @@ import pyglet
 from pyglet.window import key
 from pyglet.gl import *
 
-# Create template config
-config = pyglet.gl.Config()
-config.buffer_size = 32
-# Create a window using this config
-win = pyglet.window.Window(config=config, resizable=True, vsync=True)
+screen = pyglet.window.get_platform().get_default_display().get_default_screen()
+template = pyglet.gl.Config(alpha_size=8, depth_size=24, double_buffer=True)
+config = screen.get_best_config(template)
+context = config.create_context(None)
+win = pyglet.window.Window(resizable=True, vsync=True, context=context)
 
 shadow_factor = (GL_ZERO, GL_ZERO)
 geometry_factor = (GL_ZERO, GL_ZERO)
@@ -115,7 +115,6 @@ shadow_factors = (	(GL_ONE, GL_ONE),
 					(GL_SRC_COLOR, GL_ONE),
 					(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR),
 					(GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA),
-					(GL_DST_COLOR, GL_ONE),
 					(GL_ONE_MINUS_DST_COLOR, GL_ONE),
 					(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR),
 					(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA),
