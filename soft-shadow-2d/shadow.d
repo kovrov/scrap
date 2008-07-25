@@ -43,11 +43,8 @@ struct Edge
 	
 	Point normal()
 	{
-		Point rotate90cw(ref Point p)	{
-			return Point(p.y, -p.x);
-		}
-		
-		return rotate90cw(dst - src);
+		Point p = dst - src;
+		return Point(p.y, -p.x);
 	}
 	
 	Point tangent()
@@ -386,8 +383,8 @@ void main()
 		//
 		// accumulate lighting in a texture
 		//
-		glClearColor(0.,0.,0.,0.);
-		glViewport(0,0,rendertexsize, rendertexsize);
+		glClearColor(0., 0., 0., 0.);
+//		glViewport(0,0,rendertexsize, rendertexsize);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		foreach (ref light; lights)
 		{
@@ -409,24 +406,24 @@ void main()
 			glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE);
 			drawImage(light.texture, light.position, Size(2*light.outerradius, 2*light.outerradius), Point(0,0), 0, light.color);
 		}
-		
+/*
 		//
 		// copy lighting into texture
 		//
 		glBindTexture(GL_TEXTURE_2D, rendertex);
 		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 0, 0, rendertexsize, rendertexsize, 0);
-		
+*/		
 		//
 		// render regular scene
 		//
-		glViewport(0,0,640,480);
-		glClearColor(1.,1.,1.,0.);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//		glViewport(0,0,640,480);
+//		glClearColor(1.,1.,1.,0.);
+//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		foreach (ref blocker; lightBlockers)
 			blocker.draw();
-		
+/*		
 		//
 		// apply lighting by rending light texture on top
 		//
@@ -440,14 +437,14 @@ void main()
 		glTexCoord2d(1.,0.); glVertex2f(640,480);
 		glTexCoord2d(1.,1.); glVertex2f(640,0);     
 		glEnd();
-		
+*/
 		//
 		// render lights on top, so they're clearly visible
 		//
 		glBlendFunc(GL_ONE, GL_ZERO);
 		foreach (ref light; lights)
 			light.draw();
-		
+
 		//
 		// swap and limit framerate
 		//
