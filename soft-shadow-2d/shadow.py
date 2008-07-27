@@ -3,6 +3,7 @@ http://www.gamedev.net/reference/programming/features/2dsoftshadow/
 http://www.incasoftware.de/~kamm/projects/index.php/2007/09/08/soft-shadows-2d/
 """
 
+import math
 import pyglet
 from pyglet.gl import *
 
@@ -10,25 +11,33 @@ from pyglet.gl import *
 class Color:
 	pass
 
+'''
 class Size:
 	pass
+'''
 
 class Point:
-	def __init__(self):
-		self.x = 0.0
-		self.y = 0.0
+	def __init__(self, x=0., y=0.):
+		self.x = x
+		self.y = y
+	def __sub__(self, other):
+		return Point(self.x - other.x, self.y - other.y)
+	def __add__(self, other):
+		return Point(self.x + other.x, self.y + other.y)
+	def cross(self, other):
+		return self.x * other.y - self.y * other.x
 
-'''
+
 class Edge:
-	def __init__(self):
-		self.src = Point()
-		self.dst = Point()
+	def __init__(self, src, dst):
+		self.src = src
+		self.dst = dst
 	def normal():
 		p = dst - src
 		return Point(p.y, -p.x)
-	def tangent():
-		return dst - src
-'''
+	def tangent(self):
+		return self.dst - self.src
+
 
 class ConvexPolygon:
 	# constructs from a vertex list, vertices must be in ccw order
@@ -41,81 +50,71 @@ class ConvexPolygon:
 		self.edges.append(Edge(verts[-1], verts[0]))
 		assert self.isValid()
 
-	"""
-		Finds the edges that face away from a given location 'src'.
+	# Finds the edges that face away from a given location 'src'.
+	# Returns a list of indices into 'edges'. In ccw order.
+	def getBackfacingEdgeIndices(self, src):
+		assert isValid()
 
-		Returns:
-			A list of indices into 'edges'. In ccw order.
-	"""
-	def getBackfacingEdgeIndices(src):
-		assert(isValid());
-
-		size_t[] result;
+		result = [] #size_t[]
 
 		# find the indices of the two edges that face away from 'src' and that
 		# have one adjacent edge facing towards 'src'
-		size_t firstbackfacing = size_t.max, lastbackfacing = size_t.max;
+		firstbackfacing = size_t.max
+		lastbackfacing = size_t.max
 
-		{
-			bool prev_edge_front, cur_edge_front;
-			for i, ref edge; edges:
-				if (edge.normal.dot(src - edge.src) < 0)
-					cur_edge_front = true;
-				else
-					cur_edge_front = false;
-
-				if (i != 0)
-				{
-					if (cur_edge_front && !prev_edge_front)
-						firstbackfacing = i;
-					else if (!cur_edge_front && prev_edge_front)
-						lastbackfacing = i-1;
-				}
-
-				prev_edge_front = cur_edge_front;
-
-		}
+		prev_edge_front = cur_edge_front = False
+		for i, edge in edges.iteritems():
+			if edge.normal.dot(src - edge.src) < 0:
+				cur_edge_front = True
+			else:
+				cur_edge_front = False
+			if i != 0:
+				if cur_edge_front and not prev_edge_front:
+					firstbackfacing = i
+				elif not cur_edge_front and prev_edge_front:
+					lastbackfacing = i-1
+			prev_edge_front = cur_edge_front
 
 		# if no change between front and backfacing vertices was found,
 		# we are inside the polygon, consequently all edges face backwards
-		if firstbackfacing == size_t.max && lastbackfacing == size_t.max:
-			for (size_t i = 0; i < edges.length; ++i)
+		if firstbackfacing == size_t.max and lastbackfacing == size_t.max:
+			for i in xrange(len(edges)):
 				result.append(i)
-			return result;
+			return result
 		# else, if one one of the changes was found, we missed the one at 0
-		elif (firstbackfacing == size_t.max)
-			firstbackfacing = 0;
-		elif (lastbackfacing == size_t.max)
-			lastbackfacing = edges.length - 1;
+		elif firstbackfacing == size_t.max:
+			firstbackfacing = 0
+		elif lastbackfacing == size_t.max:
+			lastbackfacing = edges.length - 1
 
 		# if this is true, we can just put the indices in result in order
 		if firstbackfacing <= lastbackfacing:
-			for (size_t i = firstbackfacing; i <= lastbackfacing; ++i)
+			for i in xrange(firstbackfacing, lastbackfacing+1):
 				result.append(i)
 		# else we must go from first to $ and from 0 to last
 		else:
-			for (size_t i = firstbackfacing; i < edges.length; ++i)
+			for i in xrange(firstbackfacing, edges.length):
 				result.append(i)
-			for (size_t i = 0; i <= lastbackfacing; ++i)
+			for i in xrange(lastbackfacing+1):
 				result.append(i)
 
 		return result;
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
-	bool isValid():
-		for (size_t i = 0; i < edges.length; ++i)
-			size_t nexti = i+1 < edges.length ? i+1 : 0;
-			if (edges[i].dst != edges[nexti].src)
-				return false;
-			if (edges[i].tangent().cross(edges[nexti].tangent()) <= 0)
-				return false;
-		return true;
+	def isValid(self):
+		for i in xrange(len(self.edges)):
+			nexti = i+1 if i+1 < len(self.edges) else 0
+			if self.edges[i].dst != self.edges[nexti].src:
+				return False
+			if self.edges[i].tangent().cross(self.edges[nexti].tangent()) <= 0:
+				return False
+		return True
 
 
 class LightBlocker:
-	def __init__(self):
-		self.position = Point()
-		self.shape = ConvexPolygon()
+	def __init__(self, pos, shape):
+		self.position = pos
+		self.shape = shape
 
 	# returns a sequence of vertices that form a line, indicating
 	# where light is blocked
@@ -138,20 +137,21 @@ class LightBlocker:
 
 
 class Light:
-	texture = Texture()
-	def __init__(self):
-		self.position = Point()
-		self.color = Color.White
-		self.outerradius = 128.0
-		self.sourceradius = 5.0
-	def draw():
-		glDisable(GL_TEXTURE_2D);
-		Color.Yellow.setGLColor();
-		glBegin(GL_TRIANGLE_FAN);
-		makeVertex(position);
-		segments = 20;
-		for (int i = 0; i < segments + 1; ++i)
-			makeVertex(position + Point.fromPolar(sourceradius, 2*PI*i / segments));
+	texture = pyglet.image.load("media/light.png").get_texture()
+	def __init__(self, pos, color=(1.,1.,1.), outerradius=128., sourceradius=5.):
+		self.position = pos
+		self.color = color
+		self.outerradius = outerradius
+		self.sourceradius = sourceradius
+	def draw(self):
+		glDisable(GL_TEXTURE_2D)
+		glColor3f(0., 1., 1.) #Color.Yellow.setGLColor()
+		glBegin(GL_TRIANGLE_FAN)
+		makeVertex(self.position)
+		segments = 20
+		for i in xrange(segments + 1):
+			angle = 2*math.pi*i
+			makeVertex(self.position + Point(self.sourceradius * math.cos(angle), self.sourceradius * math.sin(angle)))
 		glEnd()
 
 
@@ -160,6 +160,8 @@ def makeVertex(p):
 
 '''
 class Penumbra:
+	texture = pyglet.image.load("media/penumbra.png").get_texture() #static
+
 	# line line between 'base' and 'base + direction' has the
 	# shadow intensity 'intensity'
 	class Section:
@@ -172,7 +174,7 @@ class Penumbra:
 
 	def draw()
 	{
-		assert(sections.length >= 2);
+		assert sections.length >= 2
 
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texture.getID());
@@ -195,8 +197,6 @@ class Penumbra:
 
 		glDisable(GL_TEXTURE_2D);
 	}
-
-	static Texture texture;
 '''
 
 '''
@@ -220,6 +220,32 @@ class Umbra:
 			makeVertex(s.base + s.direction);
 		glEnd();
 '''
+
+def drawImage(texture, pos, size=None, color=(1.,1.,1.)):
+	# if no size is specified, use texture size
+	if size is None:
+		size = texture.width, texture.height
+	# enable 2d textures and bind texture
+	glEnable(GL_TEXTURE_2D)
+	# bind texture ID to this tex
+	glBindTexture(GL_TEXTURE_2D, texture.id)
+	# set color to one given
+	glColor3f(*color)
+	glPushMatrix()
+	# rotate and translate
+	glTranslatef(pos.x, pos.y, 0)
+	# draw image at given coords, binding texture appropriately
+	glBegin(GL_QUADS)
+	# center calculations
+	halfWidth = size[0]/2
+	halfHeight = size[1]/2
+	# -halfWidth and -halfHeight act as ancors to rotate from the center
+	glTexCoord2d(0,0); glVertex2f(-halfWidth, -halfHeight)
+	glTexCoord2d(0,1); glVertex2f(-halfWidth, -halfHeight + size[1])
+	glTexCoord2d(1,1); glVertex2f(-halfWidth + size.w, -halfHeight + size.h)
+	glTexCoord2d(1,0); glVertex2f(-halfWidth + size.w, -halfHeight)
+	glEnd()
+	glPopMatrix()
 
 '''
 def renderShadow(light, blocker):
@@ -343,19 +369,16 @@ def renderShadow(light, blocker):
 	leftpenumbra.draw();
 '''
 
-
-win = pyglet.window.Window(resizable=True, vsync=True)
-
 lights = [
 	# this first light will move with the mouse cursor
-	Light(Point(0, 0), Color.White, 200, 10),
+	Light(Point(0, 0), (1.,1.,1.), 200, 10),  # white
 	# stationary lights
-	Light(Point(350, 330), Color.Green),
-	Light(Point(270, 260), Color.Blue),
-	Light(Point(200, 400), Color.Yellow, 200),
-	Light(Point(500,  50), Color.Red),
-	Light(Point(450,  50), Color.Green),
-	Light(Point(475,  75), Color.Blue)]
+	Light(Point(350, 330), (0.,1.,0.)),  # Green
+	Light(Point(270, 260), (0.,0.,1.)),  # Blue
+	Light(Point(200, 400), (1.,1.,0.), 200),  # Yellow
+	Light(Point(500,  50), (1.,0.,0.)),  # Red
+	Light(Point(450,  50), (0.,1.,0.)),  # Green
+	Light(Point(475,  75), (0.,0.,1.))]  # Blue
 
 lightBlockers = [
 	# small box
@@ -389,6 +412,7 @@ lightBlockers = [
 			Point(-70, 100),
 			Point(-80,  80)]))]
 
+win = pyglet.window.Window(resizable=True, vsync=True)
 
 @win.event
 def on_draw():
@@ -408,7 +432,7 @@ def on_draw():
 		# draw light
 		glColorMask(True, True, True, False)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE)
-		drawImage(light.texture, light.position, Size(2*light.outerradius, 2*light.outerradius), Point(0,0), 0, light.color)
+	#	drawImage(light.texture, light.position, (2*light.outerradius, 2*light.outerradius), light.color)
 	# render regular scene
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 	for blocker in lightBlockers:
@@ -422,30 +446,5 @@ def on_draw():
 @win.event
 def on_mouse_motion(x, y, dx, dy):
 	print "on_mouse_motion"
-
-
-#main
-arc.window.open("2D Shadows", 640, 480, false);
-arc.input.open();
-# load textures
-Penumbra.texture = Texture("media/penumbra.png");
-Light.texture = Texture("media/light.png");
-# setup world data
-setupWorld();
-# initialize dynamic texture
-GLuint rendertex;
-uint rendertexsize = 256;
-{
-	ubyte[] texdata = new ubyte[rendertexsize*rendertexsize*4];
-	for (ref color; texdata)
-		color = 255;
-	glGenTextures(1, &rendertex);
-	glBindTexture(GL_TEXTURE_2D, rendertex);
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, rendertexsize, rendertexsize, 0,
-				 GL_RGBA, GL_UNSIGNED_BYTE, texdata.ptr);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	delete texdata;
-}
 
 pyglet.app.run()
