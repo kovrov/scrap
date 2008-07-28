@@ -8,6 +8,14 @@ import math
 import pyglet
 from pyglet.gl import *
 
+def create_window():
+	screen = pyglet.window.get_platform().get_default_display().get_default_screen()
+	template = pyglet.gl.Config(alpha_size=8, depth_size=24, double_buffer=True)
+	config = screen.get_best_config(template)
+	context = config.create_context(None)
+	return pyglet.window.Window(resizable=True, vsync=True, context=context)
+win = create_window()
+
 
 class Point:
 	def __init__(self, x=0., y=0.):
@@ -169,32 +177,11 @@ class Light:
 		glEnd()
 
 	def drawLight(self):
-		# enable 2d textures and bind texture
-		glEnable(GL_TEXTURE_2D)
-		# bind texture ID to this tex
-		glBindTexture(GL_TEXTURE_2D, self.texture.id)
-		# set color to one given
+		glBindTexture(self.texture.target, self.texture.id) #GL_TEXTURE_2D
 		glColor3f(*self.color)
-		glPushMatrix()
-		# rotate and translate
-		glTranslatef(self.position.x, self.position.y, 0)
-		# draw image at given coords, binding texture appropriately
-		glBegin(GL_QUADS)
-		# center calculations
-		(2*self.outerradius, 2*self.outerradius)
-		halfWidth = self.outerradius
-		halfHeight = self.outerradius
-		# -halfWidth and -halfHeight act as ancors to rotate from the center
-		glTexCoord2d(0,0); glVertex2f(-halfWidth, -halfHeight)
-		glTexCoord2d(0,1); glVertex2f(-halfWidth, -halfHeight + self.outerradius*2)
-		glTexCoord2d(1,1); glVertex2f(-halfWidth + self.outerradius*2, -halfHeight + self.outerradius*2)
-		glTexCoord2d(1,0); glVertex2f(-halfWidth + self.outerradius*2, -halfHeight)
-		glEnd()
-		glPopMatrix()
-
-
-def makeVertex(p):
-	glVertex2f(p.x, p.y)
+		x, y = self.position.x - self.outerradius, self.position.y - self.outerradius
+		width = height = self.outerradius*2
+		self.texture.blit(x, y, 0, width, height)
 
 '''
 class Penumbra:
@@ -222,13 +209,13 @@ class Penumbra:
 		for (i, ref s; sections[:])
 		{
 			glTexCoord2d(0., 1.);
-			makeVertex(s.base);
+			glVertex2f(s.base.x, s.base.y)
 
 			glTexCoord2d(s.intensity, 0.);
-			makeVertex(s.base + s.direction);
+			glVertex2f(*(s.base + s.direction))
 
 			glTexCoord2d(sections[i+1].intensity, 0.);
-			makeVertex(sections[i+1].base + sections[i+1].direction);
+			glVertex2f(*(sections[i+1].base + sections[i+1].direction))
 		}
 
 		glEnd();
@@ -249,13 +236,13 @@ class Umbra:
 		style = GL_TRIANGLE_STRIP;
 		glBegin(style);
 		for (ref s; sections[0..$/2+1]):
-			makeVertex(s.base);
-			makeVertex(s.base + s.direction);
+			glVertex2f(s.base.x, s.base.y)
+			glVertex2f(*(s.base + s.direction))
 		glEnd();
 		glBegin(style);
 		foreach_reverse(ref s; sections[$/2..$])
-			makeVertex(s.base);
-			makeVertex(s.base + s.direction);
+			glVertex2f(s.base.x, s.base.y)
+			glVertex2f(*(s.base + s.direction))
 		glEnd();
 '''
 
@@ -381,8 +368,6 @@ lightBlockers = [
 			Point(-70, 100),
 			Point(-80,  80)]))]
 
-win = pyglet.window.Window(resizable=True, vsync=True)
-
 @win.event
 def on_draw():
 	# accumulate lighting in a texture
@@ -400,6 +385,7 @@ def on_draw():
 		for blocker in lightBlockers:
 			renderShadow(light, blocker);
 		# draw light
+		glEnable(GL_TEXTURE_2D)
 		glColorMask(True, True, True, False)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE)
 		light.drawLight()
