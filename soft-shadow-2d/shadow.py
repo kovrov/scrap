@@ -8,14 +8,6 @@ import pyglet
 from pyglet.gl import *
 
 
-class Color:
-	pass
-
-'''
-class Size:
-	pass
-'''
-
 class Point:
 	def __init__(self, x=0., y=0.):
 		self.x = x
@@ -26,14 +18,16 @@ class Point:
 		return Point(self.x + other.x, self.y + other.y)
 	def cross(self, other):
 		return self.x * other.y - self.y * other.x
+	def __iter__(self):
+		return iter((self.x, self.y))
 
 
 class Edge:
 	def __init__(self, src, dst):
 		self.src = src
 		self.dst = dst
-	def normal():
-		p = dst - src
+	def normal(self):
+		p = self.dst - self.src
 		return Point(p.y, -p.x)
 	def tangent(self):
 		return self.dst - self.src
@@ -113,7 +107,7 @@ class ConvexPolygon:
 
 class LightBlocker:
 	def __init__(self, pos, shape):
-		self.position = pos
+		self.position = pos #TODO: value
 		self.shape = shape
 
 	# returns a sequence of vertices that form a line, indicating
@@ -126,33 +120,58 @@ class LightBlocker:
 			ret.append(self.position + self.shape.edges[ind].dst)
 		return ret
 
-	def draw(self, offset = Point(0,0)):
+	def draw(self):
 		glDisable(GL_TEXTURE_2D)
 		glColor3f(1.0, 0.0, 0.0)
 		glBegin(GL_TRIANGLE_FAN)
 		for edge in self.shape.edges:
-			glVertex2f(self.position.x + offset.x + edge.src.x, self.position.y + offset.y + edge.src.y)
-			glVertex2f(self.position.x + offset.x + edge.dst.x, self.position.y + offset.y + edge.dst.y)
+			glVertex2f(self.position.x + edge.src.x, self.position.y + edge.src.y)
+			glVertex2f(self.position.x + edge.dst.x, self.position.y + edge.dst.y)
 		glEnd()
 
 
 class Light:
 	texture = pyglet.image.load("media/light.png").get_texture()
 	def __init__(self, pos, color=(1.,1.,1.), outerradius=128., sourceradius=5.):
-		self.position = pos
-		self.color = color
+		self.position = pos #TODO: value
+		self.color = tuple(color)
 		self.outerradius = outerradius
 		self.sourceradius = sourceradius
-	def draw(self):
-		glDisable(GL_TEXTURE_2D)
-		glColor3f(0., 1., 1.) #Color.Yellow.setGLColor()
-		glBegin(GL_TRIANGLE_FAN)
-		makeVertex(self.position)
+	def drawSource(self):
 		segments = 20
+		increment = math.pi*2 / segments
+		radius = self.sourceradius
+		x, y = self.position
+		glDisable(GL_TEXTURE_2D)
+		glBegin(GL_TRIANGLE_FAN)
+		glColor3f(1.,1.,0.)
+		glVertex2f(x, y)
 		for i in xrange(segments + 1):
-			angle = 2*math.pi*i
-			makeVertex(self.position + Point(self.sourceradius * math.cos(angle), self.sourceradius * math.sin(angle)))
+			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
 		glEnd()
+	def drawLight(self):
+		# enable 2d textures and bind texture
+		glEnable(GL_TEXTURE_2D)
+		# bind texture ID to this tex
+		glBindTexture(GL_TEXTURE_2D, self.texture.id)
+		# set color to one given
+		glColor3f(*self.color)
+		glPushMatrix()
+		# rotate and translate
+		glTranslatef(self.position.x, self.position.y, 0)
+		# draw image at given coords, binding texture appropriately
+		glBegin(GL_QUADS)
+		# center calculations
+		(2*self.outerradius, 2*self.outerradius)
+		halfWidth = self.outerradius
+		halfHeight = self.outerradius
+		# -halfWidth and -halfHeight act as ancors to rotate from the center
+		glTexCoord2d(0,0); glVertex2f(-halfWidth, -halfHeight)
+		glTexCoord2d(0,1); glVertex2f(-halfWidth, -halfHeight + self.outerradius*2)
+		glTexCoord2d(1,1); glVertex2f(-halfWidth + self.outerradius*2, -halfHeight + self.outerradius*2)
+		glTexCoord2d(1,0); glVertex2f(-halfWidth + self.outerradius*2, -halfHeight)
+		glEnd()
+		glPopMatrix()
 
 
 def makeVertex(p):
@@ -172,7 +191,7 @@ class Penumbra:
 	}
 	Section[] sections;
 
-	def draw()
+	def draw(self)
 	{
 		assert sections.length >= 2
 
@@ -207,7 +226,7 @@ class Umbra:
 			self.direction = Point()
 	def __init__(self):
 		self.sections = [] #Section[]
-	def draw():
+	def draw(self):
 		style = GL_TRIANGLE_STRIP;
 		glBegin(style);
 		for (ref s; sections[0..$/2+1]):
@@ -220,32 +239,6 @@ class Umbra:
 			makeVertex(s.base + s.direction);
 		glEnd();
 '''
-
-def drawImage(texture, pos, size=None, color=(1.,1.,1.)):
-	# if no size is specified, use texture size
-	if size is None:
-		size = texture.width, texture.height
-	# enable 2d textures and bind texture
-	glEnable(GL_TEXTURE_2D)
-	# bind texture ID to this tex
-	glBindTexture(GL_TEXTURE_2D, texture.id)
-	# set color to one given
-	glColor3f(*color)
-	glPushMatrix()
-	# rotate and translate
-	glTranslatef(pos.x, pos.y, 0)
-	# draw image at given coords, binding texture appropriately
-	glBegin(GL_QUADS)
-	# center calculations
-	halfWidth = size[0]/2
-	halfHeight = size[1]/2
-	# -halfWidth and -halfHeight act as ancors to rotate from the center
-	glTexCoord2d(0,0); glVertex2f(-halfWidth, -halfHeight)
-	glTexCoord2d(0,1); glVertex2f(-halfWidth, -halfHeight + size[1])
-	glTexCoord2d(1,1); glVertex2f(-halfWidth + size.w, -halfHeight + size.h)
-	glTexCoord2d(1,0); glVertex2f(-halfWidth + size.w, -halfHeight)
-	glEnd()
-	glPopMatrix()
 
 '''
 def renderShadow(light, blocker):
@@ -419,6 +412,7 @@ def on_draw():
 	# accumulate lighting in a texture
 	glClearColor(0., 0., 0., 0.)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+	glEnable(GL_BLEND);
 	for light in lights:
 		# clear alpha to full visibility
 		glColorMask(False, False, False, True)
@@ -432,7 +426,7 @@ def on_draw():
 		# draw light
 		glColorMask(True, True, True, False)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE)
-	#	drawImage(light.texture, light.position, (2*light.outerradius, 2*light.outerradius), light.color)
+		light.drawLight()
 	# render regular scene
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 	for blocker in lightBlockers:
@@ -440,11 +434,12 @@ def on_draw():
 	# render lights on top, so they're clearly visible
 	glBlendFunc(GL_ONE, GL_ZERO)
 	for light in lights:
-		light.draw()
+		light.drawSource()
 
 
 @win.event
 def on_mouse_motion(x, y, dx, dy):
-	print "on_mouse_motion"
+	lights[0].position.x = x
+	lights[0].position.y = y
 
 pyglet.app.run()
