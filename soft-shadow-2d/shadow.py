@@ -39,9 +39,19 @@ class Point:
 			return 0.
 		self *= (1. / length)
 		return length
+	def normaliseCopy(self):
+		p = Point(self.x, self.y)
+		p.normalise()
+		return p
 	# returns length of vector
 	def length(self):
 		return math.sqrt(self.x*self.x + self.y*self.y)
+	def angle(self, other):  # angle to other vector
+		dot = self.dot(other)
+		cross = self.cross(other)
+		# angle between segments
+		return math.atan2(cross, dot);
+
 	def __iter__(self):
 		return iter((self.x, self.y))
 
@@ -116,7 +126,7 @@ class ConvexPolygon:
 			for i in xrange(lastbackfacing+1):
 				result.append(i)
 
-		return result;
+		return result
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
 	def isValid(self):
@@ -183,68 +193,56 @@ class Light:
 		width = height = self.outerradius*2
 		self.texture.blit(x, y, 0, width, height)
 
-'''
+
 class Penumbra:
 	texture = pyglet.image.load("media/penumbra.png").get_texture() #static
 
+	class Section:
+		def __init__(self, base, direction, intensity):
+			self.base = base
+			self.direction = direction
+			self.intensity = intensity
+
 	# line line between 'base' and 'base + direction' has the
 	# shadow intensity 'intensity'
-	class Section:
-	{
-		Point base;
-		Point direction;
-		real intensity;
-	}
-	Section[] sections;
+	def __init__(self):
+		self.sections = [] #Section[]
 
-	def draw(self)
-	{
-		assert sections.length >= 2
-
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texture.getID());
-
-		glBegin(GL_TRIANGLES);
-
-		for (i, ref s; sections[:])
-		{
+	def draw(self):
+		assert len(self.sections) >= 2
+		glEnable(GL_TEXTURE_2D)
+		glBindTexture(GL_TEXTURE_2D, self.texture.id)
+		glBegin(GL_TRIANGLES)
+		for i, s in enumerate(self.sections[:-2]):
 			glTexCoord2d(0., 1.);
 			glVertex2f(s.base.x, s.base.y)
-
-			glTexCoord2d(s.intensity, 0.);
+			glTexCoord2d(s.intensity, 0.)
 			glVertex2f(*(s.base + s.direction))
-
-			glTexCoord2d(sections[i+1].intensity, 0.);
-			glVertex2f(*(sections[i+1].base + sections[i+1].direction))
-		}
-
+			glTexCoord2d(self.sections[i+1].intensity, 0.)
+			glVertex2f(*(self.sections[i+1].base + self.sections[i+1].direction))
 		glEnd();
-
 		glDisable(GL_TEXTURE_2D);
-	}
-'''
 
-'''
+
 class Umbra:
 	class Section:
-		def __init(self):
-			self.base =  Point()
-			self.direction = Point()
+		def __init__(self, base, direction):
+			self.base = base
+			self.direction = direction
 	def __init__(self):
 		self.sections = [] #Section[]
 	def draw(self):
 		style = GL_TRIANGLE_STRIP;
 		glBegin(style);
-		for (ref s; sections[0..$/2+1]):
+		for s in self.sections[:len(self.sections)/2+1]:
 			glVertex2f(s.base.x, s.base.y)
 			glVertex2f(*(s.base + s.direction))
 		glEnd();
 		glBegin(style);
-		foreach_reverse(ref s; sections[$/2..$])
+		for s in reversed(self.sections[len(self.sections)/2:len(self.sections)]):
 			glVertex2f(s.base.x, s.base.y)
 			glVertex2f(*(s.base + s.direction))
 		glEnd();
-'''
 
 
 def renderShadow(light, blocker):
@@ -272,9 +270,9 @@ def renderShadow(light, blocker):
 		p = reference - light.position
 		lightdisp = Point(-p.y, p.x)
 		lightdisp.normalise()
-		lightdisp *= light.sourceradius;
+		lightdisp *= light.sourceradius
 		if lightdisp.dot(reference - blocker.position) < 0.:
-			lightdisp *= -1.;
+			lightdisp *= -1.
 		return lightdisp
 
 	# Gets the direction that marks the beginning of total shadow
@@ -285,11 +283,11 @@ def renderShadow(light, blocker):
 	#
 	# build penumbrae (soft shadows), cast from the edges
 	rightpenumbra = Penumbra()
-	startdir = extendDir(blockerLine[0] - (light.position - getLightDisplacement(blockerLine[0])));
+	startdir = extendDir(blockerLine[0] - (light.position - getLightDisplacement(blockerLine[0])))
 	rightpenumbra.sections.append(Penumbra.Section(blockerLine[0], startdir, 0.0))
-	for i in xrange(blockerLine.length - 1):
-		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])));
-		available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]));
+	for i in xrange(len(blockerLine) - 1):
+		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])))
+		available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]))
 		if wanted < available:
 			rightpenumbra.sections.append(Penumbra.Section(blockerLine[i], getTotalShadowStartDirection(blockerLine[i]), 1.0))
 			break
@@ -314,7 +312,7 @@ def renderShadow(light, blocker):
 	umbra.sections.append(Umbra.Section(rightpenumbra.sections[-1].base, rightpenumbra.sections[-1].direction))
 
 	for vert in blockerLine[len(rightpenumbra.sections)-1:len(blockerLine)-len(leftpenumbra.sections)+1]:
-		umbra.sections.append(Umbra.Section(vert, extendDir(0.5 * (leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction))))
+		umbra.sections.append(Umbra.Section(vert, extendDir((leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction) * 0.5)))
 
 	umbra.sections.append(Umbra.Section(leftpenumbra.sections[-1].base, leftpenumbra.sections[-1].direction))
 
@@ -373,7 +371,7 @@ def on_draw():
 	# accumulate lighting in a texture
 	glClearColor(0.,0.,0.,0.)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-	glEnable(GL_BLEND);
+	glEnable(GL_BLEND)
 	for light in lights:
 		# clear alpha to full visibility
 		glColorMask(False, False, False, True)
@@ -383,7 +381,7 @@ def on_draw():
 		glDisable(GL_TEXTURE_2D)
 		glColor4f(0.,0.,0.,1.)
 		for blocker in lightBlockers:
-			renderShadow(light, blocker);
+			renderShadow(light, blocker)
 		# draw light
 		glEnable(GL_TEXTURE_2D)
 		glColorMask(True, True, True, False)
