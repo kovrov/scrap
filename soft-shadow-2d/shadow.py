@@ -3,7 +3,6 @@ http://www.gamedev.net/reference/programming/features/2dsoftshadow/
 http://www.incasoftware.de/~kamm/projects/index.php/2007/09/08/soft-shadows-2d/
 """
 
-import sys
 import math
 import pyglet
 from pyglet.gl import *
@@ -78,21 +77,18 @@ class ConvexPolygon:
 		self.edges.append(Edge(verts[-1], verts[0]))
 		assert self.isValid()
 
-	# Finds the edges that face away from a given location 'src'.
+	# Finds the edges that face away from a given location 'point'.
 	# Returns a list of indices into 'edges'. In ccw order.
-	def getBackfacingEdgeIndices(self, src):
+	def getBackfacingEdgeIndices(self, point):
 		assert self.isValid()
-
 		result = [] #size_t[]
-
-		# find the indices of the two edges that face away from 'src' and that
-		# have one adjacent edge facing towards 'src'
-		firstbackfacing = sys.maxint
-		lastbackfacing = sys.maxint
-
+		# find the indices of the two edges that face away from 'point' and that
+		# have one adjacent edge facing towards 'point'
+		firstbackfacing = lastbackfacing = None
 		prev_edge_front = cur_edge_front = False
 		for i, edge in enumerate(self.edges):
-			if edge.normal().dot(src - edge.src) < 0:
+			direction = point - edge.src
+			if direction.dot(edge.normal()) < 0:
 				cur_edge_front = True
 			else:
 				cur_edge_front = False
@@ -102,30 +98,26 @@ class ConvexPolygon:
 				elif not cur_edge_front and prev_edge_front:
 					lastbackfacing = i-1
 			prev_edge_front = cur_edge_front
-
 		# if no change between front and backfacing vertices was found,
 		# we are inside the polygon, consequently all edges face backwards
-		if firstbackfacing == sys.maxint and lastbackfacing == sys.maxint:
+		if firstbackfacing is None and lastbackfacing is None:
 			for i in xrange(len(self.edges)):
 				result.append(i)
 			return result
 		# else, if one one of the changes was found, we missed the one at 0
-		elif firstbackfacing == sys.maxint:
+		elif firstbackfacing is None:
 			firstbackfacing = 0
-		elif lastbackfacing == sys.maxint:
+		elif lastbackfacing is None:
 			lastbackfacing = len(self.edges) - 1
-
 		# if this is true, we can just put the indices in result in order
 		if firstbackfacing <= lastbackfacing:
 			for i in xrange(firstbackfacing, lastbackfacing+1):
 				result.append(i)
-		# else we must go from first to $ and from 0 to last
-		else:
+		else:  # we must go from first to $ and from 0 to last
 			for i in xrange(firstbackfacing, len(self.edges)):
 				result.append(i)
 			for i in xrange(lastbackfacing+1):
 				result.append(i)
-
 		return result
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
