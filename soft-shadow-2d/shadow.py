@@ -3,6 +3,7 @@ http://www.gamedev.net/reference/programming/features/2dsoftshadow/
 http://www.incasoftware.de/~kamm/projects/index.php/2007/09/08/soft-shadows-2d/
 """
 
+import sys
 import math
 import pyglet
 from pyglet.gl import *
@@ -12,20 +13,35 @@ class Point:
 	def __init__(self, x=0., y=0.):
 		self.x = x
 		self.y = y
+	def __imul__(self, val):
+		self.x *= val; self.y *= val; return self
+	def __mul__(self, val):
+		return Point(self.x*val, self.y*val)
 	def __sub__(self, other):
 		return Point(self.x - other.x, self.y - other.y)
 	def __add__(self, other):
 		return Point(self.x + other.x, self.y + other.y)
-	def cross(self, other):
+	def cross(self, other):  # cross product
 		return self.x * other.y - self.y * other.x
+	def dot(self, other):  # dot product
+		return self.x*other.x + self.y*other.y
+	def normalise(self):
+		length = self.length()
+		if length == 0.:
+			return 0.
+		self *= (1. / length)
+		return length
+	# returns length of vector
+	def length(self):
+		return math.sqrt(self.x*self.x + self.y*self.y)
 	def __iter__(self):
 		return iter((self.x, self.y))
 
 
 class Edge:
 	def __init__(self, src, dst):
-		self.src = src
-		self.dst = dst
+		self.src = src #TODO: value
+		self.dst = dst #TODO: value
 	def normal(self):
 		p = self.dst - self.src
 		return Point(p.y, -p.x)
@@ -47,18 +63,18 @@ class ConvexPolygon:
 	# Finds the edges that face away from a given location 'src'.
 	# Returns a list of indices into 'edges'. In ccw order.
 	def getBackfacingEdgeIndices(self, src):
-		assert isValid()
+		assert self.isValid()
 
 		result = [] #size_t[]
 
 		# find the indices of the two edges that face away from 'src' and that
 		# have one adjacent edge facing towards 'src'
-		firstbackfacing = size_t.max
-		lastbackfacing = size_t.max
+		firstbackfacing = sys.maxint
+		lastbackfacing = sys.maxint
 
 		prev_edge_front = cur_edge_front = False
-		for i, edge in edges.iteritems():
-			if edge.normal.dot(src - edge.src) < 0:
+		for i, edge in enumerate(self.edges):
+			if edge.normal().dot(src - edge.src) < 0:
 				cur_edge_front = True
 			else:
 				cur_edge_front = False
@@ -71,15 +87,15 @@ class ConvexPolygon:
 
 		# if no change between front and backfacing vertices was found,
 		# we are inside the polygon, consequently all edges face backwards
-		if firstbackfacing == size_t.max and lastbackfacing == size_t.max:
-			for i in xrange(len(edges)):
+		if firstbackfacing == sys.maxint and lastbackfacing == sys.maxint:
+			for i in xrange(len(self.edges)):
 				result.append(i)
 			return result
 		# else, if one one of the changes was found, we missed the one at 0
-		elif firstbackfacing == size_t.max:
+		elif firstbackfacing == sys.maxint:
 			firstbackfacing = 0
-		elif lastbackfacing == size_t.max:
-			lastbackfacing = edges.length - 1
+		elif lastbackfacing == sys.maxint:
+			lastbackfacing = len(self.edges) - 1
 
 		# if this is true, we can just put the indices in result in order
 		if firstbackfacing <= lastbackfacing:
@@ -87,7 +103,7 @@ class ConvexPolygon:
 				result.append(i)
 		# else we must go from first to $ and from 0 to last
 		else:
-			for i in xrange(firstbackfacing, edges.length):
+			for i in xrange(firstbackfacing, len(self.edges)):
 				result.append(i)
 			for i in xrange(lastbackfacing+1):
 				result.append(i)
@@ -122,7 +138,7 @@ class LightBlocker:
 
 	def draw(self):
 		glDisable(GL_TEXTURE_2D)
-		glColor3f(1.0, 0.0, 0.0)
+		glColor3f(1.,0.,0.)
 		glBegin(GL_TRIANGLE_FAN)
 		for edge in self.shape.edges:
 			glVertex2f(self.position.x + edge.src.x, self.position.y + edge.src.y)
@@ -132,11 +148,13 @@ class LightBlocker:
 
 class Light:
 	texture = pyglet.image.load("media/light.png").get_texture()
+
 	def __init__(self, pos, color=(1.,1.,1.), outerradius=128., sourceradius=5.):
 		self.position = pos #TODO: value
 		self.color = tuple(color)
 		self.outerradius = outerradius
 		self.sourceradius = sourceradius
+
 	def drawSource(self):
 		segments = 20
 		increment = math.pi*2 / segments
@@ -149,6 +167,7 @@ class Light:
 		for i in xrange(segments + 1):
 			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
 		glEnd()
+
 	def drawLight(self):
 		# enable 2d textures and bind texture
 		glEnable(GL_TEXTURE_2D)
@@ -200,7 +219,7 @@ class Penumbra:
 
 		glBegin(GL_TRIANGLES);
 
-		for (i, ref s; sections[0..$-1])
+		for (i, ref s; sections[:])
 		{
 			glTexCoord2d(0., 1.);
 			makeVertex(s.base);
@@ -240,7 +259,7 @@ class Umbra:
 		glEnd();
 '''
 
-'''
+
 def renderShadow(light, blocker):
 	# get the line that blocks light for the blocker and light combination
 	# move the light position towards blocker by its sourceradius to avoid
@@ -248,119 +267,76 @@ def renderShadow(light, blocker):
 	normal = blocker.position - light.position
 	normal.normalise()
 
-	Point[] blockerLine = blocker.getBlockedLine(light.position + normal * light.sourceradius);
+	blockerLine = blocker.getBlockedLine(light.position + normal * light.sourceradius) #Point[]
 
 	# if the light source is completely surrounded by the blocker, don't draw its shadow
-	if (blockerLine.length == blocker.shape.edges.length + 1)
-		return;
+	if len(blockerLine) == len(blocker.shape.edges) + 1:
+		return
 
-	"""
-		scales a vector with respect to the light radius
-		used for penumbra and umbra lights where the tips
-		are not supposed to be visible
-	"""
-	Point extendDir(ref Point dir) {
-		return dir.normaliseCopy() * light.outerradius * 1.5;
-	}
+	# scales a vector with respect to the light radius
+	# used for penumbra and umbra lights where the tips
+	# are not supposed to be visible
+	def extendDir(direction):
+		return direction.normaliseCopy() * light.outerradius * 1.5
 
-	"""
-		Displaces the light pos by sourceradius orthogonal to the line from
-		reference to the light's position. Used for calculating penumbra size.
-	"""
-	Point getLightDisplacement(ref Point reference)	{
-		Point lightdisp = Point.makePerpTo(reference - light.position);
-		lightdisp.normalise();
+	# Displaces the light pos by sourceradius orthogonal to the line from
+	# reference to the light's position. Used for calculating penumbra size.
+	def getLightDisplacement(reference):
+		p = reference - light.position
+		lightdisp = Point(-p.y, p.x)
+		lightdisp.normalise()
 		lightdisp *= light.sourceradius;
-		if (lightdisp.dot(reference - blocker.position) < 0.)
+		if lightdisp.dot(reference - blocker.position) < 0.:
 			lightdisp *= -1.;
-		return lightdisp;
-	}
+		return lightdisp
 
-	"""
-		Gets the direction that marks the beginning of total shadow
-		for the given point.
-	"""
-	Point getTotalShadowStartDirection(ref Point at) {
-		return extendDir(at - (light.position + getLightDisplacement(at)));
-	}
+	# Gets the direction that marks the beginning of total shadow
+	# for the given point.
+	def getTotalShadowStartDirection(at):
+		return extendDir(at - (light.position + getLightDisplacement(at)))
 
 	#
 	# build penumbrae (soft shadows), cast from the edges
-	#
+	rightpenumbra = Penumbra()
+	startdir = extendDir(blockerLine[0] - (light.position - getLightDisplacement(blockerLine[0])));
+	rightpenumbra.sections.append(Penumbra.Section(blockerLine[0], startdir, 0.0))
+	for i in xrange(blockerLine.length - 1):
+		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])));
+		available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]));
+		if wanted < available:
+			rightpenumbra.sections.append(Penumbra.Section(blockerLine[i], getTotalShadowStartDirection(blockerLine[i]), 1.0))
+			break
+		else:
+			rightpenumbra.sections.append(Penumbra.Section(blockerLine[i+1], extendDir(blockerLine[i+1] - blockerLine[i]), available / wanted))
 
-	Penumbra rightpenumbra;
-	{
-		Point startdir = extendDir(blockerLine[0] - (light.position - getLightDisplacement(blockerLine[0])));
-		rightpenumbra.sections.append(Penumbra.Section(blockerLine[0], startdir, 0.0))
-		for (size_t i = 0; i < blockerLine.length - 1; ++i)
-		{
-			real wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])));
-			real available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]));
-
-			if (wanted < available)
-			{
-				rightpenumbra.sections.append(Penumbra.Section(blockerLine[i], getTotalShadowStartDirection(blockerLine[i]), 1.0))
-				break;
-			}
-			else
-			{
-				rightpenumbra.sections.append(Penumbra.Section(
-					blockerLine[i+1],
-					extendDir(blockerLine[i+1] - blockerLine[i]),
-					available / wanted))
-			}
-		}
-	}
-
-	Penumbra leftpenumbra;
-	{
-		Point startdir = extendDir(blockerLine[$-1] - (light.position - getLightDisplacement(blockerLine[$-1])));
-		leftpenumbra.sections.append(Penumbra.Section(
-			blockerLine[$-1],
-			startdir,
-			0.0))
-		for (size_t i = 0; i < blockerLine.length - 1; ++i)
-		{
-			real wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[$-i-1])));
-			real available = abs(startdir.angle(blockerLine[$-i-2] - blockerLine[$-i-1]));
-
-			if (wanted < available)
-			{
-				leftpenumbra.sections.append(Penumbra.Section(
-					blockerLine[$-i-1],
-					getTotalShadowStartDirection(blockerLine[$-i-1]),
-					1.0))
-				break;
-			}
-			else
-			{
-				leftpenumbra.sections.append(Penumbra.Section(
-					blockerLine[$-i-2],
-					extendDir(blockerLine[$-i-2] - blockerLine[$-i-1]),
-					available / wanted))
-			}
-		}
-	}
+	leftpenumbra = Penumbra()
+	startdir = extendDir(blockerLine[-1] - (light.position - getLightDisplacement(blockerLine[-1])))
+	leftpenumbra.sections.append(Penumbra.Section(blockerLine[-1], startdir, 0.0))
+	for i in xrange(i < len(blockerLine) - 1):
+		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1])))
+		available = abs(startdir.angle(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]))
+		if wanted < available:
+			leftpenumbra.sections.append(Penumbra.Section(blockerLine[len(blockerLine)-i-1], getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1]), 1.0))
+			break
+		else:
+			leftpenumbra.sections.append(Penumbra.Section(blockerLine[len(blockerLine)-i-2], extendDir(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]), available / wanted))
 
 	#
 	# build umbrae (hard shadows), cast between the insides of penumbrae
-	#
-	Umbra umbra;
+	umbra = Umbra()
+	umbra.sections.append(Umbra.Section(rightpenumbra.sections[-1].base, rightpenumbra.sections[-1].direction))
 
-	umbra.sections.append(Umbra.Section(rightpenumbra.sections[$-1].base, rightpenumbra.sections[$-1].direction))
+	for vert in blockerLine[len(rightpenumbra.sections)-1:len(blockerLine)-len(leftpenumbra.sections)+1]:
+		umbra.sections.append(Umbra.Section(vert, extendDir(0.5 * (leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction))))
 
-	for (ref vert; blockerLine[rightpenumbra.sections.length-1..$-leftpenumbra.sections.length+1])
-		umbra.sections.append(Umbra.Section(vert, extendDir(0.5 * (leftpenumbra.sections[$-1].direction + rightpenumbra.sections[$-1].direction))))
-
-	umbra.sections.append(Umbra.Section(leftpenumbra.sections[$-1].base, leftpenumbra.sections[$-1].direction))
+	umbra.sections.append(Umbra.Section(leftpenumbra.sections[-1].base, leftpenumbra.sections[-1].direction))
 
 	#
 	# draw shadows to alpha
-	#
-	umbra.draw();
-	rightpenumbra.draw();
-	leftpenumbra.draw();
-'''
+	umbra.draw()
+	rightpenumbra.draw()
+	leftpenumbra.draw()
+
 
 lights = [
 	# this first light will move with the mouse cursor
@@ -410,7 +386,7 @@ win = pyglet.window.Window(resizable=True, vsync=True)
 @win.event
 def on_draw():
 	# accumulate lighting in a texture
-	glClearColor(0., 0., 0., 0.)
+	glClearColor(0.,0.,0.,0.)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	glEnable(GL_BLEND);
 	for light in lights:
@@ -420,9 +396,9 @@ def on_draw():
 		# write shadow volumes to alpha
 		glBlendFunc(GL_ONE, GL_ONE)
 		glDisable(GL_TEXTURE_2D)
-		glColor4f(0., 0., 0., 1.)
-	#	for blocker in lightBlockers:
-	#		renderShadow(light, blocker);
+		glColor4f(0.,0.,0.,1.)
+		for blocker in lightBlockers:
+			renderShadow(light, blocker);
 		# draw light
 		glColorMask(True, True, True, False)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE)
