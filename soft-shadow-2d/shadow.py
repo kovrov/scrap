@@ -42,15 +42,12 @@ class Point:
 		p = Point(self.x, self.y)
 		p.normalise()
 		return p
-	# returns length of vector
-	def length(self):
+	def length(self):  # length of vector
 		return math.sqrt(self.x*self.x + self.y*self.y)
 	def angle(self, other):  # angle to other vector
 		dot = self.dot(other)
 		cross = self.cross(other)
-		# angle between segments
-		return math.atan2(cross, dot);
-
+		return math.atan2(cross, dot)  # angle between segments
 	def __iter__(self):
 		return iter((self.x, self.y))
 
@@ -81,7 +78,7 @@ class ConvexPolygon:
 	# Returns a list of indices into 'edges'. In ccw order.
 	def getBackfacingEdgeIndices(self, point):
 		assert self.isValid()
-		result = [] #size_t[]
+		result = []
 		# find the indices of the two edges that face away from 'point' and that
 		# have one adjacent edge facing towards 'point'
 		firstbackfacing = lastbackfacing = None
@@ -140,14 +137,13 @@ class LightBlocker:
 	# where light is blocked
 	def getBlockedLine(self, src):
 		edgeIndices = self.shape.getBackfacingEdgeIndices(src - self.position)
-		ret = []  #Point[]
+		ret = [] 
 		ret.append(self.position + self.shape.edges[edgeIndices[0]].src)
 		for ind in edgeIndices:
 			ret.append(self.position + self.shape.edges[ind].dst)
 		return ret
 
 	def draw(self):
-		glDisable(GL_TEXTURE_2D)
 		glColor3f(1.,0.,0.)
 		glBegin(GL_TRIANGLE_FAN)
 		for edge in self.shape.edges:
@@ -170,7 +166,6 @@ class Light:
 		increment = math.pi*2 / segments
 		radius = self.sourceradius
 		x, y = self.position
-		glDisable(GL_TEXTURE_2D)
 		glBegin(GL_TRIANGLE_FAN)
 		glColor3f(1.,1.,0.)
 		glVertex2f(x, y)
@@ -187,7 +182,7 @@ class Light:
 
 
 class Penumbra:
-	texture = pyglet.image.load("media/penumbra.png").get_texture() #static
+	texture = pyglet.image.load("media/penumbra.png").get_texture()
 
 	class Section:
 		def __init__(self, base, direction, intensity):
@@ -195,25 +190,22 @@ class Penumbra:
 			self.direction = direction
 			self.intensity = intensity
 
-	# line line between 'base' and 'base + direction' has the
+	# line between 'base' and 'base + direction' has the
 	# shadow intensity 'intensity'
 	def __init__(self):
-		self.sections = [] #Section[]
+		self.sections = []
 
 	def draw(self):
 		assert len(self.sections) >= 2
-		glEnable(GL_TEXTURE_2D)
-		glBindTexture(GL_TEXTURE_2D, self.texture.id)
+		#glEnable(GL_TEXTURE_2D)
+		#glBindTexture(GL_TEXTURE_2D, self.texture.id)
 		glBegin(GL_TRIANGLES)
-		for i, s in enumerate(self.sections[:-2]):
-			glTexCoord2d(0., 1.);
-			glVertex2f(s.base.x, s.base.y)
-			glTexCoord2d(s.intensity, 0.)
-			glVertex2f(*(s.base + s.direction))
-			glTexCoord2d(self.sections[i+1].intensity, 0.)
-			glVertex2f(*(self.sections[i+1].base + self.sections[i+1].direction))
-		glEnd();
-		glDisable(GL_TEXTURE_2D);
+		for i, s in enumerate(self.sections[:-1]):
+			glTexCoord2d(0.,                           1.); glVertex2f(*(s.base))
+			glTexCoord2d(s.intensity,                  0.); glVertex2f(*(s.base + s.direction))
+			glTexCoord2d(self.sections[i+1].intensity, 0.); glVertex2f(*(self.sections[i+1].base + self.sections[i+1].direction))
+		glEnd()
+		#glDisable(GL_TEXTURE_2D)
 
 
 class Umbra:
@@ -222,7 +214,7 @@ class Umbra:
 			self.base = base
 			self.direction = direction
 	def __init__(self):
-		self.sections = [] #Section[]
+		self.sections = []
 	def draw(self):
 		style = GL_TRIANGLE_STRIP;
 		glBegin(style);
@@ -231,7 +223,7 @@ class Umbra:
 			glVertex2f(*(s.base + s.direction))
 		glEnd();
 		glBegin(style);
-		for s in reversed(self.sections[len(self.sections)/2:len(self.sections)]):
+		for s in reversed(self.sections[len(self.sections)/2:]):
 			glVertex2f(s.base.x, s.base.y)
 			glVertex2f(*(s.base + s.direction))
 		glEnd();
@@ -244,15 +236,14 @@ def renderShadow(light, blocker):
 	normal = blocker.position - light.position
 	normal.normalise()
 
-	blockerLine = blocker.getBlockedLine(light.position + normal * light.sourceradius) #Point[]
+	blockerLine = blocker.getBlockedLine(light.position + normal * light.sourceradius)
 
 	# if the light source is completely surrounded by the blocker, don't draw its shadow
 	if len(blockerLine) == len(blocker.shape.edges) + 1:
 		return
 
-	# scales a vector with respect to the light radius
-	# used for penumbra and umbra lights where the tips
-	# are not supposed to be visible
+	# scales a vector with respect to the light radius used for penumbra and umbra
+	# lights where the tips are not supposed to be visible
 	def extendDir(direction):
 		return direction.normaliseCopy() * light.outerradius * 1.5
 
@@ -311,8 +302,8 @@ def renderShadow(light, blocker):
 	#
 	# draw shadows to alpha
 	umbra.draw()
-	rightpenumbra.draw()
 	leftpenumbra.draw()
+	rightpenumbra.draw()
 
 
 lights = [
@@ -370,12 +361,10 @@ def on_draw():
 		glClear(GL_COLOR_BUFFER_BIT)
 		# write shadow volumes to alpha
 		glBlendFunc(GL_ONE, GL_ONE)
-		glDisable(GL_TEXTURE_2D)
 		glColor4f(0.,0.,0.,1.)
 		for blocker in lightBlockers:
 			renderShadow(light, blocker)
 		# draw light
-		glEnable(GL_TEXTURE_2D)
 		glColorMask(True, True, True, False)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_ONE)
 		light.drawLight()
