@@ -182,7 +182,7 @@ class Light:
 
 
 class Penumbra:
-	texture = pyglet.image.load("media/penumbra.png").get_texture()
+	texture = pyglet.image.load("penumbra.png").get_texture()
 
 	class Section:
 		def __init__(self, base, direction, intensity):
@@ -196,16 +196,19 @@ class Penumbra:
 		self.sections = []
 
 	def draw(self):
-		assert len(self.sections) >= 2
-		#glEnable(GL_TEXTURE_2D)
-		#glBindTexture(GL_TEXTURE_2D, self.texture.id)
+		assert len(self.sections) > 1
+		glEnable(GL_TEXTURE_2D)
+		glBindTexture(GL_TEXTURE_2D, self.texture.id)
 		glBegin(GL_TRIANGLES)
 		for i, s in enumerate(self.sections[:-1]):
-			glTexCoord2d(0.,                           1.); glVertex2f(*(s.base))
-			glTexCoord2d(s.intensity,                  0.); glVertex2f(*(s.base + s.direction))
-			glTexCoord2d(self.sections[i+1].intensity, 0.); glVertex2f(*(self.sections[i+1].base + self.sections[i+1].direction))
+			glTexCoord2d(0., 1.)
+			glVertex2f(*(s.base))
+			glTexCoord2d(s.intensity, 0.)
+			glVertex2f(*(s.base + s.direction))
+			glTexCoord2d(self.sections[i+1].intensity, 0.)
+			glVertex2f(*(self.sections[i+1].base + self.sections[i+1].direction))
 		glEnd()
-		#glDisable(GL_TEXTURE_2D)
+		glDisable(GL_TEXTURE_2D)
 
 
 class Umbra:
@@ -215,18 +218,19 @@ class Umbra:
 			self.direction = direction
 	def __init__(self):
 		self.sections = []
+
 	def draw(self):
-		style = GL_TRIANGLE_STRIP;
-		glBegin(style);
+		assert len(self.sections) > 1
+		glBegin(GL_TRIANGLE_STRIP)
 		for s in self.sections[:len(self.sections)/2+1]:
 			glVertex2f(s.base.x, s.base.y)
 			glVertex2f(*(s.base + s.direction))
-		glEnd();
-		glBegin(style);
+		glEnd()
+		glBegin(GL_TRIANGLE_STRIP)
 		for s in reversed(self.sections[len(self.sections)/2:]):
 			glVertex2f(s.base.x, s.base.y)
 			glVertex2f(*(s.base + s.direction))
-		glEnd();
+		glEnd()
 
 
 def renderShadow(light, blocker):
@@ -279,15 +283,24 @@ def renderShadow(light, blocker):
 
 	leftpenumbra = Penumbra()
 	startdir = extendDir(blockerLine[-1] - (light.position - getLightDisplacement(blockerLine[-1])))
-	leftpenumbra.sections.append(Penumbra.Section(blockerLine[-1], startdir, 0.0))
-	for i in xrange(i < len(blockerLine) - 1):
+	leftpenumbra.sections.append(Penumbra.Section(
+				blockerLine[-1],
+				startdir,
+				0.))
+	for i in xrange(len(blockerLine) - 1):
 		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1])))
 		available = abs(startdir.angle(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]))
 		if wanted < available:
-			leftpenumbra.sections.append(Penumbra.Section(blockerLine[len(blockerLine)-i-1], getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1]), 1.0))
+			leftpenumbra.sections.append(Penumbra.Section(
+						blockerLine[len(blockerLine)-i-1],
+						getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1]),
+						1.))
 			break
 		else:
-			leftpenumbra.sections.append(Penumbra.Section(blockerLine[len(blockerLine)-i-2], extendDir(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]), available / wanted))
+			leftpenumbra.sections.append(Penumbra.Section(
+						blockerLine[len(blockerLine)-i-2],
+						extendDir(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]),
+						available / wanted))
 
 	#
 	# build umbrae (hard shadows), cast between the insides of penumbrae
@@ -325,15 +338,6 @@ lightBlockers = [
 			Point( 10, -10),
 			Point( 10,  10),
 			Point(-10,  10)])),
-	# some polygon
-	LightBlocker(Point(450, 360),
-		ConvexPolygon([
-			Point(-20, -20),
-			Point(  0, -30),
-			Point( 20, -20),
-			Point( 20,   0),
-			Point(  0,  20),
-			Point(-15,  10)])),
 	# rectangle that's much longer than wide
 	LightBlocker(Point(150, 100),
 		ConvexPolygon([
@@ -347,7 +351,16 @@ lightBlockers = [
 			Point( 80, -80),
 			Point(100, -70),
 			Point(-70, 100),
-			Point(-80,  80)]))]
+			Point(-80,  80)])),
+	# some polygon
+	LightBlocker(Point(450, 360),
+		ConvexPolygon([
+			Point(-20, -20),
+			Point(  0, -30),
+			Point( 20, -20),
+			Point( 20,   0),
+			Point(  0,  20),
+			Point(-15,  10)]))]
 
 @win.event
 def on_draw():
