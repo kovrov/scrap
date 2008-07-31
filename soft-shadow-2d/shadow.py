@@ -153,7 +153,7 @@ class LightBlocker:
 
 
 class Light:
-	texture = pyglet.image.load("media/light.png").get_texture()
+	texture = pyglet.resource.image("light.png").get_texture()
 
 	def __init__(self, pos, color=(1.,1.,1.), outerradius=128., sourceradius=5.):
 		self.position = pos #TODO: value
@@ -163,7 +163,7 @@ class Light:
 
 	def drawSource(self):
 		segments = 20
-		increment = math.pi*2 / segments
+		increment = math.pi * 2 / segments
 		radius = self.sourceradius
 		x, y = self.position
 		glBegin(GL_TRIANGLE_FAN)
@@ -177,12 +177,12 @@ class Light:
 		glBindTexture(self.texture.target, self.texture.id) #GL_TEXTURE_2D
 		glColor3f(*self.color)
 		x, y = self.position.x - self.outerradius, self.position.y - self.outerradius
-		width = height = self.outerradius*2
+		width = height = self.outerradius * 2
 		self.texture.blit(x, y, 0, width, height)
 
 
 class Penumbra:
-	texture = pyglet.image.load("penumbra.png").get_texture()
+	texture = pyglet.resource.image("penumbra.png").get_texture()
 
 	class Section:
 		def __init__(self, base, direction, intensity):
@@ -271,15 +271,24 @@ def renderShadow(light, blocker):
 	# build penumbrae (soft shadows), cast from the edges
 	rightpenumbra = Penumbra()
 	startdir = extendDir(blockerLine[0] - (light.position - getLightDisplacement(blockerLine[0])))
-	rightpenumbra.sections.append(Penumbra.Section(blockerLine[0], startdir, 0.0))
+	rightpenumbra.sections.append(Penumbra.Section(
+				blockerLine[0],
+				startdir,
+				0.))
 	for i in xrange(len(blockerLine) - 1):
 		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])))
 		available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]))
 		if wanted < available:
-			rightpenumbra.sections.append(Penumbra.Section(blockerLine[i], getTotalShadowStartDirection(blockerLine[i]), 1.0))
+			rightpenumbra.sections.append(Penumbra.Section(
+						blockerLine[i],
+						getTotalShadowStartDirection(blockerLine[i]),
+						1.))
 			break
 		else:
-			rightpenumbra.sections.append(Penumbra.Section(blockerLine[i+1], extendDir(blockerLine[i+1] - blockerLine[i]), available / wanted))
+			rightpenumbra.sections.append(Penumbra.Section(
+						blockerLine[i+1],
+						extendDir(blockerLine[i+1] - blockerLine[i]),
+						available / wanted))
 
 	leftpenumbra = Penumbra()
 	startdir = extendDir(blockerLine[-1] - (light.position - getLightDisplacement(blockerLine[-1])))
@@ -308,9 +317,13 @@ def renderShadow(light, blocker):
 	umbra.sections.append(Umbra.Section(rightpenumbra.sections[-1].base, rightpenumbra.sections[-1].direction))
 
 	for vert in blockerLine[len(rightpenumbra.sections)-1:len(blockerLine)-len(leftpenumbra.sections)+1]:
-		umbra.sections.append(Umbra.Section(vert, extendDir((leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction) * 0.5)))
+		umbra.sections.append(Umbra.Section(
+					vert,
+					extendDir((leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction) * 0.5)))
 
-	umbra.sections.append(Umbra.Section(leftpenumbra.sections[-1].base, leftpenumbra.sections[-1].direction))
+	umbra.sections.append(Umbra.Section(
+				leftpenumbra.sections[-1].base,
+				leftpenumbra.sections[-1].direction))
 
 	#
 	# draw shadows to alpha
