@@ -34,10 +34,8 @@ class Point:
 		return self.x*other.x + self.y*other.y
 	def normalise(self):
 		length = self.length()
-		if length == 0.:
-			return 0.
-		self *= (1. / length)
-		return length
+		if length != 0.:
+			self *= (1. / length)
 	def normaliseCopy(self):
 		p = Point(self.x, self.y)
 		p.normalise()
@@ -119,12 +117,13 @@ class ConvexPolygon:
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
 	def isValid(self):
-		for i in xrange(len(self.edges)):
-			nexti = i+1 if i+1 < len(self.edges) else 0
-			if self.edges[i].dst != self.edges[nexti].src:
+		current = self.edges[-1]
+		for next in self.edges:
+			if current.dst is not next.src:
 				return False
-			if self.edges[i].tangent().cross(self.edges[nexti].tangent()) <= 0:
+			if current.tangent().cross(next.tangent()) < 1.:
 				return False
+			current = next
 		return True
 
 
@@ -167,7 +166,7 @@ class Light:
 		radius = self.sourceradius
 		x, y = self.position
 		glBegin(GL_TRIANGLE_FAN)
-		glColor3f(1.,1.,0.)
+		glColor3f(*self.color)
 		glVertex2f(x, y)
 		for i in xrange(segments + 1):
 			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
@@ -297,18 +296,18 @@ def renderShadow(light, blocker):
 				startdir,
 				0.))
 	for i in xrange(len(blockerLine) - 1):
-		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1])))
-		available = abs(startdir.angle(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]))
+		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[-i-1])))
+		available = abs(startdir.angle(blockerLine[-i-2] - blockerLine[-i-1]))
 		if wanted < available:
 			leftpenumbra.sections.append(Penumbra.Section(
-						blockerLine[len(blockerLine)-i-1],
-						getTotalShadowStartDirection(blockerLine[len(blockerLine)-i-1]),
+						blockerLine[-i-1],
+						getTotalShadowStartDirection(blockerLine[-i-1]),
 						1.))
 			break
 		else:
 			leftpenumbra.sections.append(Penumbra.Section(
-						blockerLine[len(blockerLine)-i-2],
-						extendDir(blockerLine[len(blockerLine)-i-2] - blockerLine[len(blockerLine)-i-1]),
+						blockerLine[-i-2],
+						extendDir(blockerLine[-i-2] - blockerLine[-i-1]),
 						available / wanted))
 
 	#
@@ -316,7 +315,8 @@ def renderShadow(light, blocker):
 	umbra = Umbra()
 	umbra.sections.append(Umbra.Section(rightpenumbra.sections[-1].base, rightpenumbra.sections[-1].direction))
 
-	for vert in blockerLine[len(rightpenumbra.sections)-1:len(blockerLine)-len(leftpenumbra.sections)+1]:
+	# WTF?
+	for vert in blockerLine[len(rightpenumbra.sections)-1:-len(leftpenumbra.sections)+1]:
 		umbra.sections.append(Umbra.Section(
 					vert,
 					extendDir((leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction) * 0.5)))
