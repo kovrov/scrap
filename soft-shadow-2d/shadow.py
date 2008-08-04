@@ -196,25 +196,25 @@ class Penumbra:
 
 	def draw(self):
 		assert len(self.sections) > 1
-		a = []
+		triangles_data = []
 		for i in xrange(len(self.sections)-1):
-			s = self.sections[i]
-			sn = self.sections[i+1]
-			bd = s.base+s.direction
-			bdn = sn.base + sn.direction
-			a += [	0.,           1.,       0., 1.,
-					s.base.x,     s.base.y, 0., 1.,
-					s.intensity,  0.,       0., 1.,
-					bd.x,         bd.y,     0., 1.,
-					sn.intensity, 0.,       0., 1.,
-					bdn.x,        bdn.y,    0., 1.]
-		gl_array = (GLfloat * (3*len(a)))(*a)
+			sect = self.sections[i]
+			sectnext = self.sections[i+1]
+			bd = sect.base + sect.direction
+			bdnext = sectnext.base + sectnext.direction
+			triangles_data += [	0.,              1.,          0., 1., # texture
+								sect.base.x,     sect.base.y, 0., 1., # vertex
+								sect.intensity,  0.,          0., 1., # texture
+								bd.x,            bd.y,        0., 1., # vertex
+								sectnext.intensity, 0.,       0., 1., # texture
+								bdnext.x,        bdnext.y,    0., 1.] # vertex
+		gl_triangles_array = (GLfloat * (3*len(triangles_data)))(*triangles_data)
 		glPushAttrib(GL_ENABLE_BIT)
 		glEnable(self.texture.target)
 		glBindTexture(self.texture.target, self.texture.id)
 		glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT)
-		glInterleavedArrays(GL_T4F_V4F, 0, gl_array)
-		glDrawArrays(GL_TRIANGLES, 0, len(a)/6)
+		glInterleavedArrays(GL_T4F_V4F, 0, gl_triangles_array)
+		glDrawArrays(GL_TRIANGLES, 0, len(triangles_data)/6)
 		glPopClientAttrib()
 		glPopAttrib()
 
