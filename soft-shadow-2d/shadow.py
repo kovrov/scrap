@@ -7,6 +7,7 @@ import math
 import pyglet
 from pyglet.gl import *
 
+
 def create_window():
 	screen = pyglet.window.get_platform().get_default_display().get_default_screen()
 	template = pyglet.gl.Config(alpha_size=8, depth_size=24, double_buffer=True)
@@ -23,7 +24,7 @@ class Point:
 	def __imul__(self, val):
 		self.x *= val; self.y *= val; return self
 	def __mul__(self, val):
-		return Point(self.x*val, self.y*val)
+		return Point(self.x * val, self.y * val)
 	def __sub__(self, other):
 		return Point(self.x - other.x, self.y - other.y)
 	def __add__(self, other):
@@ -31,21 +32,18 @@ class Point:
 	def cross(self, other):  # cross product
 		return self.x * other.y - self.y * other.x
 	def dot(self, other):  # dot product
-		return self.x*other.x + self.y*other.y
+		return self.x * other.x + self.y * other.y
 	def normalise(self):
 		length = self.length()
 		if length != 0.:
 			self *= (1. / length)
+		return self
 	def normaliseCopy(self):
-		p = Point(self.x, self.y)
-		p.normalise()
-		return p
+		return Point(self.x, self.y).normalise()
 	def length(self):  # length of vector
-		return math.sqrt(self.x*self.x + self.y*self.y)
+		return math.sqrt(self.x * self.x + self.y * self.y)
 	def angle(self, other):  # angle to other vector
-		dot = self.dot(other)
-		cross = self.cross(other)
-		return math.atan2(cross, dot)  # angle between segments
+		return math.atan2(self.cross(other), self.dot(other))  # angle between segments
 	def __iter__(self):
 		return iter((self.x, self.y))
 
@@ -169,7 +167,7 @@ class Light:
 		glColor3f(*self.color)
 		glVertex2f(x, y)
 		for i in xrange(segments + 1):
-			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
+			glVertex2f(radius * math.cos(i * increment) + x, radius * math.sin(i * increment) + y)
 		glEnd()
 
 	def drawLight(self):
@@ -208,7 +206,7 @@ class Penumbra:
 								bd.x,            bd.y,        0., 1., # vertex
 								sectnext.intensity, 0.,       0., 1., # texture
 								bdnext.x,        bdnext.y,    0., 1.] # vertex
-		gl_triangles_array = (GLfloat * (3*len(triangles_data)))(*triangles_data)
+		gl_triangles_array = (GLfloat * (3 * len(triangles_data)))(*triangles_data)
 		glPushAttrib(GL_ENABLE_BIT)
 		glEnable(self.texture.target)
 		glBindTexture(self.texture.target, self.texture.id)
@@ -226,6 +224,8 @@ class Umbra:
 			self.direction = direction
 	def __init__(self):
 		self.sections = []
+	def appendSection(self, base, direction):
+		self.sections.append(self.Section(base, direction))
 
 	def draw(self):
 		assert len(self.sections) > 1
@@ -318,22 +318,18 @@ def renderShadow(light, blocker):
 						blockerLine[-i-2],
 						extendDir(blockerLine[-i-2] - blockerLine[-i-1]),
 						available / wanted))
-
 	#
 	# build umbrae (hard shadows), cast between the insides of penumbrae
 	umbra = Umbra()
-	umbra.sections.append(Umbra.Section(rightpenumbra.sections[-1].base, rightpenumbra.sections[-1].direction))
-
+	umbra.appendSection(rightpenumbra.sections[-1].base,
+	                    rightpenumbra.sections[-1].direction)
 	# WTF?
 	for vert in blockerLine[len(rightpenumbra.sections)-1:-len(leftpenumbra.sections)+1]:
-		umbra.sections.append(Umbra.Section(
-					vert,
-					extendDir((leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction) * 0.5)))
+		umbra.appendSection(vert,
+		                    extendDir((leftpenumbra.sections[-1].direction + rightpenumbra.sections[-1].direction) * 0.5))
 
-	umbra.sections.append(Umbra.Section(
-				leftpenumbra.sections[-1].base,
-				leftpenumbra.sections[-1].direction))
-
+	umbra.appendSection(leftpenumbra.sections[-1].base,
+	                    leftpenumbra.sections[-1].direction)
 	#
 	# draw shadows to alpha
 	umbra.draw()
@@ -384,6 +380,7 @@ lightBlockers = [
 			Point(  0,  20),
 			Point(-15,  10)]))]
 
+
 @win.event
 def on_draw():
 	# accumulate lighting in a texture
@@ -417,5 +414,6 @@ def on_draw():
 def on_mouse_motion(x, y, dx, dy):
 	lights[0].position.x = x
 	lights[0].position.y = y
+
 
 pyglet.app.run()
