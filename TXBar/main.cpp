@@ -308,8 +308,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else // MM_OUT
 		{
-			clearLLMouseHook(g_llmouse_hhook);
-			g_llmouse_hhook = NULL;
+			if (NULL != g_llmouse_hhook)
+			{
+				clearLLMouseHook(g_llmouse_hhook);
+				g_llmouse_hhook = NULL;
+			}
 		}
 		return 0;
 

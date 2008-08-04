@@ -54,19 +54,16 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	if (nCode < 0)
 		return ::CallNextHookEx(NULL, nCode, wParam, lParam);
 
-	if (nCode == HC_ACTION)
+	if (nCode == HC_ACTION && wParam == WM_MOUSEMOVE)
 	{
-		if (wParam == WM_MOUSEMOVE)
-		{
-			MSLLHOOKSTRUCT* mouse_data = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam);
-			RECT rc;
-			::GetWindowRect(g_llmouse_hwnd, &rc);
-			POINT pt = mouse_data->pt;
-			::ScreenToClient(g_llmouse_hwnd, &pt);
-			int mousemove_flag = ::PtInRect(&rc, mouse_data->pt) ? MM_IN : MM_OUT;
-			::PostMessage(g_llmouse_hwnd, WM_MOUSEMOVE_GLOBAL,
-					mousemove_flag, MAKELPARAM(pt.x, pt.y));
-		}
+		MSLLHOOKSTRUCT* mouse_data = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam);
+		RECT rc;
+		::GetWindowRect(g_llmouse_hwnd, &rc);
+		POINT pt = mouse_data->pt;
+		::ScreenToClient(g_llmouse_hwnd, &pt);
+		int mousemove_flag = ::PtInRect(&rc, mouse_data->pt) ? MM_IN : MM_OUT;
+		::PostMessage(g_llmouse_hwnd, WM_MOUSEMOVE_GLOBAL,
+				mousemove_flag, MAKELPARAM(pt.x, pt.y));
 	}
 
 	return ::CallNextHookEx(llmouse_hhook, nCode, wParam, lParam);
