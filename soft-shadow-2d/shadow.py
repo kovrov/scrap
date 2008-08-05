@@ -21,6 +21,10 @@ class Point:
 	def __init__(self, x=0., y=0.):
 		self.x = x
 		self.y = y
+	def __eq__(self, other):
+		return self.x == other.x and self.y == other.y
+	def __ne__(self, other):
+		return self.x != other.x or self.y != other.y
 	def __imul__(self, val):
 		self.x *= val; self.y *= val; return self
 	def __mul__(self, val):
@@ -38,8 +42,6 @@ class Point:
 		if length != 0.:
 			self *= (1. / length)
 		return self
-	def normaliseCopy(self):
-		return Point(self.x, self.y).normalise()
 	def length(self):  # length of vector
 		return math.sqrt(self.x * self.x + self.y * self.y)
 	def angle(self, other):  # angle to other vector
@@ -74,7 +76,6 @@ class ConvexPolygon:
 	# Returns a list of indices into 'edges'. In ccw order.
 	def getBackfacingEdgeIndices(self, point):
 		assert self.isValid()
-		result = []
 		# find the indices of the two edges that face away from 'point' and that
 		# have one adjacent edge facing towards 'point'
 		firstbackfacing = lastbackfacing = None
@@ -85,33 +86,26 @@ class ConvexPolygon:
 				cur_edge_front = True
 			else:
 				cur_edge_front = False
-			if i != 0:
+			if i != 0:  # not first element
 				if cur_edge_front and not prev_edge_front:
 					firstbackfacing = i
 				elif not cur_edge_front and prev_edge_front:
-					lastbackfacing = i-1
+					lastbackfacing = i - 1
 			prev_edge_front = cur_edge_front
 		# if no change between front and backfacing vertices was found,
 		# we are inside the polygon, consequently all edges face backwards
 		if firstbackfacing is None and lastbackfacing is None:
-			for i in xrange(len(self.edges)):
-				result.append(i)
-			return result
+			return xrange(len(self.edges))
 		# else, if one one of the changes was found, we missed the one at 0
 		elif firstbackfacing is None:
 			firstbackfacing = 0
 		elif lastbackfacing is None:
 			lastbackfacing = len(self.edges) - 1
-		# if this is true, we can just put the indices in result in order
-		if firstbackfacing <= lastbackfacing:
-			for i in xrange(firstbackfacing, lastbackfacing+1):
-				result.append(i)
-		else:  # we must go from first to $ and from 0 to last
-			for i in xrange(firstbackfacing, len(self.edges)):
-				result.append(i)
-			for i in xrange(lastbackfacing+1):
-				result.append(i)
-		return result
+		# if this is true, we must go from first to $ and from 0 to last
+		if firstbackfacing > lastbackfacing:
+			return range(firstbackfacing, len(self.edges)) + range(lastbackfacing+1)
+		# or we can just put the indices in result in order
+		return xrange(firstbackfacing, lastbackfacing+1)
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
 	def isValid(self):
@@ -130,8 +124,8 @@ class LightBlocker:
 		self.position = pos #TODO: value
 		self.shape = shape
 
-	# returns a sequence of vertices that form a line, indicating
-	# where light is blocked
+	# returns a sequence of vertices that form a line, indicating where light
+	# is blocked
 	def getBlockedLine(self, src):
 		edgeIndices = self.shape.getBackfacingEdgeIndices(src - self.position)
 		ret = [] 
@@ -257,7 +251,7 @@ def renderShadow(light, blocker):
 	# scales a vector with respect to the light radius used for penumbra and umbra
 	# lights where the tips are not supposed to be visible
 	def extendDir(direction):
-		return direction.normaliseCopy() * light.outerradius * 1.5
+		return Point(*direction).normalise() * light.outerradius * 1.5
 
 	# Displaces the light pos by sourceradius orthogonal to the line from
 	# reference to the light's position. Used for calculating penumbra size.

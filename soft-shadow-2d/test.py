@@ -32,15 +32,16 @@ class Point:
 		if length != 0.:
 			self *= (1. / length)
 		return self
-	def normaliseCopy(self):
-		return Point(self.x, self.y).normalise()
 	def length(self):  # length of vector
 		return math.sqrt(self.x * self.x + self.y * self.y)
 	def angle(self, other):  # angle to other vector
 		return math.atan2(self.cross(other), self.dot(other))  # angle between segments
 	def __iter__(self):
 		return iter((self.x, self.y))
-
+	def __eq__(self, other):
+		return self.x == other.x and self.y == other.y
+	def __ne__(self, other):
+		return self.x != other.x or self.y != other.y
 
 class ConvexPolygon:
 	# constructs from a vertex list, vertices must be in ccw order
@@ -57,7 +58,6 @@ class ConvexPolygon:
 	# Returns a list of indices into 'edges'. In ccw order.
 	def getBackfacingEdgeIndices(self, point):
 		assert self.isValid()
-		result = []
 		# find the indices of the two edges that face away from 'point' and that
 		# have one adjacent edge facing towards 'point'
 		firstbackfacing = lastbackfacing = None
@@ -68,7 +68,7 @@ class ConvexPolygon:
 				cur_edge_front = True
 			else:
 				cur_edge_front = False
-			if i != 0:
+			if i != 0:  # not first element
 				if cur_edge_front and not prev_edge_front:
 					firstbackfacing = i
 				elif not cur_edge_front and prev_edge_front:
@@ -77,9 +77,7 @@ class ConvexPolygon:
 		# if no change between front and backfacing vertices was found,
 		# we are inside the polygon, consequently all edges face backwards
 		if firstbackfacing is None and lastbackfacing is None:
-			for i in xrange(len(self.edges)):
-				result.append(i)
-			return result
+			return range(len(self.edges))
 		# else, if one one of the changes was found, we missed the one at 0
 		elif firstbackfacing is None:
 			firstbackfacing = 0
@@ -87,14 +85,9 @@ class ConvexPolygon:
 			lastbackfacing = len(self.edges) - 1
 		# if this is true, we can just put the indices in result in order
 		if firstbackfacing <= lastbackfacing:
-			for i in xrange(firstbackfacing, lastbackfacing+1):
-				result.append(i)
-		else:  # we must go from first to $ and from 0 to last
-			for i in xrange(firstbackfacing, len(self.edges)):
-				result.append(i)
-			for i in xrange(lastbackfacing+1):
-				result.append(i)
-		return result
+			return range(firstbackfacing, lastbackfacing+1)
+		# or we must go from first to $ and from 0 to last
+		return range(firstbackfacing, len(self.edges)) + range(lastbackfacing+1)
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
 	def isValid(self):
@@ -152,11 +145,16 @@ class LightBlocker:
 	def __init__(self, pos, shape):
 		self.position = pos #TODO: value
 		self.shape = shape
+		# debug
+		self.labels = []
+		for edge in self.shape.edges:
+			x, y = self.position + edge.src
+			self.labels.append(pyglet.text.Label('%g,%g' % (edge.src.x, edge.src.y), x=x, y=y))
 
-	# returns a sequence of vertices that form a line, indicating
-	# where light is blocked
-	def getBlockedLine(self, src):
-		edgeIndices = self.shape.getBackfacingEdgeIndices(src - self.position)
+	# returns a sequence of vertices that form a line, indicating where light
+	# is blocked
+	def getBlockedLine(self, point):
+		edgeIndices = self.shape.getBackfacingEdgeIndices(point - self.position)
 		ret = [] 
 		ret.append(self.position + self.shape.edges[edgeIndices[0]].src)
 		for ind in edgeIndices:
@@ -167,9 +165,12 @@ class LightBlocker:
 		glColor3f(1.,0.,0.)
 		glBegin(GL_TRIANGLE_FAN)
 		for edge in self.shape.edges:
-			glVertex2f(self.position.x + edge.src.x, self.position.y + edge.src.y)
-			glVertex2f(self.position.x + edge.dst.x, self.position.y + edge.dst.y)
+			glVertex2f(*self.position + edge.src)
+			glVertex2f(*self.position + edge.dst)
 		glEnd()
+		# debug
+		for label in self.labels:
+			label.draw()
 
 
 light = Light(Point(0, 0), (1.,1.,1.), 200, 10)
@@ -224,5 +225,16 @@ def on_draw():
 		for point in blockerLine:
 			glVertex2f(*point)
 		glEnd()
+		# visalize begin-end of the line
+		begin = blockerLine[0]
+		end = blockerLine[-1]
+		if begin != end:
+			glPointSize(4)
+			glBegin(GL_POINTS)
+			glColor3f(0., 1.0, 0.)
+			glVertex2f(*begin)
+			glColor3f(0., 0.9, 0.9)
+			glVertex2f(*end)
+			glEnd()
 
 pyglet.app.run()
