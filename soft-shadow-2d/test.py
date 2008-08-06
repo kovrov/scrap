@@ -64,14 +64,18 @@ class ConvexPolygon:
 		first_face_id = last_face_id = None
 		prev_edge_front = cur_edge_front = False
 		for i, edge in enumerate(self.edges):
-			direction = point - edge.src  # wtf?
-			cur_edge_front = True if direction.dot(edge.normal()) < 0 else False
-			if i != 0:  # not first element
+			point_dir = point - edge.src  # wtf?
+			cur_edge_front = False if point_dir.dot(edge.normal()) < 0 else True
+#			print i, "front" if cur_edge_front else ""
+			if i != 0:  # not first element?
 				if cur_edge_front and not prev_edge_front:
 					first_face_id = i
+#					print "  first_face_id"
 				elif not cur_edge_front and prev_edge_front:
 					last_face_id = i
+#					print "  last_face_id"
 			prev_edge_front = cur_edge_front
+#		assert 0
 		#
 		# if no change between front and backfacing vertices was found,
 		# we are inside the polygon, consequently all edges face backwards
@@ -172,38 +176,14 @@ class LightBlocker:
 			label.draw()
 
 
-light = Light(Point(0, 0), (1.,1.,1.), 200, 10)
-lightBlockers = [
-	# small box
-	LightBlocker(Point(225, 220),
-		ConvexPolygon([
-			Point(-10, -10),
-			Point( 10, -10),
-			Point( 10,  10),
-			Point(-10,  10)])),
-	# rectangle that's much longer than wide
-	LightBlocker(Point(150, 100),
-		ConvexPolygon([
-			Point(-120,-10),
-			Point( 300,-10),
-			Point( 300, 10),
-			Point(-120, 10)])),
-	# diagonal line
-	LightBlocker(Point(300, 300),
-		ConvexPolygon([
-			Point( 80, -80),
-			Point(100, -70),
-			Point(-70, 100),
-			Point(-80,  80)])),
-	# some polygon
-	LightBlocker(Point(450, 360),
-		ConvexPolygon([
-			Point(-20, -20),
-			Point(  0, -30),
-			Point( 20, -20),
-			Point( 20,   0),
-			Point(  0,  20),
-			Point(-15,  10)]))]
+light = Light(Point(160, 200), (1.,1.,1.), 200, 4)
+blocker = LightBlocker(Point(200, 200),
+                       ConvexPolygon([Point(-40,  10),
+                                      Point(-20, -20),
+                                      Point( 10, -40),
+                                      Point( 40, -10),
+                                      Point( 20,  20),
+                                      Point(-10,  40)]))
 
 win = pyglet.window.Window(resizable=True)
 
@@ -215,25 +195,25 @@ def on_mouse_motion(x, y, dx, dy):
 @win.event
 def on_draw():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-	for blocker in lightBlockers:
-		blocker.draw()
-		# blocked lines
-		blockerLine = blocker.getBlockedLine(light.position)
-		glColor3f(1.,1.,1.)
-		glBegin(GL_LINE_STRIP)
-		for point in blockerLine:
-			glVertex2f(*point)
+	blocker.draw()
+	# blocked lines
+	blockerLine = blocker.getBlockedLine(light.position)
+	glColor3f(1.,1.,1.)
+	glBegin(GL_LINE_STRIP)
+	for point in blockerLine:
+		glVertex2f(*point)
+	glEnd()
+	# visalize begin-end of the line
+	begin = blockerLine[0]
+	end = blockerLine[-1]
+	if begin != end:
+		glPointSize(4)
+		glBegin(GL_POINTS)
+		glColor3f(0., 1.0, 0.)
+		glVertex2f(*begin)
+		glColor3f(0., 0.9, 0.9)
+		glVertex2f(*end)
 		glEnd()
-		# visalize begin-end of the line
-		begin = blockerLine[0]
-		end = blockerLine[-1]
-		if begin != end:
-			glPointSize(4)
-			glBegin(GL_POINTS)
-			glColor3f(0., 1.0, 0.)
-			glVertex2f(*begin)
-			glColor3f(0., 0.9, 0.9)
-			glVertex2f(*end)
-			glEnd()
+	light.drawSource()
 
 pyglet.app.run()
