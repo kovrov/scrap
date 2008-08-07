@@ -72,39 +72,35 @@ class ConvexPolygon:
 		self.edges.append(Edge(verts[-1], verts[0]))
 		assert self.isValid()
 
-	# Finds the edges that face away from a given location 'point'.
-	# Returns a list of indices into 'edges'. In ccw order.
 	def getBackfacingEdgeIndices(self, point):
+		"""
+		Finds the edges that face away from a given location 'point'.
+		Returns a list of indices into 'edges'. In ccw order.
+		"""
 		assert self.isValid()
 		#
-		# find the indices of the two edges that face away from 'point' and that
-		# have one adjacent edge facing towards 'point'
-		first_face_id = last_face_id = None
-		prev_edge_front = cur_edge_front = False
+		# find indices of the "left" and "right" edges
+		right_face_id = left_face_id = None
+		prev_faced_to_point = None
 		for i, edge in enumerate(self.edges):
-			direction = point - edge.src  # wtf?
-			cur_edge_front = True if direction.dot(edge.normal()) < 0 else False
-			if i != 0:  # not first element
-				if cur_edge_front and not prev_edge_front:
-					first_face_id = i
-				elif not cur_edge_front and prev_edge_front:
-					last_face_id = i
-			prev_edge_front = cur_edge_front
+			point_dir = point - edge.src
+			faced_to_point = False if point_dir.dot(edge.normal()) < 0. else True
+			if faced_to_point != prev_faced_to_point:
+				if faced_to_point:
+					left_face_id = i
+				else:
+					right_face_id = i
+			prev_faced_to_point = faced_to_point
 		#
-		# if no change between front and backfacing vertices was found,
-		# we are inside the polygon, consequently all edges face backwards
-		if first_face_id is None and last_face_id is None:
+		# the point is inside of this polygon
+		if right_face_id is None or left_face_id is None:
 			return xrange(len(self.edges))
-		# else, if one one of the changes was found, we missed the one at 0
-		if first_face_id is None:
-			first_face_id = 0
-		if last_face_id is None:
-			last_face_id = len(self.edges)
+		#
 		# if this is true, we can just put the indices in result in order
-		if first_face_id < last_face_id:
-			return xrange(first_face_id, last_face_id)
+		if right_face_id < left_face_id:
+			return xrange(right_face_id, left_face_id)
 		# or we must go from first to $ and from 0 to last
-		return range(first_face_id, len(self.edges)) + range(last_face_id)
+		return range(right_face_id, len(self.edges)) + range(left_face_id)
 
 	# returns true if the edges list makes up a convex polygon and are in ccw order
 	def isValid(self):
