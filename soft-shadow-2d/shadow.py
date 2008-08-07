@@ -79,7 +79,7 @@ class ConvexPolygon:
 		"""
 		assert self.isValid()
 		#
-		# find indices of the "left" and "right" edges
+		# find the left- and right-most points
 		right_face_id = left_face_id = None
 		prev_faced_to_point = None
 		for i, edge in enumerate(self.edges):
@@ -92,7 +92,7 @@ class ConvexPolygon:
 					right_face_id = i
 			prev_faced_to_point = faced_to_point
 		#
-		# the point is inside of this polygon
+		# in case the point is inside of this polygon
 		if right_face_id is None or left_face_id is None:
 			return xrange(len(self.edges))
 		#
@@ -106,7 +106,7 @@ class ConvexPolygon:
 	def isValid(self):
 		current = self.edges[-1]
 		for next in self.edges:
-			if current.dst is not next.src:
+			if current.dst != next.src:
 				return False
 			if current.tangent().cross(next.tangent()) < 1.:
 				return False
@@ -121,8 +121,8 @@ class LightBlocker:
 
 	# returns a sequence of vertices that form a line, indicating where light
 	# is blocked
-	def getBlockedLine(self, src):
-		edgeIndices = self.shape.getBackfacingEdgeIndices(src - self.position)
+	def getBlockedLine(self, point):
+		edgeIndices = self.shape.getBackfacingEdgeIndices(point - self.position)
 		ret = [] 
 		ret.append(self.position + self.shape.edges[edgeIndices[0]].src)
 		for ind in edgeIndices:
@@ -273,18 +273,20 @@ def renderShadow(light, blocker):
 				startdir,
 				0.))
 	for i in xrange(len(blockerLine) - 1):
-		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[i])))
-		available = abs(startdir.angle(blockerLine[i+1] - blockerLine[i]))
+		point = blockerLine[i]
+		next_point = blockerLine[i+1]
+		wanted = abs(startdir.angle(getTotalShadowStartDirection(point)))
+		available = abs(startdir.angle(next_point - point))
 		if wanted < available:
 			rightpenumbra.sections.append(Penumbra.Section(
-						blockerLine[i],
-						getTotalShadowStartDirection(blockerLine[i]),
+						point,
+						getTotalShadowStartDirection(point),
 						1.))
 			break
 		else:
 			rightpenumbra.sections.append(Penumbra.Section(
-						blockerLine[i+1],
-						extendDir(blockerLine[i+1] - blockerLine[i]),
+						next_point,
+						extendDir(next_point - point),
 						available / wanted))
 
 	leftpenumbra = Penumbra()
@@ -293,19 +295,21 @@ def renderShadow(light, blocker):
 				blockerLine[-1],
 				startdir,
 				0.))
-	for i in xrange(len(blockerLine) - 1):
-		wanted = abs(startdir.angle(getTotalShadowStartDirection(blockerLine[-i-1])))
-		available = abs(startdir.angle(blockerLine[-i-2] - blockerLine[-i-1]))
+	for i in reversed(xrange(1, len(blockerLine))):
+		point = blockerLine[i]
+		prev_point = blockerLine[i-1]
+		wanted = abs(startdir.angle(getTotalShadowStartDirection(point)))
+		available = abs(startdir.angle(prev_point - point))
 		if wanted < available:
 			leftpenumbra.sections.append(Penumbra.Section(
-						blockerLine[-i-1],
-						getTotalShadowStartDirection(blockerLine[-i-1]),
+						point,
+						getTotalShadowStartDirection(point),
 						1.))
 			break
 		else:
 			leftpenumbra.sections.append(Penumbra.Section(
-						blockerLine[-i-2],
-						extendDir(blockerLine[-i-2] - blockerLine[-i-1]),
+						prev_point,
+						extendDir(prev_point - point),
 						available / wanted))
 	#
 	# build umbrae (hard shadows), cast between the insides of penumbrae

@@ -61,7 +61,7 @@ class ConvexPolygon:
 		"""
 		assert self.isValid()
 		#
-		# find indices of the "left" and "right" edges
+		# find the left- and right-most points
 		right_face_id = left_face_id = None
 		prev_faced_to_point = None
 		for i, edge in enumerate(self.edges):
@@ -78,13 +78,14 @@ class ConvexPolygon:
 					right_face_id = i
 			prev_faced_to_point = faced_to_point
 		#
-		# the point is inside of this polygon
+		# in case the point is inside of this polygon
 		if right_face_id is None or left_face_id is None:
 			return xrange(len(self.edges))
 		#
 		# if this is true, we can just put the indices in result in order
 		if right_face_id < left_face_id:
 			return xrange(right_face_id, left_face_id)
+		#
 		# or we must go from first to $ and from 0 to last
 		return range(right_face_id, len(self.edges)) + range(left_face_id)
 
@@ -92,7 +93,7 @@ class ConvexPolygon:
 	def isValid(self):
 		current = self.edges[-1]
 		for next in self.edges:
-			if current.dst is not next.src:
+			if current.dst != next.src:
 				return False
 			if current.tangent().cross(next.tangent()) < 1.:
 				return False
@@ -150,9 +151,11 @@ class LightBlocker:
 			x, y = self.position + edge.src
 			self.labels.append(pyglet.text.Label('%g,%g' % (edge.src.x, edge.src.y), x=x, y=y))
 
-	# returns a sequence of vertices that form a line, indicating where light
-	# is blocked
 	def getBlockedLine(self, point):
+		"""
+		returns a sequence of vertices that form a line, indicating where light
+		is blocked
+		"""
 		edgeIndices = self.shape.getBackfacingEdgeIndices(point - self.position)
 		ret = [] 
 		ret.append(self.position + self.shape.edges[edgeIndices[0]].src)
