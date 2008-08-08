@@ -160,13 +160,13 @@ class Light:
 
 class LightBlocker:
 	def __init__(self, pos, shape):
-		self.position = pos #TODO: value
+		self.position = Point(*pos)
 		self.shape = shape
 		# debug
 		self.labels = []
 		for vertex in self.shape.vertices:
 			x, y = self.position + vertex
-			self.labels.append(pyglet.text.Label('%g,%g' % (vertex.x, vertex.y), x=x, y=y))
+			self.labels.append(pyglet.text.Label('%g,%g' % (vertex.x/10, vertex.y/10), x=x, y=y))
 
 	def getBlockedLine(self, point):
 		"""
@@ -191,10 +191,8 @@ class LightBlocker:
 			label.draw()
 
 
-#light = Light(Point(160, 200), (1.,1.,1.), 200, 4)
-#light = Light(Point(160, 220), (1.,1.,1.), 200, 4)
-light = Light(Point(230, 170), (1.,1.,1.), 200, 4)
-blocker = LightBlocker(Point(200, 200),
+light = Light(Point(150, 200), (1.,1.,1.), 200, 4)
+blocker = LightBlocker((200, 200),
                        ConvexPolygon([(-40,  10),
                                       (-20, -20),
                                       ( 10, -40),
@@ -222,14 +220,12 @@ def on_draw():
 	glEnd()
 	# visalize begin-end of the line
 	if len(blocking_line) > 0:
-		begin = blocking_line[0]
-		end = blocking_line[-1]
 		glPointSize(4)
 		glBegin(GL_POINTS)
 		glColor3f(0., 1.0, 0.)
-		glVertex2f(*begin)
+		glVertex2f(*blocking_line[0])  # begin
 		glColor3f(0., 0.9, 0.9)
-		glVertex2f(*end)
+		glVertex2f(*blocking_line[-1])  # end
 		glEnd()
 	light.drawSource()
 
