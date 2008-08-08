@@ -2,15 +2,6 @@ import math
 import pyglet
 from pyglet.gl import *
 
-def iter_current_next(iterable):
-    it = iter(iterable)
-    first = current = it.next()
-    for next in it:
-        yield current, next
-        current = next
-    yield current, first
-
-
 class Point:
 	def __init__(self, x=0., y=0.):
 		self.x = x
@@ -42,74 +33,100 @@ class Point:
 		return self.x == other.x and self.y == other.y
 	def __ne__(self, other):
 		return self.x != other.x or self.y != other.y
+	def __repr__(self):
+		return "(%g,%g)" % (self.x, self.y)
 
 class ConvexPolygon:
 	# constructs from a vertex list, vertices must be in ccw order
 	def __init__(self, verts):
-		# edges, in ccw order
-		self.edges = []
-		assert len(verts) > 3, "Polygon needs at least 3 vertices"
-		for i in xrange(1, len(verts)):
-			self.edges.append(Edge(verts[i-1], verts[i]))
-		self.edges.append(Edge(verts[-1], verts[0]))
-		assert self.isValid()
+		self.vertices = [Point(x,y) for x,y in verts]
+		assert self.isValid(), "the points must form edges in ccw order"
 
-	def getBackfacingEdgeIndices(self, point):
+	def iter_edges(self):
 		"""
-		Finds the edges that face away from a given location 'point'.
-		Returns a list of indices into 'edges'. In ccw order.
+		To iterate over edges in form of ("source", "destination") points
+		"""
+		it = iter(self.vertices)
+		first_src = src = it.next()
+		for dst in it:
+			yield src, dst
+			src = dst
+		yield src, first_src
+
+	def extreme_vertices_id(self, point):
+		"""
+		find the left and right extreme vertices relative to given 'point'
 		"""
 		assert self.isValid()
-		#
-		# find the left- and right-most points
-		right_face_id = left_face_id = None
+		right_id = left_id = None
 		prev_faced_to_point = None
-		for i, edge in enumerate(self.edges):
+		for i, (edge_src, edge_dst) in enumerate(self.iter_edges()):
 			#
 			# determine if current edge is faced towards the point
-			point_dir = point - edge.src
-			faced_to_point = False if point_dir.dot(edge.normal()) < 0. else True
+			point_dir = point - edge_src
+			edge_dir = edge_dst - edge_src
+			edge_normal = Point(edge_dir.y, -edge_dir.x)
+			faced_to_point = False if point_dir.dot(edge_normal) < 0. else True
 			#
 			# set possible "left" or "right" edge id
 			if faced_to_point != prev_faced_to_point:
 				if faced_to_point:
-					left_face_id = i
+					left_id = i
 				else:
-					right_face_id = i
+					right_id = i
 			prev_faced_to_point = faced_to_point
-		#
-		# in case the point is inside of this polygon
-		if right_face_id is None or left_face_id is None:
-			return xrange(len(self.edges))
-		#
-		# if this is true, we can just put the indices in result in order
-		if right_face_id < left_face_id:
-			return xrange(right_face_id, left_face_id)
-		#
-		# or we must go from first to $ and from 0 to last
-		return range(right_face_id, len(self.edges)) + range(left_face_id)
+		return right_id, left_id
 
-	# returns true if the edges list makes up a convex polygon and are in ccw order
+	def back_points_ids(self, point):
+		right_id, left_id = self.extreme_vertices_id(point)
+		#
+		# if the point is inside this polygon, first and last vertices overlaps
+		if right_id is None or left_id is None:
+			return xrange(-1, len(self.vertices))
+		#
+		# if indices are consecutive, just generate range
+		if right_id < left_id:
+			return xrange(right_id, left_id+1)
+		#
+		# in this case, the indices are not consecutive
+		return range(right_id, len(self.vertices)) + range(left_id+1)
+
+	def front_points_ids(self, point):
+		right_id, left_id = self.extreme_vertices_id(point)
+		#
+		# if the point is inside polygon, there nothing to return
+		if right_id is None or left_id is None:
+			return []
+		#
+		# if indices are consecutive, just generate range
+		if left_id < right_id:
+			return xrange(left_id, right_id+1)
+		#
+		# in this case, the indices are not consecutive
+		return range(left_id, len(self.vertices)) + range(right_id+1)
+
 	def isValid(self):
-		current = self.edges[-1]
-		for next in self.edges:
-			if current.dst != next.src:
+		"""
+		returns true if the edges list makes up a convex polygon and are in ccw order
+		"""
+		it = self.iter_edges()
+		first_src, first_dst = current_src, current_dst = it.next()
+		for next_src, next_dst in it:
+			assert current_dst == next_src
+			if test_angle((current_src, current_dst), (next_src, next_dst)) < 1.:
 				return False
-			if current.tangent().cross(next.tangent()) < 1.:
-				return False
-			current = next
+			current_src, current_dst = next_src, next_dst
+		if test_angle((current_src, current_dst), (first_src, first_dst)) < 1.:
+			return False
 		return True
 
 
-class Edge:
-	def __init__(self, src, dst):
-		self.src = src #TODO: value
-		self.dst = dst #TODO: value
-	def normal(self):
-		p = self.dst - self.src
-		return Point(p.y, -p.x)
-	def tangent(self):
-		return self.dst - self.src
+def test_angle(edge1, edge2):
+	return edge_tangent(edge1).cross(edge_tangent(edge2))
+
+def edge_tangent(edge):
+	src, dst = edge
+	return dst - src
 
 
 class Light:
@@ -147,28 +164,27 @@ class LightBlocker:
 		self.shape = shape
 		# debug
 		self.labels = []
-		for edge in self.shape.edges:
-			x, y = self.position + edge.src
-			self.labels.append(pyglet.text.Label('%g,%g' % (edge.src.x, edge.src.y), x=x, y=y))
+		for vertex in self.shape.vertices:
+			x, y = self.position + vertex
+			self.labels.append(pyglet.text.Label('%g,%g' % (vertex.x, vertex.y), x=x, y=y))
 
 	def getBlockedLine(self, point):
 		"""
 		returns a sequence of vertices that form a line, indicating where light
 		is blocked
 		"""
-		edgeIndices = self.shape.getBackfacingEdgeIndices(point - self.position)
-		ret = [] 
-		ret.append(self.position + self.shape.edges[edgeIndices[0]].src)
-		for ind in edgeIndices:
-			ret.append(self.position + self.shape.edges[ind].dst)
-		return ret
+		ids = self.shape.back_points_ids(point - self.position)
+		return [self.position + self.shape.vertices[i] for i in ids]
+
+	def getBlockingLine(self, point):
+		ids = self.shape.front_points_ids(point - self.position)
+		return [self.position + self.shape.vertices[i] for i in ids]
 
 	def draw(self):
 		glColor3f(1.,0.,0.)
 		glBegin(GL_TRIANGLE_FAN)
-		for edge in self.shape.edges:
-			glVertex2f(*self.position + edge.src)
-			glVertex2f(*self.position + edge.dst)
+		for vertex in self.shape.vertices:
+			glVertex2f(*self.position + vertex)
 		glEnd()
 		# debug
 		for label in self.labels:
@@ -179,12 +195,12 @@ class LightBlocker:
 #light = Light(Point(160, 220), (1.,1.,1.), 200, 4)
 light = Light(Point(230, 170), (1.,1.,1.), 200, 4)
 blocker = LightBlocker(Point(200, 200),
-                       ConvexPolygon([Point(-40,  10),
-                                      Point(-20, -20),
-                                      Point( 10, -40),
-                                      Point( 40, -10),
-                                      Point( 20,  20),
-                                      Point(-10,  40)]))
+                       ConvexPolygon([(-40,  10),
+                                      (-20, -20),
+                                      ( 10, -40),
+                                      ( 40, -10),
+                                      ( 20,  20),
+                                      (-10,  40)]))
 
 win = pyglet.window.Window(resizable=True)
 
@@ -198,16 +214,16 @@ def on_draw():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	blocker.draw()
 	# blocked lines
-	blockerLine = blocker.getBlockedLine(light.position)
+	blocking_line = blocker.getBlockingLine(light.position)
 	glColor3f(1.,1.,1.)
 	glBegin(GL_LINE_STRIP)
-	for point in blockerLine:
+	for point in blocking_line:
 		glVertex2f(*point)
 	glEnd()
 	# visalize begin-end of the line
-	begin = blockerLine[0]
-	end = blockerLine[-1]
-	if begin != end:
+	if len(blocking_line) > 0:
+		begin = blocking_line[0]
+		end = blocking_line[-1]
 		glPointSize(4)
 		glBegin(GL_POINTS)
 		glColor3f(0., 1.0, 0.)
