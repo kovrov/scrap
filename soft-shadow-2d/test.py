@@ -128,6 +128,27 @@ def edge_tangent(edge):
 	src, dst = edge
 	return dst - src
 
+def fill_circle(position, radius, color):
+		segments = 20
+		increment = math.pi * 2 / segments
+		radius = radius
+		x, y = position
+		glBegin(GL_TRIANGLE_FAN)
+		glColor3f(*color)
+		glVertex2f(x, y)
+		for i in xrange(segments + 1):
+			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
+		glEnd()
+
+def draw_circle(position, radius, color):
+		segments = 32
+		increment = math.pi * 2 / segments
+		radius = radius
+		x, y = position
+		glBegin(GL_LINE_STRIP)
+		for i in xrange(segments + 1):
+			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
+		glEnd()
 
 class Light:
 	texture = pyglet.resource.image("light.png").get_texture()
@@ -139,16 +160,8 @@ class Light:
 		self.sourceradius = sourceradius
 
 	def drawSource(self):
-		segments = 20
-		increment = math.pi * 2 / segments
-		radius = self.sourceradius
-		x, y = self.position
-		glBegin(GL_TRIANGLE_FAN)
-		glColor3f(*self.color)
-		glVertex2f(x, y)
-		for i in xrange(segments + 1):
-			glVertex2f(radius*math.cos(i*increment)+x, radius*math.sin(i*increment)+y)
-		glEnd()
+		fill_circle(self.position, self.sourceradius, self.color)
+		draw_circle(self.position, self.outerradius, self.color)
 
 	def drawLight(self):
 		glBindTexture(self.texture.target, self.texture.id) #GL_TEXTURE_2D

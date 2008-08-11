@@ -234,9 +234,7 @@ def renderShadow(light, blocker):
 	# get the line that blocks light for the blocker and light combination
 	# move the light position towards blocker by its sourceradius to avoid
 	# popping of penumbrae
-	normal = blocker.position - light.position
-	normal.normalise()
-
+	normal = (blocker.position - light.position).normalise()
 	blockerLine = blocker.getBlockedLine(light.position + normal * light.sourceradius)
 
 	# if the light source is completely surrounded by the blocker, don't draw its shadow
@@ -252,8 +250,7 @@ def renderShadow(light, blocker):
 	# reference to the light's position. Used for calculating penumbra size.
 	def getLightDisplacement(reference):
 		p = reference - light.position
-		lightdisp = Point(-p.y, p.x)
-		lightdisp.normalise()
+		lightdisp = Point(-p.y, p.x).normalise()
 		lightdisp *= light.sourceradius
 		if lightdisp.dot(reference - blocker.position) < 0.:
 			lightdisp *= -1.
