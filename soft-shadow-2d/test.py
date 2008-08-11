@@ -200,8 +200,8 @@ class LightBlocker:
 			glVertex2f(*self.position + vertex)
 		glEnd()
 		# debug
-		for label in self.labels:
-			label.draw()
+		#for label in self.labels:
+		#	label.draw()
 
 
 light = Light(Point(150, 200), (1.,1.,1.), 200, 4)
@@ -225,21 +225,101 @@ def on_draw():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	blocker.draw()
 	# blocked lines
-	blocking_line = blocker.getBlockingLine(light.position)
+	blocked_line = blocker.getBlockedLine(light.position)
 	glColor3f(1.,1.,1.)
 	glBegin(GL_LINE_STRIP)
-	for point in blocking_line:
+	for point in blocked_line:
 		glVertex2f(*point)
 	glEnd()
 	# visalize begin-end of the line
-	if len(blocking_line) > 0:
+	if len(blocked_line) > 0:
 		glPointSize(4)
 		glBegin(GL_POINTS)
 		glColor3f(0., 1.0, 0.)
-		glVertex2f(*blocking_line[0])  # begin
+		glVertex2f(*blocked_line[0])  # begin
 		glColor3f(0., 0.9, 0.9)
-		glVertex2f(*blocking_line[-1])  # end
+		glVertex2f(*blocked_line[-1])  # end
 		glEnd()
+	#for i, point in enumerate(blocked_line):
+	#	pyglet.text.Label(str(i), x=point.x, y=point.y).draw()
+	# penumbra
+	calc_right_penumbra(blocked_line, light)
 	light.drawSource()
+
+
+class PenumbraSection:
+	def __init__(self, base, direction, intensity):
+		self.base = base
+		self.direction = direction
+		self.intensity = intensity
+		#
+		debug_line((light.position.x, light.position.y), light.position + direction, "");
+		debug_point(light.position + direction, "direction, intensity=%g" % intensity)
+		debug_point(base, "base")
+
+
+
+def calc_right_penumbra(blocker_line, light):
+	# scales a vector with respect to the light radius used for penumbra and umbra
+	# lights where the tips are not supposed to be visible
+	def extendDir(direction):
+		return Point(*direction).normalise() * light.outerradius * 1.5
+	# Displaces the light pos by sourceradius orthogonal to the line from
+	# reference to the light's position. Used for calculating penumbra size.
+	def getLightDisplacement(reference):
+		p = reference - light.position
+		lightdisp = Point(-p.y, p.x).normalise()
+		lightdisp *= light.sourceradius
+		if lightdisp.dot(reference - blocker.position) < 0.:
+			lightdisp *= -1.
+		return lightdisp
+	# Gets the direction that marks the beginning of total shadow
+	# for the given point.
+	def getTotalShadowStartDirection(at):
+		return extendDir(at - (light.position + getLightDisplacement(at)))
+
+	rightpenumbra = []
+
+	direction = blocker_line[0] - (light.position - getLightDisplacement(blocker_line[0]))
+	startdir = extendDir(direction)
+	#print "direction = %s - (%s - getLightDisplacement(%s)) =" % (blocker_line[0], light.position, blocker_line[0]), direction
+	#print "startdir = extendDir(direction) = ", startdir
+	rightpenumbra.append(PenumbraSection(
+				blocker_line[0], # base
+				startdir, # direction
+				0.)) # intensity
+
+	for i in xrange(len(blocker_line) - 1):
+		point = blocker_line[i]
+		next_point = blocker_line[i+1]
+
+		totalShadowStartDirection = extendDir(point - (light.position + getLightDisplacement(point)))
+
+		wanted = abs(startdir.angle(totalShadowStartDirection))
+		available = abs(startdir.angle(next_point - point))
+		if wanted < available:
+			rightpenumbra.append(PenumbraSection(
+						point, # base
+						totalShadowStartDirection, # direction
+						1.)) # intensity
+			break
+		else:
+			rightpenumbra.append(PenumbraSection(
+						next_point, # base
+						extendDir(next_point - point), # direction
+						available / wanted)) # intensity
+
+def debug_point(point, msg):
+	glBegin(GL_POINTS)
+	glVertex2f(*point)
+	glEnd()
+	pyglet.text.Label(msg, x=int(point.x), y=int(point.y)).draw()
+
+def debug_line(src, dst, msg):
+	glBegin(GL_LINE_STRIP)
+	glVertex2f(*src)
+	glVertex2f(*dst)
+	glEnd()
+	#pyglet.text.Label(msg, x=int(point.x), y=int(point.y)).draw()
 
 pyglet.app.run()
