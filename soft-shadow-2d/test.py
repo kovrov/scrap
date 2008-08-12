@@ -204,7 +204,7 @@ class LightBlocker:
 		#	label.draw()
 
 
-light = Light(Point(150, 200), (1.,1.,1.), 200, 4)
+light = Light(Point(150, 200), (1.,1.,1.), 200, 10)
 blocker = LightBlocker((200, 200),
                        ConvexPolygon([(-40,  10),
                                       (-20, -20),
@@ -225,7 +225,8 @@ def on_draw():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	blocker.draw()
 	# blocked lines
-	blocked_line = blocker.getBlockedLine(light.position)
+	normal = (blocker.position - light.position).normalise()
+	blocked_line = blocker.getBlockedLine(light.position + normal * light.sourceradius)
 	glColor3f(1.,1.,1.)
 	glBegin(GL_LINE_STRIP)
 	for point in blocked_line:
@@ -244,6 +245,7 @@ def on_draw():
 	#	pyglet.text.Label(str(i), x=point.x, y=point.y).draw()
 	# penumbra
 	calc_right_penumbra(blocked_line, light)
+	#
 	light.drawSource()
 
 
@@ -253,10 +255,34 @@ class PenumbraSection:
 		self.direction = direction
 		self.intensity = intensity
 		#
+		glColor3f(0.5, 0.5, 0.5)
 		debug_line((light.position.x, light.position.y), light.position + direction, "");
 		debug_point(light.position + direction, "direction, intensity=%g" % intensity)
 		debug_point(base, "base")
 
+def draw_penumbra(sections, texture):
+	assert len(sections) > 1
+	triangles_data = []
+	for i in xrange(len(sections)-1):
+		sect = sections[i]
+		sectnext = sections[i+1]
+		bd = sect.base + sect.direction
+		bdnext = sectnext.base + sectnext.direction
+		triangles_data += [	0.,              1.,          0., 1., # texture
+							sect.base.x,     sect.base.y, 0., 1., # vertex
+							sect.intensity,  0.,          0., 1., # texture
+							bd.x,            bd.y,        0., 1., # vertex
+							sectnext.intensity, 0.,       0., 1., # texture
+							bdnext.x,        bdnext.y,    0., 1.] # vertex
+	gl_triangles_array = (GLfloat * (3 * len(triangles_data)))(*triangles_data)
+	glPushAttrib(GL_ENABLE_BIT)
+	glEnable(texture.target)
+	glBindTexture(texture.target, texture.id)
+	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT)
+	glInterleavedArrays(GL_T4F_V4F, 0, gl_triangles_array)
+	glDrawArrays(GL_TRIANGLES, 0, len(triangles_data)/6)
+	glPopClientAttrib()
+	glPopAttrib()
 
 
 def calc_right_penumbra(blocker_line, light):
