@@ -204,16 +204,17 @@ class LightBlocker:
 		#	label.draw()
 
 
-light = Light(Point(150, 200), (1.,1.,1.), 200, 10)
-blocker = LightBlocker((200, 200),
+light = Light(Point(150, 200), (1.,1.,1.), 200, 20)
+blocker = LightBlocker((400, 200),
                        ConvexPolygon([(-40,  10),
                                       (-20, -20),
                                       ( 10, -40),
                                       ( 40, -10),
-                                      ( 20,  20),
+                                      ( 30,  10),
                                       (-10,  40)]))
 
 win = pyglet.window.Window(resizable=True)
+penumbra_texture = pyglet.resource.image("test.png").get_texture()
 
 @win.event
 def on_mouse_motion(x, y, dx, dy):
@@ -254,13 +255,8 @@ class PenumbraSection:
 		self.base = base
 		self.direction = direction
 		self.intensity = intensity
-		#
-		glColor3f(0.5, 0.5, 0.5)
-		debug_line((light.position.x, light.position.y), light.position + direction, "");
-		debug_point(light.position + direction, "direction, intensity=%g" % intensity)
-		debug_point(base, "base")
 
-def draw_penumbra(sections, texture):
+def draw_penumbra(sections):
 	assert len(sections) > 1
 	triangles_data = []
 	for i in xrange(len(sections)-1):
@@ -276,10 +272,11 @@ def draw_penumbra(sections, texture):
 							bdnext.x,        bdnext.y,    0., 1.] # vertex
 	gl_triangles_array = (GLfloat * (3 * len(triangles_data)))(*triangles_data)
 	glPushAttrib(GL_ENABLE_BIT)
-	glEnable(texture.target)
-	glBindTexture(texture.target, texture.id)
+	glEnable(penumbra_texture.target)
+	glBindTexture(penumbra_texture.target, penumbra_texture.id)
 	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT)
 	glInterleavedArrays(GL_T4F_V4F, 0, gl_triangles_array)
+	glColor3f(0.3,0.3,0.3)
 	glDrawArrays(GL_TRIANGLES, 0, len(triangles_data)/6)
 	glPopClientAttrib()
 	glPopAttrib()
@@ -334,12 +331,19 @@ def calc_right_penumbra(blocker_line, light):
 						next_point, # base
 						extendDir(next_point - point), # direction
 						available / wanted)) # intensity
+	draw_penumbra(rightpenumbra)
+	for psect in rightpenumbra:
+		glColor3f(0.5, 0.5, 0.5)
+		debug_line((psect.base.x, psect.base.y), psect.base + psect.direction, "");
+		debug_point(psect.base + psect.direction, str(psect.intensity))
+		debug_point(psect.base, "base")
 
 def debug_point(point, msg):
+	x, y = point
 	glBegin(GL_POINTS)
 	glVertex2f(*point)
 	glEnd()
-	pyglet.text.Label(msg, x=int(point.x), y=int(point.y)).draw()
+	pyglet.text.Label(msg, x=int(x), y=int(y)).draw()
 
 def debug_line(src, dst, msg):
 	glBegin(GL_LINE_STRIP)
