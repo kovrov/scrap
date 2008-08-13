@@ -113,20 +113,20 @@ class ConvexPolygon:
 		first_src, first_dst = current_src, current_dst = it.next()
 		for next_src, next_dst in it:
 			assert current_dst == next_src
-			if test_angle((current_src, current_dst), (next_src, next_dst)) < 1.:
+			if sine((current_src, current_dst), (next_src, next_dst)) < 0.:
 				return False
 			current_src, current_dst = next_src, next_dst
-		if test_angle((current_src, current_dst), (first_src, first_dst)) < 1.:
+		if sine((current_src, current_dst), (first_src, first_dst)) < 0.:
 			return False
 		return True
 
 
-def test_angle(edge1, edge2):
-	return edge_tangent(edge1).cross(edge_tangent(edge2))
-
-def edge_tangent(edge):
-	src, dst = edge
-	return dst - src
+def sine(edge1, edge2):  # negative value means reflex angle
+	edge1_src, edge1_dst = edge1
+	edge1_direction = edge1_dst - edge1_src
+	edge2_src, edge2_dst = edge2
+	edge2_direction = edge2_dst - edge2_src
+	return edge1_direction.cross(edge2_direction)
 
 def fill_circle(position, radius, color):
 		segments = 20
