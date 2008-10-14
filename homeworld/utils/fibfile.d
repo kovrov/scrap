@@ -2,6 +2,19 @@ import std.stream;
 import std.file;
 import std.stdio;
 import std.c.stdlib;
+import std.string;
+
+Screen[string] screens;
+
+
+struct Screen
+{
+	string name;
+	this(string scrname)
+	{
+		name = scrname;
+	}
+}
 
 // Spacer between listwindow element and the
 enum
@@ -80,10 +93,13 @@ enum FL : uint //FIBLinkFlags
 struct FibFile
 {
 	void[] rawdata;
-	void load(string filename) // fibfileheader *feScreensLoad(char *fileName) [src/Game/FEFlow.c]
+	FibScreen[] screens;
+	ptrdiff_t mem_offset;
+
+	this(string filename) // fibfileheader *feScreensLoad(char *fileName) [src/Game/FEFlow.c]
 	{
 		rawdata = std.file.read(filename);
-		ptrdiff_t mem_offset = cast(ptrdiff_t)&rawdata[0];
+		mem_offset = cast(ptrdiff_t)rawdata.ptr;
 
 		struct FileHeader
 		{
@@ -93,54 +109,15 @@ struct FibFile
 		}
 		FileHeader* header = cast(FileHeader*)&rawdata[0];
 
-		struct Link
-		{
-			char *name;       //optional name of this link
-			FL flags;         //flags controlling behaviour of link
-			char *linkToName; //name of screen to link to
-		}
-		struct Atom
-		{
-			char  *name;                        //optional name of control
-			FAF flags;                          //flags to control behavior
-			uint status;                        //status flags for this atom, checked etc.
-			FA type;                            //type of control (button, scroll bar, etc.)
-			ubyte  borderWidth;                 //width, in pixels, of the border
-			ushort  tabstop;                    //denotes the tab ordering of UI controls
-			uint  borderColor;                  //optional color of border
-			uint  contentColor;                 //optional color of content
-			short  x,      loadedX;
-			short  y,      loadedY;
-			short  width,  loadedWidth;
-			short  height, loadedHeight;
-			ubyte *pData;                       //pointer to type-specific data
-			ubyte *attribs;                     //sound(button atom) or font(static text atom) reference
-			char   hotKeyModifiers;
-			//char   hotKey[FE_NumberLanguages];
-			char   pad2[2];
-			uint drawstyle[2];
-			void*  region;
-			uint pad[2];
-		}
-		struct Screen
-		{
-			char* name;       //name of screen for link purposes
-			uint flags;       //flags for this screen
-			ushort nLinks;    //number of links in this screen
-			ushort nAtoms;    //number of atoms in screen
-			Link* links;      //pointer to list of links
-			Atom* atoms;      //pointer to list of atoms
-		}
-		Screen[] screens = cast(Screen[])
-			rawdata[FileHeader.sizeof .. FileHeader.sizeof + Screen.sizeof * header.nScreens];
+		screens = cast(FibScreen[])
+			rawdata[FileHeader.sizeof .. FileHeader.sizeof + FibScreen.sizeof * header.nScreens];
 		foreach (ref scr; screens)
 		{
-			assert (scr.name !is null, "screens need a name");
-			scr.name += mem_offset;
+			assert (scr.name_fixup !is null, "screens need a name");
 
-			ptrdiff_t begin = cast(ptrdiff_t)scr.links;
-			scr.links += mem_offset;
-			foreach (ref link; cast(Link[])rawdata[begin .. begin + Link.sizeof * scr.nLinks])
+			ptrdiff_t begin = cast(ptrdiff_t)scr.links_fixup;
+			scr.links_fixup += mem_offset;
+			foreach (ref link; cast(FibScreen.Link[])rawdata[begin .. begin + FibScreen.Link.sizeof * scr.nLinks])
 			{
 				//if (!(link.flags & FL.Enabled)) continue;
 				assert (link.name !is null);
@@ -149,19 +126,19 @@ struct FibFile
 				link.linkToName += mem_offset;
 			}
 
-			begin = cast(ptrdiff_t)scr.atoms;
-			scr.atoms += mem_offset;
+			begin = cast(ptrdiff_t)scr.atoms_fixup;
+			scr.atoms_fixup += mem_offset;
 
 			/*	see if there are any menu items present in the screen so we can
 				know if we should reposition the screen for high-rez */
 			bool menuItemsPresent = false;
-			if (scr.name == "HyperspaceRollCall")
+			if (scr.name_fixup == "HyperspaceRollCall")
 			{
 				menuItemsPresent = true;
 			}
 			else
 			{
-				foreach (ref atom; cast(Atom[])rawdata[begin .. begin + Atom.sizeof * scr.nAtoms])
+				foreach (ref atom; cast(FibScreen.Atom[])rawdata[begin .. begin + FibScreen.Atom.sizeof * scr.nAtoms])
 				{
 					if (atom.type == FA.MenuItem)
 					{
@@ -171,7 +148,7 @@ struct FibFile
 				}
 			}
 
-			foreach (ref atom; cast(Atom[])rawdata[begin .. begin + Atom.sizeof * scr.nAtoms])
+			foreach (ref atom; cast(FibScreen.Atom[])rawdata[begin .. begin + FibScreen.Atom.sizeof * scr.nAtoms])
 			{
 				atom.region = null;
 
@@ -193,16 +170,16 @@ struct FibFile
 				{
 					if (atom.flags & FAF.Background)
 					{
-						feResRescaleBackground(&atom);
+						//feResRescaleBackground(&atom);
 					}
 					else
 					{
-						if (!feAtomOnScreen(&atom))
+						//if (!feAtomOnScreen(&atom))
 						{
 							atom.flags |= FAF.Hidden;
 						}
-						atom.x = feResRepositionCentredX(atom.x);
-						atom.y = feResRepositionCentredY(atom.y);
+						//atom.x = feResRepositionCentredX(atom.x);
+						//atom.y = feResRepositionCentredY(atom.y);
 					}
 				}
 
@@ -241,20 +218,75 @@ struct FibFile
 					}
 				}
 			}
-
-			feScreenEntryAdd(screen);
 		}
 	}
+	~this()
+	{
+		delete rawdata;
+	}
 
+	struct FibScreen
+	{
+		char* name_fixup;   //name of screen for link purposes
+		uint flags;         //flags for this screen
+		ushort nLinks;      //number of links in this screen
+		ushort nAtoms;      //number of atoms in screen
+		Link* links_fixup;  //pointer to list of links
+		Atom* atoms_fixup;  //pointer to list of atoms
+
+		struct Link
+		{
+			char *name;       //optional name of this link
+			FL flags;         //flags controlling behaviour of link
+			char *linkToName; //name of screen to link to
+		}
+		struct Atom
+		{
+			char  *name;                        //optional name of control
+			FAF flags;                          //flags to control behavior
+			uint status;                        //status flags for this atom, checked etc.
+			FA type;                            //type of control (button, scroll bar, etc.)
+			ubyte  borderWidth;                 //width, in pixels, of the border
+			ushort  tabstop;                    //denotes the tab ordering of UI controls
+			uint  borderColor;                  //optional color of border
+			uint  contentColor;                 //optional color of content
+			short  x,      loadedX;
+			short  y,      loadedY;
+			short  width,  loadedWidth;
+			short  height, loadedHeight;
+			ubyte *pData;                       //pointer to type-specific data
+			ubyte *attribs;                     //sound(button atom) or font(static text atom) reference
+			char   hotKeyModifiers;
+			//char   hotKey[FE_NumberLanguages];
+			char   pad2[2];
+			uint drawstyle[2];
+			void*  region;
+			uint pad[2];
+		}
+	}
 }
+
+
+void load(string filename, inout Screen[string] screens)
+{
+	auto fib = FibFile(filename);
+	foreach (ref scr; fib.screens)
+	{
+		Screen screen;
+		screen.name = toString(scr.name_fixup + fib.mem_offset);
+		screens[screen.name] = screen;
+	}
+}
+
 
 /+
 +/
 
 void main()
 {
-	//ubyte[] data = cast(ubyte[])"123asd".dup;
-	//writefln("%s", data[0..2]);
-	FibFile fib;
-	fib.load("front_end.fib");
+	load("front_end.fib", screens);
+	foreach (ref screen; screens)
+	{
+		writefln("%s", screen.name);
+	}
 }
