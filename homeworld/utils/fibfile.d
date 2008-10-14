@@ -80,7 +80,7 @@ enum FL : uint //FIBLinkFlags
 struct FibFile
 {
 	void[] rawdata;
-	void load(string filename)
+	void load(string filename) // fibfileheader *feScreensLoad(char *fileName) [src/Game/FEFlow.c]
 	{
 		rawdata = std.file.read(filename);
 		ptrdiff_t mem_offset = cast(ptrdiff_t)&rawdata[0];
@@ -151,6 +151,26 @@ struct FibFile
 
 			begin = cast(ptrdiff_t)scr.atoms;
 			scr.atoms += mem_offset;
+
+			/*	see if there are any menu items present in the screen so we can
+				know if we should reposition the screen for high-rez */
+			bool menuItemsPresent = false;
+			if (scr.name == "HyperspaceRollCall")
+			{
+				menuItemsPresent = true;
+			}
+			else
+			{
+				foreach (ref atom; cast(Atom[])rawdata[begin .. begin + Atom.sizeof * scr.nAtoms])
+				{
+					if (atom.type == FA.MenuItem)
+					{
+						menuItemsPresent = true;
+						break;
+					}
+				}
+			}
+
 			foreach (ref atom; cast(Atom[])rawdata[begin .. begin + Atom.sizeof * scr.nAtoms])
 			{
 				atom.region = null;
@@ -169,7 +189,22 @@ struct FibFile
 				atom.loadedWidth  = atom.width;
 				atom.loadedHeight = atom.height;
 
-				//if (!menuItemsPresent)
+				if (!menuItemsPresent)
+				{
+					if (atom.flags & FAF.Background)
+					{
+						feResRescaleBackground(&atom);
+					}
+					else
+					{
+						if (!feAtomOnScreen(&atom))
+						{
+							atom.flags |= FAF.Hidden;
+						}
+						atom.x = feResRepositionCentredX(atom.x);
+						atom.y = feResRepositionCentredY(atom.y);
+					}
+				}
 
 				if (atom.name) atom.name += mem_offset;
 
@@ -206,6 +241,8 @@ struct FibFile
 					}
 				}
 			}
+
+			feScreenEntryAdd(screen);
 		}
 	}
 
