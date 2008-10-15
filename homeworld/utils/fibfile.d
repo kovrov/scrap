@@ -7,9 +7,22 @@ import std.string;
 Screen[string] screens;
 
 
+struct Atom
+{
+}
+
+struct LinkTest
+{
+	string name;    //optional name of this link
+	string target;  //name of screen to link to
+//	FL flags;       //flags controlling behaviour of link
+}
+
 struct Screen
 {
 	string name;
+	Atom[] atoms;
+	LinkTest[] links;
 	this(string scrname)
 	{
 		name = scrname;
@@ -93,8 +106,8 @@ enum FL : uint //FIBLinkFlags
 struct FibFile
 {
 	void[] rawdata;
-	FibScreen[] screens;
 	ptrdiff_t mem_offset;
+	FibScreen[] screens;
 
 	this(string filename) // fibfileheader *feScreensLoad(char *fileName) [src/Game/FEFlow.c]
 	{
@@ -109,115 +122,20 @@ struct FibFile
 		}
 		FileHeader* header = cast(FileHeader*)&rawdata[0];
 
-		screens = cast(FibScreen[])
-			rawdata[FileHeader.sizeof .. FileHeader.sizeof + FibScreen.sizeof * header.nScreens];
-		foreach (ref scr; screens)
+		scope FibScreen.Scr[] scrs = cast(FibScreen.Scr[])
+			rawdata[FileHeader.sizeof .. FileHeader.sizeof + FibScreen.Scr.sizeof * header.nScreens];
+		screens.length = scrs.length;
+		foreach (i, ref scr; scrs)
 		{
-			assert (scr.name_fixup !is null, "screens need a name");
+			screens[i].ptr = &scr;
 
 			ptrdiff_t begin = cast(ptrdiff_t)scr.links_fixup;
-			scr.links_fixup += mem_offset;
-			foreach (ref link; cast(FibScreen.Link[])rawdata[begin .. begin + FibScreen.Link.sizeof * scr.nLinks])
-			{
-				//if (!(link.flags & FL.Enabled)) continue;
-				assert (link.name !is null);
-				link.name += mem_offset;
-				assert (link.linkToName !is null);
-				link.linkToName += mem_offset;
-			}
+			screens[i].links = cast(FibScreen.FibLink[])rawdata[begin .. begin + FibScreen.FibLink.sizeof * scr.nLinks];
+			assert (screens[i].links.length == scr.nLinks);
 
 			begin = cast(ptrdiff_t)scr.atoms_fixup;
-			scr.atoms_fixup += mem_offset;
-
-			/*	see if there are any menu items present in the screen so we can
-				know if we should reposition the screen for high-rez */
-			bool menuItemsPresent = false;
-			if (scr.name_fixup == "HyperspaceRollCall")
-			{
-				menuItemsPresent = true;
-			}
-			else
-			{
-				foreach (ref atom; cast(FibScreen.Atom[])rawdata[begin .. begin + FibScreen.Atom.sizeof * scr.nAtoms])
-				{
-					if (atom.type == FA.MenuItem)
-					{
-						menuItemsPresent = true;
-						break;
-					}
-				}
-			}
-
-			foreach (ref atom; cast(FibScreen.Atom[])rawdata[begin .. begin + FibScreen.Atom.sizeof * scr.nAtoms])
-			{
-				atom.region = null;
-
-				assert (atom.width  > atom.x);
-				assert (atom.height > atom.y);
-				//convert 2-point rectangle to a 1 point/width/height
-				if (atom.type == FA.ListWindow)
-					atom.width -= atom.x + LW_BarWidth + LW_WindowXBarSpace;
-				else
-					atom.width -= atom.x;
-
-				atom.height -= atom.y;
-				atom.loadedX = atom.x;
-				atom.loadedY = atom.y;
-				atom.loadedWidth  = atom.width;
-				atom.loadedHeight = atom.height;
-
-				if (!menuItemsPresent)
-				{
-					if (atom.flags & FAF.Background)
-					{
-						//feResRescaleBackground(&atom);
-					}
-					else
-					{
-						//if (!feAtomOnScreen(&atom))
-						{
-							atom.flags |= FAF.Hidden;
-						}
-						//atom.x = feResRepositionCentredX(atom.x);
-						//atom.y = feResRepositionCentredY(atom.y);
-					}
-				}
-
-				if (atom.name) atom.name += mem_offset;
-
-				
-				if (atom.pData)
-				{
-					if (atom.type != FA.RadioButton) //HACK: don't fix-up radio button pointers
-						atom.pData += mem_offset;
-
-					if (atom.flags & FAF.Bitmap)  //if this is a bitmap
-					{
-						//...code to load in the bitmap and set new pointer
-					}
-					else if (atom.type != FA.RadioButton)  //else it must be a text region
-					{
-						atom.type = FA.StaticText;  //make it a text region
-					}
-				}
-
-				if (atom.attribs)
-				{
-					switch (atom.type)
-					{
-					case FA.StaticText:
-						//load in the font
-						//atom.attribs = cast(ubyte*)frFontRegister(cast(char*)(atom.attribs + mem_offset));
-						atom.attribs += mem_offset;
-						assert (atom.attribs !is null);
-						break;
-					case FA.BitmapButton:
-						atom.attribs += mem_offset;
-						assert (atom.attribs !is null);
-						break;
-					}
-				}
-			}
+			screens[i].atoms = cast(FibScreen.Atom[])rawdata[begin .. begin + FibScreen.Atom.sizeof * scr.nAtoms];
+			assert (screens[i].atoms.length == scr.nAtoms);
 		}
 	}
 	~this()
@@ -227,53 +145,164 @@ struct FibFile
 
 	struct FibScreen
 	{
-		char* name_fixup;   //name of screen for link purposes
-		uint flags;         //flags for this screen
-		ushort nLinks;      //number of links in this screen
-		ushort nAtoms;      //number of atoms in screen
-		Link* links_fixup;  //pointer to list of links
-		Atom* atoms_fixup;  //pointer to list of atoms
+		Scr* ptr;
+		FibLink[] links;
+		Atom[] atoms;
 
-		struct Link
+		struct Scr
 		{
-			char *name;       //optional name of this link
-			FL flags;         //flags controlling behaviour of link
-			char *linkToName; //name of screen to link to
+			char* name_fixup;   //name of screen for link purposes
+			uint flags;         //flags for this screen
+			ushort nLinks;      //number of links in this screen
+			ushort nAtoms;      //number of atoms in screen
+			FibLink* links_fixup;  //pointer to list of links
+			Atom* atoms_fixup;  //pointer to list of atoms
+		}
+
+		struct FibLink
+		{
+			char* name_fixup;       //optional name of this link
+			FL flags;               //flags controlling behaviour of link
+			char* linkToName_fixup; //name of screen to link to
 		}
 		struct Atom
 		{
-			char  *name;                        //optional name of control
-			FAF flags;                          //flags to control behavior
-			uint status;                        //status flags for this atom, checked etc.
-			FA type;                            //type of control (button, scroll bar, etc.)
-			ubyte  borderWidth;                 //width, in pixels, of the border
-			ushort  tabstop;                    //denotes the tab ordering of UI controls
-			uint  borderColor;                  //optional color of border
-			uint  contentColor;                 //optional color of content
+			/+ char* +/ char*  name_fixup;            //optional name of control
+			FAF    flags;                 //flags to control behavior
+			uint   status;                //status flags for this atom, checked etc.
+			FA     type;                  //type of control (button, scroll bar, etc.)
+			ubyte  borderWidth;           //width, in pixels, of the border
+			ushort tabstop;               //denotes the tab ordering of UI controls
+			uint   borderColor;           //optional color of border
+			uint   contentColor;          //optional color of content
 			short  x,      loadedX;
 			short  y,      loadedY;
 			short  width,  loadedWidth;
 			short  height, loadedHeight;
-			ubyte *pData;                       //pointer to type-specific data
-			ubyte *attribs;                     //sound(button atom) or font(static text atom) reference
+			ubyte* pData_fixup;           //pointer to type-specific data
+			ubyte* attribs_fixup;         //sound(button atom) or font(static text atom) reference
 			char   hotKeyModifiers;
-			//char   hotKey[FE_NumberLanguages];
+//			char   hotKey[5];             // FE_NumberLanguages
 			char   pad2[2];
-			uint drawstyle[2];
-			void*  region;
-			uint pad[2];
-		}
+			uint   drawstyle[2];
+			void*  reserved; // region
+			uint   pad[2];
+			}
 	}
 }
 
 
 void load(string filename, inout Screen[string] screens)
 {
-	auto fib = FibFile(filename);
-	foreach (ref scr; fib.screens)
+	scope fib = FibFile(filename);
+	foreach (ref fibscr; fib.screens)
 	{
 		Screen screen;
-		screen.name = toString(scr.name_fixup + fib.mem_offset);
+
+		assert (fibscr.ptr.name_fixup !is null, "screens need a name");
+		screen.name = toString(fibscr.ptr.name_fixup + fib.mem_offset);
+
+		screen.links.length = fibscr.links.length;
+		foreach (i, ref link; screen.links)
+		{
+			auto fiblink = fibscr.links[i];
+			if (! fiblink.flags & FL.Enabled) continue;
+
+			assert (fiblink.name_fixup !is null);
+			link.name = toString(fiblink.name_fixup + fib.mem_offset);
+
+			assert (fiblink.linkToName_fixup !is null);
+			link.target = toString(fiblink.linkToName_fixup + fib.mem_offset);
+		}
+
+		/*	see if there are any menu items present in the screen so we can
+			know if we should reposition the screen for high-rez */
+		bool menuItemsPresent = false;
+		if (screen.name == "HyperspaceRollCall")
+		{
+			menuItemsPresent = true;
+		}
+		else
+		{
+			foreach (ref atom; fibscr.atoms)
+			{
+				if (atom.type == FA.MenuItem)
+				{
+					menuItemsPresent = true;
+					break;
+				}
+			}
+		}
+
+		foreach (ref atom; fibscr.atoms)
+		{
+			assert (atom.width  > atom.x);
+			assert (atom.height > atom.y);
+			//convert 2-point rectangle to a 1 point/width/height
+			if (atom.type == FA.ListWindow)
+				atom.width -= atom.x + LW_BarWidth + LW_WindowXBarSpace;
+			else
+				atom.width -= atom.x;
+
+			atom.height -= atom.y;
+			atom.loadedX = atom.x;
+			atom.loadedY = atom.y;
+			atom.loadedWidth  = atom.width;
+			atom.loadedHeight = atom.height;
+
+			if (!menuItemsPresent)
+			{
+				if (atom.flags & FAF.Background)
+				{
+					//feResRescaleBackground(&atom);
+				}
+				else
+				{
+					//if (!feAtomOnScreen(&atom))
+					{
+						atom.flags |= FAF.Hidden;
+					}
+					//atom.x = feResRepositionCentredX(atom.x);
+					//atom.y = feResRepositionCentredY(atom.y);
+				}
+			}
+
+			if (atom.name_fixup) toString(atom.name_fixup + fib.mem_offset);
+
+			
+			if (atom.pData_fixup)
+			{
+//				if (atom.type != FA.RadioButton) //HACK: don't fix-up radio button pointers
+//					atom.pData_fixup + fib.mem_offset;
+
+				if (atom.flags & FAF.Bitmap)  //if this is a bitmap
+				{
+					//...code to load in the bitmap and set new pointer
+				}
+				else if (atom.type != FA.RadioButton)  //else it must be a text region
+				{
+					atom.type = FA.StaticText;  //make it a text region
+				}
+			}
+
+			if (atom.attribs_fixup)
+			{
+				switch (atom.type)
+				{
+				case FA.StaticText:
+					//load in the font
+					//atom.attribs = cast(ubyte*)frFontRegister(cast(char*)(atom.attribs + mem_offset));
+//					atom.attribs_fixup + fib.mem_offset;
+					assert (atom.attribs_fixup + fib.mem_offset !is null);
+					break;
+				case FA.BitmapButton:
+//					atom.attribs_fixup + fib.mem_offset;
+					assert (atom.attribs_fixup + fib.mem_offset !is null);
+					break;
+				}
+			}
+		}
+
 		screens[screen.name] = screen;
 	}
 }
