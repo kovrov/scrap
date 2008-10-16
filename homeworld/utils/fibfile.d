@@ -1,3 +1,15 @@
+/+
+
+a GUI layer...
+
+* A list of widgets (buttons, check boxes, etc).
+* Position and state variables.
+* Logic to keep the widgets coordinated, relying on
+  the state and position variables to tell the widgets
+  where they are supposed to be.
+
++/
+
 import std.file;
 import std.stdio;
 import std.string;
@@ -240,7 +252,7 @@ struct FibFile
 {
 	void[] rawdata;
 	ptrdiff_t mem_offset;
-	Segment[] screens;
+	Raw[] screens;
 
 	this(string filename) // fibfileheader *feScreensLoad(char *fileName) [src/Game/FEFlow.c]
 	{
@@ -255,19 +267,19 @@ struct FibFile
 		}
 		FileHeader* header = cast(FileHeader*)&rawdata[0];
 
-		scope Segment.Scr[] scrs = cast(Segment.Scr[])
-			(rawdata[FileHeader.sizeof .. FileHeader.sizeof + Segment.Scr.sizeof * header.nScreens]);
+		scope Raw.Scr[] scrs = cast(Raw.Scr[])
+			(rawdata[FileHeader.sizeof .. FileHeader.sizeof + Raw.Scr.sizeof * header.nScreens]);
 		screens.length = scrs.length;
 		foreach (i, ref scr; scrs)
 		{
 			screens[i].ptr = &scr;
 
 			ptrdiff_t begin = cast(ptrdiff_t)scr.links_fixup;
-			screens[i].links = cast(Segment.FibLink[])(rawdata[begin .. begin + Segment.FibLink.sizeof * scr.nLinks]);
+			screens[i].links = cast(Raw.Lnk[])(rawdata[begin .. begin + Raw.Lnk.sizeof * scr.nLinks]);
 			assert (screens[i].links.length == scr.nLinks);
 
 			begin = cast(ptrdiff_t)scr.atoms_fixup;
-			screens[i].atoms = cast(Segment.Atom[])(rawdata[begin .. begin + Segment.Atom.sizeof * scr.nAtoms]);
+			screens[i].atoms = cast(Raw.Atm[])(rawdata[begin .. begin + Raw.Atm.sizeof * scr.nAtoms]);
 			assert (screens[i].atoms.length == scr.nAtoms);
 		}
 	}
@@ -276,11 +288,11 @@ struct FibFile
 		delete rawdata;
 	}
 
-	struct Segment
+	struct Raw
 	{
 		Scr* ptr;
-		FibLink[] links;
-		Atom[] atoms;
+		Lnk[] links;
+		Atm[] atoms;
 
 		static assert (Scr.sizeof == 20);
 		struct Scr
@@ -289,20 +301,20 @@ struct FibFile
 			uint flags;         //flags for this screen
 			ushort nLinks;      //number of links in this screen
 			ushort nAtoms;      //number of atoms in screen
-			FibLink* links_fixup;  //pointer to list of links
+			Link* links_fixup;  //pointer to list of links
 			Atom* atoms_fixup;  //pointer to list of atoms
 		}
 
-		static assert (FibLink.sizeof == 12);
-		struct FibLink
+		static assert (Lnk.sizeof == 12);
+		struct Lnk
 		{
 			char* name_fixup;       //optional name of this link
 			FL flags;               //flags controlling behaviour of link
 			char* linkToName_fixup; //name of screen to link to
 		}
 
-		static assert (Atom.sizeof == 76);
-		struct Atom
+		static assert (Atm.sizeof == 76);
+		struct Atm
 		{
 			char*    name_fixup;            //optional name of control
 			FAF      flags;                 //flags to control behavior
