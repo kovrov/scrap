@@ -15,18 +15,14 @@ import std.stdio;
 import std.string;
 
 
-
 struct Atom
 {
 	string name;
-	int width;
-	int height;
-	int loadedX;
-	int loadedY;
-	int loadedWidth;
-	int loadedHeight;
+	short x;
+	short y;
+	short width;
+	short height;
 	uint flags; // FAF
-	ubyte type; // FA
 }
 
 struct Link
@@ -98,18 +94,21 @@ void load(string filename, inout Screen[string] screens)
 		{
 			const fibAtom = &fibscr.atoms[i];
 
+			atom.type = fibAtom.type;
+
 			assert (fibAtom.width  > fibAtom.x);
 			assert (fibAtom.height > fibAtom.y);
+
+			atom.x = fibAtom.x;
+			atom.y = fibAtom.y;
 			//convert 2-point rectangle to a 1 point/width/height
 			if (fibAtom.type == FA.ListWindow)
 				atom.width = fibAtom.width - (fibAtom.x + LW_BarWidth + LW_WindowXBarSpace);
 			else
 				atom.width = fibAtom.width - fibAtom.x;
 			atom.height = fibAtom.height - fibAtom.y;
-			atom.loadedX = fibAtom.x;
-			atom.loadedY = fibAtom.y;
-			atom.loadedWidth  = fibAtom.width;
-			atom.loadedHeight = fibAtom.height;
+
+			//TODO: save x,y,w,h values in case we change resolution later...
 
 			if (!menuItemsPresent)
 			{
@@ -160,6 +159,7 @@ void load(string filename, inout Screen[string] screens)
 //					fibAtom.attribs_fixup + fib.mem_offset;
 					assert (fibAtom.attribs_fixup + fib.mem_offset !is null);
 					break;
+				default:
 				}
 			}
 		}
@@ -346,19 +346,21 @@ void main()
 {
 	Screen[string] screens;
 	load("front_end.fib", screens);
-	foreach (ref screen; screens)
+	auto screen = screens["Main_game_screen"];
+	//foreach (ref screen; screens)
 	{
-		writefln("%s", screen.name);
+		writefln("\"%s\"", screen.name);
 		writefln("  links:");
 		foreach (ref link; screen.links)
 		{
-			writefln("    %s", link.name);
-			writefln("      target: %s", link.target);
+			writefln("    \"%s\"", link.name);
+			writefln("      target: \"%s\"", link.target);
 		}
 		writefln("  atoms:");
 		foreach (ref atom; screen.atoms)
 		{
-			writefln("    %s", atom.name);
+			writef("    \"%s\"", atom.name);
+			writefln(" %s,%s", atom.x, atom.y);
 		}
 	}
 }
