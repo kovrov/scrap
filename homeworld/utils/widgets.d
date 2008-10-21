@@ -1,10 +1,39 @@
-interface Widget
+
+class Widget
 {
-	void draw();
+	short x, y;
+	short width, height;
+	uint flags; // FAF
+	string name;
+
+	this(short x, short y, short w, short h)
+	{
+		this.x = x;
+		this.y = y;
+		this.width = w;
+		this.height = h;
+	}
+
+	abstract void draw();
+}
+
+class NullWidget : Widget
+{
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	void draw()
+	{
+	}
 }
 
 class UserRegion : Widget
 {
+	string draw_callback_name;
+	this(short x, short y, short w, short h, string draw_callback_name)
+	{
+		super(x,y,w,h);
+		this.draw_callback_name = draw_callback_name;
+	}
+
 	void draw()
 	{
 	}
@@ -12,6 +41,7 @@ class UserRegion : Widget
 
 class StaticText : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -19,6 +49,14 @@ class StaticText : Widget
 
 class Button : Widget
 {
+	string target_name;
+
+	this(short x, short y, short w, short h, string target)
+	{
+		super(x,y,w,h);
+		this.target_name = target_name;
+	}
+
 	void draw()
 	{
 	}
@@ -26,6 +64,7 @@ class Button : Widget
 
 class CheckBox : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -33,6 +72,7 @@ class CheckBox : Widget
 
 class ToggleButton : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -40,6 +80,7 @@ class ToggleButton : Widget
 
 class ScrollBar : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -47,6 +88,7 @@ class ScrollBar : Widget
 
 class StatusBar : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -54,6 +96,7 @@ class StatusBar : Widget
 
 class TextEntry : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -61,6 +104,7 @@ class TextEntry : Widget
 
 class ListViewExpandButton : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -68,6 +112,7 @@ class ListViewExpandButton : Widget
 
 class TitleBar : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -75,6 +120,7 @@ class TitleBar : Widget
 
 class MenuItem : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -82,6 +128,7 @@ class MenuItem : Widget
 
 class RadioButton : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -89,6 +136,7 @@ class RadioButton : Widget
 
 class CutoutRegion : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -96,6 +144,13 @@ class CutoutRegion : Widget
 
 class DecorativeRegion : Widget
 {
+	string img_name;
+
+	this(short x, short y, short w, short h, string img_name)
+	{
+		super(x,y,w,h);
+		this.img_name = img_name;
+	}
 	void draw()
 	{
 	}
@@ -103,6 +158,7 @@ class DecorativeRegion : Widget
 
 class Divider : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -110,6 +166,7 @@ class Divider : Widget
 
 class ListWindow : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -117,6 +174,7 @@ class ListWindow : Widget
 
 class BitmapButton : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -124,6 +182,7 @@ class BitmapButton : Widget
 
 class HorizSlider : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -131,6 +190,7 @@ class HorizSlider : Widget
 
 class VertSlider : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -138,6 +198,7 @@ class VertSlider : Widget
 
 class DragButton : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}
@@ -145,6 +206,7 @@ class DragButton : Widget
 
 class OpaqueDecorativeRegion : Widget
 {
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	void draw()
 	{
 	}

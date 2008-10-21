@@ -14,16 +14,8 @@ import std.file;
 import std.stdio;
 import std.string;
 
+import widgets;
 
-struct Atom
-{
-	string name;
-	short x;
-	short y;
-	short width;
-	short height;
-	uint flags; // FAF
-}
 
 struct Link
 {
@@ -35,7 +27,7 @@ struct Link
 struct Screen
 {
 	string name;
-	Atom[] atoms;
+	Widget[] widgets;
 	Link[] links;
 	this(string scrname)
 	{
@@ -53,8 +45,8 @@ void load(string filename, inout Screen[string] screens)
 	{
 		Screen screen;
 
-		assert (fibscr.ptr.name_fixup !is null, "screens need a name");
-		screen.name = toString(fibscr.ptr.name_fixup + fib.mem_offset);
+		assert (fibscr.ptr.name_fixup != 0, "screens need a name");
+		screen.name = toString(cast(char*)fibscr.ptr.name_fixup + fib.mem_offset);
 
 		screen.links.length = fibscr.links.length;
 		foreach (i, ref link; screen.links)
@@ -63,8 +55,8 @@ void load(string filename, inout Screen[string] screens)
 
 			if (! fiblink.flags & FL.Enabled) continue;
 
-			assert (fiblink.name_fixup !is null);
-			link.name = toString(fiblink.name_fixup + fib.mem_offset);
+			assert (fiblink.name_fixup != 0);
+			link.name = toString(cast(char*)fiblink.name_fixup + fib.mem_offset);
 
 			assert (fiblink.linkToName_fixup !is null);
 			link.target = toString(fiblink.linkToName_fixup + fib.mem_offset);
@@ -89,24 +81,95 @@ void load(string filename, inout Screen[string] screens)
 			}
 		}
 
-		screen.atoms.length = fibscr.atoms.length;
-		foreach (i, ref atom; screen.atoms)
+		screen.widgets.length = fibscr.atoms.length;
+		foreach (i, ref widget; screen.widgets)
 		{
 			const fibAtom = &fibscr.atoms[i];
-
-			atom.type = fibAtom.type;
-
+			// basic checks...
 			assert (fibAtom.width  > fibAtom.x);
 			assert (fibAtom.height > fibAtom.y);
 
-			atom.x = fibAtom.x;
-			atom.y = fibAtom.y;
+			short width = fibAtom.width - fibAtom.x;
+			short height = fibAtom.height - fibAtom.y;
+
+			switch (fibAtom.type)
+			{
+			case FA.UserRegion:
+				assert (fibAtom.name_fixup != 0);
+				string draw_callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.UserRegion(fibAtom.x, fibAtom.y, width, height, draw_callback_name);
+				break;
+			case FA.StaticText:
+				widget = new widgets.StaticText(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.Button:
+				string target_name;
+				if (fibAtom.name_fixup != 0)
+					target_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.Button(fibAtom.x, fibAtom.y, width, height, target_name);
+				break;
+			case FA.CheckBox:
+				widget = new widgets.CheckBox(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.ToggleButton:
+				widget = new widgets.ToggleButton(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.ScrollBar:
+				widget = new widgets.ScrollBar(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.StatusBar:
+				widget = new widgets.StatusBar(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.TextEntry:
+				widget = new widgets.TextEntry(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.ListViewExpandButton:
+				widget = new widgets.ListViewExpandButton(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.TitleBar:
+				widget = new widgets.TitleBar(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.MenuItem:
+				widget = new widgets.MenuItem(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.RadioButton:
+				widget = new widgets.RadioButton(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.CutoutRegion:
+				widget = new widgets.CutoutRegion(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.DecorativeRegion:
+				assert (fibAtom.name_fixup != 0);
+				string img_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.DecorativeRegion(fibAtom.x, fibAtom.y, width, height, img_name);
+				break;
+			case FA.Divider:
+				widget = new widgets.Divider(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.ListWindow:
+				widget = new widgets.ListWindow(fibAtom.x, fibAtom.y,
+							width - LW_BarWidth - LW_WindowXBarSpace, height);
+				break;
+			case FA.BitmapButton:
+				widget = new widgets.BitmapButton(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.HorizSlider:
+				widget = new widgets.HorizSlider(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.VertSlider:
+				widget = new widgets.VertSlider(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.DragButton:
+				widget = new widgets.DragButton(fibAtom.x, fibAtom.y, width, height);
+				break;
+			case FA.OpaqueDecorativeRegion:
+				widget = new widgets.OpaqueDecorativeRegion(fibAtom.x, fibAtom.y, width, height);
+				break;
+			default:
+				widget = new widgets.NullWidget(fibAtom.x, fibAtom.y, width, height);
+			}
+
 			//convert 2-point rectangle to a 1 point/width/height
-			if (fibAtom.type == FA.ListWindow)
-				atom.width = fibAtom.width - (fibAtom.x + LW_BarWidth + LW_WindowXBarSpace);
-			else
-				atom.width = fibAtom.width - fibAtom.x;
-			atom.height = fibAtom.height - fibAtom.y;
 
 			//TODO: save x,y,w,h values in case we change resolution later...
 
@@ -120,14 +183,14 @@ void load(string filename, inout Screen[string] screens)
 				{
 					//if (!feAtomOnScreen(&fibAtom))
 					{
-						atom.flags |= FAF.Hidden;
+						widget.flags |= FAF.Hidden;
 					}
 					//fibAtom.x = feResRepositionCentredX(fibAtom.x);
 					//fibAtom.y = feResRepositionCentredY(fibAtom.y);
 				}
 			}
 
-			if (fibAtom.name_fixup) atom.name = toString(fibAtom.name_fixup + fib.mem_offset);
+			if (fibAtom.name_fixup) widget.name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 
 			
 			if (fibAtom.pData_fixup)
@@ -141,7 +204,7 @@ void load(string filename, inout Screen[string] screens)
 				}
 				else if (fibAtom.type != FA.RadioButton)  //else it must be a text region
 				{
-					atom.type = FA.StaticText;  //make it a text region
+//					atom.type = FA.StaticText;  //make it a text region
 				}
 			}
 
@@ -166,6 +229,7 @@ void load(string filename, inout Screen[string] screens)
 
 		screens[screen.name] = screen;
 	}
+	screens.rehash;
 }
 
 
@@ -297,18 +361,19 @@ struct FibFile
 		static assert (Scr.sizeof == 20);
 		struct Scr
 		{
-			char* name_fixup;   //name of screen for link purposes
+			uint name_fixup;    //name of screen for link purposes
 			uint flags;         //flags for this screen
 			ushort nLinks;      //number of links in this screen
 			ushort nAtoms;      //number of atoms in screen
-			Link* links_fixup;  //pointer to list of links
-			Atom* atoms_fixup;  //pointer to list of atoms
+			uint links_fixup;   //pointer to list of links
+			uint atoms_fixup;   //pointer to list of atoms
 		}
+		static assert ((Atm*).sizeof == uint.sizeof);
 
 		static assert (Lnk.sizeof == 12);
 		struct Lnk
 		{
-			char* name_fixup;       //optional name of this link
+			uint name_fixup;        //optional name of this link
 			FL flags;               //flags controlling behaviour of link
 			char* linkToName_fixup; //name of screen to link to
 		}
@@ -316,7 +381,7 @@ struct FibFile
 		static assert (Atm.sizeof == 76);
 		struct Atm
 		{
-			char*    name_fixup;            //optional name of control
+			uint     name_fixup;            //optional name of control
 			FAF      flags;                 //flags to control behavior
 			uint     status;                //status flags for this atom, checked etc.
 			FA       type;                  //type of control (button, scroll bar, etc.)
@@ -353,14 +418,13 @@ void main()
 		writefln("  links:");
 		foreach (ref link; screen.links)
 		{
-			writefln("    \"%s\"", link.name);
-			writefln("      target: \"%s\"", link.target);
+			writefln("    %s <%s>", link.name, link.target);
 		}
 		writefln("  atoms:");
-		foreach (ref atom; screen.atoms)
+		foreach (ref widget; screen.widgets)
 		{
-			writef("    \"%s\"", atom.name);
-			writefln(" %s,%s", atom.x, atom.y);
+			writef("    %s \"%s\"", widget, widget.name);
+			writefln(" %s,%s", widget.x, widget.y);
 		}
 	}
 }
