@@ -25,9 +25,20 @@ class Widget
 
 class NullWidget : Widget
 {
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	string font_name;
+	this(short x, short y, short w, short h, string font_name)
+	{
+		super(x,y,w,h);
+		this.font_name = font_name;
+	}
+
 	override void draw()
 	{
+	}
+
+	debug override string toString()
+	{
+		return super.toString() ~ " font:<" ~ font_name ~ ">";
 	}
 }
 
