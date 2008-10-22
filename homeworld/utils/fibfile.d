@@ -100,6 +100,7 @@ void load(string filename, inout Screen[string] screens)
 				widget = new widgets.UserRegion(fibAtom.x, fibAtom.y, width, height, draw_callback_name);
 				break;
 			case FA.StaticText:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.StaticText(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.Button:
@@ -109,33 +110,46 @@ void load(string filename, inout Screen[string] screens)
 				widget = new widgets.Button(fibAtom.x, fibAtom.y, width, height, target_name);
 				break;
 			case FA.CheckBox:
-				widget = new widgets.CheckBox(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.CheckBox(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
 			case FA.ToggleButton:
-				widget = new widgets.ToggleButton(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.ToggleButton(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
 			case FA.ScrollBar:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.ScrollBar(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.StatusBar:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.StatusBar(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.TextEntry:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.TextEntry(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.ListViewExpandButton:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.ListViewExpandButton(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.TitleBar:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.TitleBar(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.MenuItem:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.MenuItem(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.RadioButton:
-				widget = new widgets.RadioButton(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.RadioButton(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
-			case FA.CutoutRegion:
+			case FA.CutoutRegion:  // FIXME: find out what CutoutRegion's are for
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.CutoutRegion(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.DecorativeRegion:
@@ -144,28 +158,42 @@ void load(string filename, inout Screen[string] screens)
 				widget = new widgets.DecorativeRegion(fibAtom.x, fibAtom.y, width, height, img_name);
 				break;
 			case FA.Divider:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.Divider(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.ListWindow:
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.ListWindow(fibAtom.x, fibAtom.y,
-							width - LW_BarWidth - LW_WindowXBarSpace, height);
+							width - LW_BarWidth - LW_WindowXBarSpace, height,
+							callback_name);
 				break;
 			case FA.BitmapButton:
-				widget = new widgets.BitmapButton(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.BitmapButton(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
 			case FA.HorizSlider:
-				widget = new widgets.HorizSlider(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.HorizSlider(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
 			case FA.VertSlider:
-				widget = new widgets.VertSlider(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.VertSlider(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
 			case FA.DragButton:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.DragButton(fibAtom.x, fibAtom.y, width, height);
 				break;
 			case FA.OpaqueDecorativeRegion:
-				widget = new widgets.OpaqueDecorativeRegion(fibAtom.x, fibAtom.y, width, height);
+				assert (fibAtom.name_fixup != 0);
+				string img_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.OpaqueDecorativeRegion(fibAtom.x, fibAtom.y, width, height, img_name);
 				break;
 			default:
+				assert (fibAtom.name_fixup == 0);
 				widget = new widgets.NullWidget(fibAtom.x, fibAtom.y, width, height);
 			}
 
@@ -189,9 +217,6 @@ void load(string filename, inout Screen[string] screens)
 					//fibAtom.y = feResRepositionCentredY(fibAtom.y);
 				}
 			}
-
-			if (fibAtom.name_fixup) widget.name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
-
 			
 			if (fibAtom.pData_fixup)
 			{
@@ -349,6 +374,7 @@ struct FibFile
 	}
 	~this()
 	{
+		debug {(cast(byte[])rawdata)[0..$] = '0';}
 		delete rawdata;
 	}
 
@@ -423,8 +449,7 @@ void main()
 		writefln("  atoms:");
 		foreach (ref widget; screen.widgets)
 		{
-			writef("    %s \"%s\"", widget, widget.name);
-			writefln(" %s,%s", widget.x, widget.y);
+			writefln("    %s", widget);
 		}
 	}
 }
