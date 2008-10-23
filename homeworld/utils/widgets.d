@@ -6,6 +6,10 @@ class Widget
 	short x, y;
 	short width, height;
 	uint flags; // FAF
+	ubyte borderWidth;
+	uint borderColor;
+	uint contentColor;
+	uint[2] drawstyle;
 
 	this(short x, short y, short w, short h)
 	{
@@ -25,20 +29,9 @@ class Widget
 
 class NullWidget : Widget
 {
-	string font_name;
-	this(short x, short y, short w, short h, string font_name)
-	{
-		super(x,y,w,h);
-		this.font_name = font_name;
-	}
-
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	override void draw()
 	{
-	}
-
-	debug override string toString()
-	{
-		return super.toString() ~ " font:<" ~ font_name ~ ">";
 	}
 }
 
@@ -63,9 +56,22 @@ class UserRegion : Widget
 
 class StaticText : Widget
 {
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	string text;
+	string font_name;
+	this(short x, short y, short w, short h, string text, string font_name)
+	{
+		super(x,y,w,h);
+		this.text = text;
+		this.font_name = font_name;
+	}
+
 	override void draw()
 	{
+	}
+
+	debug override string toString()
+	{
+		return super.toString() ~ " font:<" ~ font_name ~ "> text<" ~ text ~ ">";
 	}
 }
 
@@ -315,9 +321,21 @@ class VertSlider : Widget
 
 class DragButton : Widget
 {
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	string function_name;
+
+	this(short x, short y, short w, short h, string function_name)
+	{
+		super(x,y,w,h);
+		this.function_name = function_name;
+	}
+
 	override void draw()
 	{
+	}
+
+	debug override string toString()
+	{
+		return super.toString() ~ " callback:<" ~ function_name ~ ">";
 	}
 }
 
