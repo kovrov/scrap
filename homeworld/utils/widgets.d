@@ -137,9 +137,21 @@ class ToggleButton : Widget
 
 class ScrollBar : Widget
 {
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	string callback_name;
+
+	this(short x, short y, short w, short h, string callback_name)
+	{
+		super(x,y,w,h);
+		this.callback_name = callback_name;
+	}
+
 	override void draw()
 	{
+	}
+
+	debug override string toString()
+	{
+		return super.toString() ~ " callback:<" ~ callback_name ~ ">";
 	}
 }
 
@@ -177,9 +189,21 @@ class TitleBar : Widget
 
 class MenuItem : Widget
 {
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	string callback_name;
+
+	this(short x, short y, short w, short h, string callback_name)
+	{
+		super(x,y,w,h);
+		this.callback_name = callback_name;
+	}
+
 	override void draw()
 	{
+	}
+
+	debug override string toString()
+	{
+		return super.toString() ~ " callback:<" ~ callback_name ~ ">";
 	}
 }
 
