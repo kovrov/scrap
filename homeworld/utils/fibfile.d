@@ -425,11 +425,89 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
 				widget = new widgets.NullWidget(fibAtom.x, fibAtom.y, width, height);
+				//writefln("NullWidget");
+				//writefln("  name_fixup:0x%X", fibAtom.name_fixup);
+				//writefln("  flags: %s", flagsRepr(fibAtom.flags));
+				//writefln("  status: %s", fibAtom.status);
+				//writefln("  type: %s", fibAtom.type);
+				//writefln("  borderWidth:%s", fibAtom.borderWidth);
+				//writefln("  tabstop: %s", fibAtom.tabstop);
+				//writefln("  borderColor: %X", fibAtom.borderColor);
+				//writefln("  contentColor: %X", fibAtom.contentColor);
+				//writefln("  pos: %s, %s size: %s, %s", fibAtom.x, fibAtom.y, fibAtom.width, fibAtom.height);
+				//writefln("  pData_fixup: 0x%X", fibAtom.pData_fixup);
+				//writefln("  attribs_fixup: 0x%X", fibAtom.attribs_fixup);
+				//writefln("  hotKeyModifiers:%s", fibAtom.hotKeyModifiers);
+				//writefln("  hotKey:%s", fibAtom.hotKey);
+				//writefln("  pad2:%s", fibAtom.pad2);
+				//writefln("  drawstyle:%s", fibAtom.drawstyle);
+				//writefln("  reserved:%s", fibAtom.reserved);
+				//writefln("  pad:%s", fibAtom.pad);
 			}
-			widget.flags = fibAtom.flags;
-			widget.borderWidth = fibAtom.borderWidth;
-			widget.borderColor = fibAtom.borderColor;
-			widget.contentColor = fibAtom.contentColor;
+
+			if (fibAtom.flags & FAF.Link)
+			{
+				widget.Link = true;
+			}
+			if (fibAtom.flags & FAF.Function)
+			{
+				widget.Function = true;
+			}
+			assert (!(fibAtom.flags & FAF.Bitmap));
+			if (fibAtom.flags & FAF.Modal)
+			{
+				widget.Modal = true;
+			}
+			if (fibAtom.flags & FAF.Popup)
+			{
+				widget.Popup = true;
+			}
+			if (fibAtom.flags & FAF.CallOnCreate)
+			{
+				widget.CallOnCreate = true;
+			}
+			if (fibAtom.flags & FAF.ContentsVisible)
+			{
+				widget.ContentsVisible = true;
+			}
+			if (fibAtom.flags & FAF.DefaultOK)
+			{
+				widget.DefaultOK = true;
+			}
+			if (fibAtom.flags & FAF.DefaultBack)
+			{
+				widget.DefaultBack = true;
+			}
+			if (fibAtom.flags & FAF.AlwaysOnTop)
+			{
+				widget.AlwaysOnTop = true;
+			}
+			if (fibAtom.flags & FAF.Draggable)
+			{
+				widget.Draggable = true;
+			}
+			if (fibAtom.flags & FAF.BorderVisible)
+			{
+				widget.BorderVisible = true;
+			}
+			if (fibAtom.flags & FAF.Disabled)
+			{
+				widget.Disabled = true;
+			}
+			if (fibAtom.flags & FAF.DontCutoutBase)
+			{
+				widget.DontCutoutBase = true;
+			}
+			if (fibAtom.flags & FAF.CallOnDelete)
+			{
+				widget.CallOnDelete = true;
+			}
+			assert (!(fibAtom.flags & FAF.Hidden));
+			if (fibAtom.flags & FAF.Background)
+			{
+				widget.Background = true;
+			}
+
 			widget.drawstyle = fibAtom.drawstyle;
 
 			//convert 2-point rectangle to a 1 point/width/height
@@ -444,9 +522,10 @@ void load(string filename, inout Screen[string] screens)
 				}
 				else
 				{
-					//if (!feAtomOnScreen(&fibAtom))
+					if (!fibAtom.onScreen())
 					{
-						widget.flags |= FAF.Hidden;
+						widget.Hidden = true;
+						writefln("WARNING! hidden: %s", widget);
 					}
 					//fibAtom.x = feResRepositionCentredX(fibAtom.x);
 					//fibAtom.y = feResRepositionCentredY(fibAtom.y);
@@ -500,7 +579,7 @@ enum FAF: uint //control flags
 {
 	Link               = 0x00000001,
 	Function           = 0x00000002,
-	Bitmap             = 0x00000004,
+	Bitmap             = 0x00000004,  // unused?
 	Modal              = 0x00000008,
 	Popup              = 0x00000010,
 	CallOnCreate       = 0x00000020,
@@ -513,7 +592,7 @@ enum FAF: uint //control flags
 	Disabled           = 0x00001000,
 	DontCutoutBase     = 0x00002000,
 	CallOnDelete       = 0x00004000,
-	Hidden             = 0x00008000,
+	Hidden             = 0x00008000,  // unused?
 	Background         = 0x00040000,
 }
 debug string flagsRepr(FAF flags)
@@ -651,6 +730,19 @@ struct FibFile
 			uint[2]  drawstyle;
 			uint     reserved;  //void* // region
 			uint[2]  pad;
+
+			// TEMP helpers
+			bool onScreen() const
+			{
+				return pointOnScreen(x, y) ||
+					pointOnScreen(x + width, y) ||
+					pointOnScreen(x + width, y + height) ||
+					pointOnScreen(x, y + height);
+			}
+			static bool pointOnScreen(short x, short y)
+			{
+				return (x >= 0) && (y >= 0) && (x < 640) && (y < 480);
+			}
 		}
 	}
 }
@@ -681,7 +773,7 @@ void main()
 		writefln("Loading %s ...", filename);
 		load(filename, screens);
 	}
-	return;
+//return;
 	auto screen = screens["Main_game_screen"];
 	//foreach (ref screen; screens)
 	{

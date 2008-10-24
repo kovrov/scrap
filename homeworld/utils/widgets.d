@@ -1,14 +1,30 @@
 
+import std.bitmanip;
 debug import std.string;
 
 class Widget
 {
 	short x, y;
 	short width, height;
-	uint flags; // FAF
-	ubyte borderWidth;
-	uint borderColor;
-	uint contentColor;
+	mixin(bitfields!(
+		bool, "Link",            1,
+		bool, "Function",        1,
+		bool, "Modal",           1,
+		bool, "Popup",           1,
+		bool, "CallOnCreate",    1,
+		bool, "ContentsVisible", 1,
+		bool, "DefaultOK",       1,
+		bool, "DefaultBack",     1,
+		bool, "AlwaysOnTop",     1,
+		bool, "Draggable",       1,
+		bool, "BorderVisible",   1,
+		bool, "Disabled",        1,
+		bool, "DontCutoutBase",  1,
+		bool, "CallOnDelete",    1,
+		bool, "Background",      1,
+		bool, "Hidden",          1));
+		//bool, "Bitmap",          1,
+		//uint, "",       15));  // 32-bit
 	uint[2] drawstyle;
 
 	this(short x, short y, short w, short h)
