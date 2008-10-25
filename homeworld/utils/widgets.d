@@ -7,19 +7,19 @@ class Widget
 	short x, y;
 	short width, height;
 	mixin(bitfields!(
-		bool, "Link",            1,
-		bool, "Function",        1,
-		bool, "Modal",           1,
-		bool, "Popup",           1,
-		bool, "CallOnCreate",    1,
-		bool, "ContentsVisible", 1,
+		bool, "Modal",           1, // BaseRegion
+		bool, "Popup",           1, // BaseRegion?
+		bool, "ContentsVisible", 1, // BaseRegion, StaticRectangle
+		bool, "BorderVisible",   1, // BaseRegion, StaticRectangle, color picker?
+		bool, "Link",            1, // button?
+		bool, "Function",        1, // BitmapButton, Button, CheckBox, DragButton, HorizSlider, ListWindow, MenuItem, RadioButton, ScrollBar, ToggleButton, UserRegion, VertSlider, (TextEntry?)
 		bool, "DefaultOK",       1,
 		bool, "DefaultBack",     1,
 		bool, "AlwaysOnTop",     1,
 		bool, "Draggable",       1,
-		bool, "BorderVisible",   1,
 		bool, "Disabled",        1,
 		bool, "DontCutoutBase",  1,
+		bool, "CallOnCreate",    1,
 		bool, "CallOnDelete",    1,
 		bool, "Background",      1,
 		bool, "Hidden",          1));
@@ -35,7 +35,9 @@ class Widget
 		this.height = h;
 	}
 
-	abstract void draw();
+	void draw()  // feStaticRectangleDraw
+	{
+	}
 
 	debug override string toString()
 	{
@@ -46,9 +48,6 @@ class Widget
 class NullWidget : Widget
 {
 	this(short x, short y, short w, short h) { super(x,y,w,h); }
-	override void draw()
-	{
-	}
 }
 
 class UserRegion : Widget
@@ -60,7 +59,7 @@ class UserRegion : Widget
 		this.draw_callback_name = draw_callback_name;
 	}
 
-	override void draw()
+	override void draw()  // feUserRegionDraw
 	{
 	}
 
@@ -81,7 +80,7 @@ class StaticText : Widget
 		this.font_name = font_name;
 	}
 
-	override void draw()
+	override void draw()  // feStaticTextDraw
 	{
 	}
 
@@ -101,7 +100,7 @@ class Button : Widget
 		this.target_name = target_name;
 	}
 
-	override void draw()
+	override void draw()  // uicButtonDraw
 	{
 	}
 
@@ -121,7 +120,7 @@ class CheckBox : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicButtonDraw
 	{
 	}
 
@@ -141,7 +140,7 @@ class ToggleButton : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicToggleDraw
 	{
 	}
 
@@ -163,6 +162,7 @@ class ScrollBar : Widget
 
 	override void draw()
 	{
+		/* vertical scrollbars has complex structure see uicChildScrollBarAlloc */
 	}
 
 	debug override string toString()
@@ -171,15 +171,16 @@ class ScrollBar : Widget
 	}
 }
 
-class StatusBar : Widget
+class TextEntry : Widget
 {
 	this(short x, short y, short w, short h) { super(x,y,w,h); }
-	override void draw()
+	override void draw()  // uicTextEntryDraw
 	{
 	}
 }
 
-class TextEntry : Widget
+/*
+class StatusBar : Widget
 {
 	this(short x, short y, short w, short h) { super(x,y,w,h); }
 	override void draw()
@@ -202,6 +203,7 @@ class TitleBar : Widget
 	{
 	}
 }
+*/
 
 class MenuItem : Widget
 {
@@ -211,10 +213,6 @@ class MenuItem : Widget
 	{
 		super(x,y,w,h);
 		this.callback_name = callback_name;
-	}
-
-	override void draw()
-	{
 	}
 
 	debug override string toString()
@@ -233,7 +231,7 @@ class RadioButton : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicRadioButtonDraw
 	{
 	}
 
@@ -246,7 +244,7 @@ class RadioButton : Widget
 class CutoutRegion : Widget  // FIXME: find out what CutoutRegion's are for
 {
 	this(short x, short y, short w, short h) { super(x,y,w,h); }
-	override void draw()
+	override void draw() // dont have a draw fn?
 	{
 	}
 }
@@ -261,7 +259,7 @@ class DecorativeRegion : Widget
 		this.img_name = img_name;
 	}
 
-	override void draw()
+	override void draw()  // ferDrawDecorative
 	{
 	}
 
@@ -274,14 +272,12 @@ class DecorativeRegion : Widget
 class Divider : Widget
 {
 	this(short x, short y, short w, short h) { super(x,y,w,h); }
-	override void draw()
-	{
-	}
 }
 
 class ListWindow : Widget
 {
 	string callback_name;
+	ScrollBar scrollbar;  // list window have to have a scrollbar ...
 
 	this(short x, short y, short w, short h, string callback_name)
 	{
@@ -289,7 +285,7 @@ class ListWindow : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicListWindowDraw
 	{
 	}
 
@@ -309,7 +305,7 @@ class BitmapButton : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicBitmapButtonDraw
 	{
 	}
 
@@ -329,7 +325,7 @@ class HorizSlider : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicHorizSliderDraw
 	{
 	}
 
@@ -349,7 +345,7 @@ class VertSlider : Widget
 		this.callback_name = callback_name;
 	}
 
-	override void draw()
+	override void draw()  // uicVertSliderDraw
 	{
 	}
 
@@ -369,7 +365,7 @@ class DragButton : Widget
 		this.function_name = function_name;
 	}
 
-	override void draw()
+	override void draw()  // uicButtonDraw
 	{
 	}
 
@@ -389,7 +385,7 @@ class OpaqueDecorativeRegion : Widget
 		this.img_name = img_name;
 	}
 
-	override void draw()
+	override void draw()  // ferDrawOpaqueDecorative
 	{
 	}
 

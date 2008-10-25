@@ -112,6 +112,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string draw_callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.UserRegion(fibAtom.x, fibAtom.y, width, height, draw_callback_name);
 				break;
@@ -140,8 +141,11 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
 				string target_name;
-				if (fibAtom.name_fixup != 0)
+				if (fibAtom.flags & FAF.Function)
+				{
+					assert (fibAtom.name_fixup);
 					target_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				}
 				widget = new widgets.Button(fibAtom.x, fibAtom.y, width, height, target_name);
 				//fibAtom.tabstop
 				//fibAtom.hotKeyModifiers
@@ -158,6 +162,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.CheckBox(fibAtom.x, fibAtom.y, width, height, callback_name);
 				//fibAtom.tabstop
@@ -171,6 +176,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.ToggleButton(fibAtom.x, fibAtom.y, width, height, callback_name);
 				//fibAtom.tabstop
@@ -189,22 +195,9 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.ScrollBar(fibAtom.x, fibAtom.y, width, height, callback_name);
-				break;
-
-			case FA.StatusBar:  // unused?
-				assert (fibAtom.name_fixup == 0);
-				assert (fibAtom.attribs_fixup == 0);
-				assert (fibAtom.pData_fixup == 0);
-				assert (fibAtom.status == 0xCDCDCDCD);
-				assert (fibAtom.tabstop == 0);
-				assert (fibAtom.hotKeyModifiers == 0);
-				assert (fibAtom.hotKey == [cast(ubyte)0,0,0,0,0]);
-				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
-				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
-
-				widget = new widgets.StatusBar(fibAtom.x, fibAtom.y, width, height);
 				break;
 
 			case FA.TextEntry:
@@ -216,38 +209,24 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.hotKey == [cast(ubyte)0,0,0,0,0]);
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
+
+				assert (fibAtom.flags & FAF.Function); // WTF?
 				// TODO: font ...
 				widget = new widgets.TextEntry(fibAtom.x, fibAtom.y, width, height);
 				//fibAtom.tabstop
 				break;
 
-			case FA.ListViewExpandButton:  // unused?
-				assert (fibAtom.name_fixup == 0);
-				assert (fibAtom.attribs_fixup == 0);
-				assert (fibAtom.pData_fixup == 0);
-				assert (fibAtom.status == 0xCDCDCDCD);
-				assert (fibAtom.tabstop == 0);
-				assert (fibAtom.hotKeyModifiers == 0);
-				assert (fibAtom.hotKey == [cast(ubyte)0,0,0,0,0]);
-				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
-				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
+			//case FA.ListViewExpandButton:  // unused?
+			//	widget = new widgets.ListViewExpandButton(fibAtom.x, fibAtom.y, width, height);
+			//	break;
 
-				widget = new widgets.ListViewExpandButton(fibAtom.x, fibAtom.y, width, height);
-				break;
+			//case FA.TitleBar:  // unused?
+			//	widget = new widgets.TitleBar(fibAtom.x, fibAtom.y, width, height);
+			//	break;
 
-			case FA.TitleBar:  // unused?
-				assert (fibAtom.name_fixup == 0);
-				assert (fibAtom.attribs_fixup == 0);
-				assert (fibAtom.pData_fixup == 0);
-				assert (fibAtom.status == 0xCDCDCDCD);
-				assert (fibAtom.tabstop == 0);
-				assert (fibAtom.hotKeyModifiers == 0);
-				assert (fibAtom.hotKey == [cast(ubyte)0,0,0,0,0]);
-				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
-				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
-
-				widget = new widgets.TitleBar(fibAtom.x, fibAtom.y, width, height);
-				break;
+			//case FA.StatusBar:  // unused?
+			//	widget = new widgets.StatusBar(fibAtom.x, fibAtom.y, width, height);
+			//	break;
 
 			case FA.MenuItem:
 				assert (fibAtom.name_fixup != 0);
@@ -260,6 +239,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				//assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.MenuItem(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
@@ -271,6 +251,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 				//HACK: don't fix-up radio button pointers
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.RadioButton(fibAtom.x, fibAtom.y, width, height, callback_name);
 				//fibAtom.tabstop
@@ -331,6 +312,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.ListWindow(fibAtom.x, fibAtom.y,
 							width - LW_BarWidth - LW_WindowXBarSpace, height,
@@ -349,6 +331,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.BitmapButton(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
@@ -364,6 +347,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.HorizSlider(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
@@ -379,6 +363,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.VertSlider(fibAtom.x, fibAtom.y, width, height, callback_name);
 				break;
@@ -391,6 +376,7 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.flags & FAF.Function);
 				string function_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.DragButton(fibAtom.x, fibAtom.y, width, height, function_name);
 				//fibAtom.hotKeyModifiers;
@@ -413,7 +399,7 @@ void load(string filename, inout Screen[string] screens)
 				widget = new widgets.OpaqueDecorativeRegion(fibAtom.x, fibAtom.y, width, height, img_name);
 				break;
 
-			default:
+			case 0:
 				assert (fibAtom.name_fixup == 0);
 				assert (fibAtom.attribs_fixup == 0);
 				assert (fibAtom.pData_fixup == 0);
@@ -448,10 +434,12 @@ void load(string filename, inout Screen[string] screens)
 			if (fibAtom.flags & FAF.Link)
 			{
 				widget.Link = true;
+				//writefln("WARNING! link: %s", widget);
 			}
 			if (fibAtom.flags & FAF.Function)
 			{
 				widget.Function = true;
+				//writefln("WARNING! function: %s", widget);
 			}
 			assert (!(fibAtom.flags & FAF.Bitmap));
 			if (fibAtom.flags & FAF.Modal)
@@ -461,6 +449,7 @@ void load(string filename, inout Screen[string] screens)
 			if (fibAtom.flags & FAF.Popup)
 			{
 				widget.Popup = true;
+				//writefln("WARNING! popup: %s", widget);
 			}
 			if (fibAtom.flags & FAF.CallOnCreate)
 			{
@@ -525,7 +514,7 @@ void load(string filename, inout Screen[string] screens)
 					if (!fibAtom.onScreen())
 					{
 						widget.Hidden = true;
-						writefln("WARNING! hidden: %s", widget);
+						//writefln("WARNING! hidden: %s", widget);
 					}
 					//fibAtom.x = feResRepositionCentredX(fibAtom.x);
 					//fibAtom.y = feResRepositionCentredY(fibAtom.y);
