@@ -7,24 +7,19 @@ class Widget
 	short x, y;
 	short width, height;
 	mixin(bitfields!(
-		bool, "Modal",           1, // BaseRegion
-		bool, "Popup",           1, // BaseRegion?
 		bool, "ContentsVisible", 1, // BaseRegion, StaticRectangle
 		bool, "BorderVisible",   1, // BaseRegion, StaticRectangle, color picker?
 		bool, "Link",            1, // button?
-		bool, "Function",        1, // BitmapButton, Button, CheckBox, DragButton, HorizSlider, ListWindow, MenuItem, RadioButton, ScrollBar, ToggleButton, UserRegion, VertSlider, (TextEntry?)
-		bool, "DefaultOK",       1,
-		bool, "DefaultBack",     1,
-		bool, "AlwaysOnTop",     1,
-		bool, "Draggable",       1,
-		bool, "Disabled",        1,
-		bool, "DontCutoutBase",  1,
-		bool, "CallOnCreate",    1,
-		bool, "CallOnDelete",    1,
-		bool, "Background",      1,
-		bool, "Hidden",          1));
-		//bool, "Bitmap",          1,
-		//uint, "",       15));  // 32-bit
+		bool, "DefaultOK",       1, // Button; meant to be used by BaseRegion
+		bool, "DefaultBack",     1, // Button; meant to be used by BaseRegion
+		bool, "Disabled",        1, // Button, ScrollBar, ListWindow, TextEntry, (any?)
+		bool, "DontCutoutBase",  1, // CutoutRegion, (any?); rationale?
+		bool, "CallOnCreate",    1, // any?
+		bool, "CallOnDelete",    1, // any?
+		bool, "Background",      1, // Button, ToggleButton
+		bool, "Hidden",          1, // (any?); rationale?
+		bool, "Bitmap",          1, // unused
+		uint, "",  4));  // padding to 16-bit
 	uint[2] drawstyle;
 
 	this(short x, short y, short w, short h)
@@ -43,6 +38,15 @@ class Widget
 	{
 		return format("%s [%s,%s, %s,%s]", this.classinfo.name, x,y,width,height);
 	}
+}
+
+class BaseRegion: Widget
+{
+	bool popup;
+	bool modal;
+	//bool alwaysOnTop;
+	bool draggable;
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
 }
 
 class NullWidget : Widget
