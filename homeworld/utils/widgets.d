@@ -9,17 +9,12 @@ class Widget
 	mixin(bitfields!(
 		bool, "ContentsVisible", 1, // BaseRegion, StaticRectangle
 		bool, "BorderVisible",   1, // BaseRegion, StaticRectangle, color picker?
-		bool, "Link",            1, // button?
-		bool, "DefaultOK",       1, // Button; meant to be used by BaseRegion
-		bool, "DefaultBack",     1, // Button; meant to be used by BaseRegion
-		bool, "Disabled",        1, // Button, ScrollBar, ListWindow, TextEntry, (any?)
-		bool, "DontCutoutBase",  1, // CutoutRegion, (any?); rationale?
+		bool, "Background",      1, // Button, ToggleButton
 		bool, "CallOnCreate",    1, // any?
 		bool, "CallOnDelete",    1, // any?
-		bool, "Background",      1, // Button, ToggleButton
+		bool, "Disabled",        1, // Button, ScrollBar, ListWindow, TextEntry, (any?)
 		bool, "Hidden",          1, // (any?); rationale?
-		bool, "Bitmap",          1, // unused
-		uint, "",  4));  // padding to 16-bit
+		uint, "",  1));  // padding to 8-bit
 	uint[2] drawstyle;
 
 	this(short x, short y, short w, short h)
@@ -39,20 +34,20 @@ class Widget
 		string flagsRepr()
 		{
 			string repr;
-			if (Link)            repr ~= "|Link";
+		  //if (Link)            repr ~= "|Link";
 		  //if (Function)        repr ~= "|Function";
-			if (Bitmap)          repr ~= "|Bitmap";
+		  //if (Bitmap)          repr ~= "|Bitmap";
 		  //if (Modal)           repr ~= "|Modal";
 		  //if (Popup)           repr ~= "|Popup";
 			if (CallOnCreate)    repr ~= "|CallOnCreate";
 			if (ContentsVisible) repr ~= "|Contents";
-			if (DefaultOK)       repr ~= "|DefaultOK";
-			if (DefaultBack)     repr ~= "|DefaultBack";
+		  //if (DefaultOK)       repr ~= "|DefaultOK";
+		  //if (DefaultBack)     repr ~= "|DefaultBack";
 		  //if (AlwaysOnTop)     repr ~= "|AlwaysOnTop";
 		  //if (Draggable)       repr ~= "|Draggable";
 			if (BorderVisible)   repr ~= "|Border";
 			if (Disabled)        repr ~= "|Disabled";
-			if (DontCutoutBase)  repr ~= "|DontCutoutBase";
+		  //if (DontCutoutBase)  repr ~= "|DontCutoutBase";
 			if (CallOnDelete)    repr ~= "|CallOnDelete";
 			if (Hidden)          repr ~= "|Hidden";
 			if (Background)      repr ~= "|Background";
@@ -270,7 +265,10 @@ class RadioButton : Widget
 
 class CutoutRegion : Widget  // FIXME: find out what CutoutRegion's are for
 {
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
+	this(short x, short y, short w, short h, bool cutout_base)
+	{
+		super(x,y,w,h);
+	}
 	override void draw() // dont have a draw fn?
 	{
 	}
