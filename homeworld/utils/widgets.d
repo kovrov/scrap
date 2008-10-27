@@ -36,7 +36,30 @@ class Widget
 
 	debug override string toString()
 	{
-		return format("%s [%s,%s, %s,%s]", this.classinfo.name, x,y,width,height);
+		string flagsRepr()
+		{
+			string repr;
+			if (Link)            repr ~= "|Link";
+		  //if (Function)        repr ~= "|Function";
+			if (Bitmap)          repr ~= "|Bitmap";
+		  //if (Modal)           repr ~= "|Modal";
+		  //if (Popup)           repr ~= "|Popup";
+			if (CallOnCreate)    repr ~= "|CallOnCreate";
+			if (ContentsVisible) repr ~= "|Contents";
+			if (DefaultOK)       repr ~= "|DefaultOK";
+			if (DefaultBack)     repr ~= "|DefaultBack";
+		  //if (AlwaysOnTop)     repr ~= "|AlwaysOnTop";
+		  //if (Draggable)       repr ~= "|Draggable";
+			if (BorderVisible)   repr ~= "|Border";
+			if (Disabled)        repr ~= "|Disabled";
+			if (DontCutoutBase)  repr ~= "|DontCutoutBase";
+			if (CallOnDelete)    repr ~= "|CallOnDelete";
+			if (Hidden)          repr ~= "|Hidden";
+			if (Background)      repr ~= "|Background";
+			return repr.length ? repr[1..$] : repr;
+		}
+
+		return format("%s [%3d,%3d, %3d,%3d] [%s]", this.classinfo.name, x,y,width,height, flagsRepr());
 	}
 }
 
@@ -211,17 +234,17 @@ class TitleBar : Widget
 
 class MenuItem : Widget
 {
-	string callback_name;
+	string target;
 
-	this(short x, short y, short w, short h, string callback_name)
+	this(short x, short y, short w, short h, string target)
 	{
 		super(x,y,w,h);
-		this.callback_name = callback_name;
+		this.target = target;
 	}
 
 	debug override string toString()
 	{
-		return super.toString() ~ " callback:<" ~ callback_name ~ ">";
+		return super.toString() ~ " target:<" ~ target ~ ">";
 	}
 }
 

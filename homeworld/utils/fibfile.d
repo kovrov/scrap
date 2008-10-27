@@ -141,13 +141,14 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
-				string target_name;
+				//assert (fibAtom.name_fixup != 0);
+				string target;
 				if (fibAtom.flags & FAF.Function)
-				{
-					assert (fibAtom.name_fixup);
-					target_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
-				}
-				widget = new widgets.Button(fibAtom.x, fibAtom.y, width, height, target_name);
+					target = "function:" ~ toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				else if (fibAtom.flags & FAF.Link)
+					target = "link:" ~ toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				//else just a useless button
+				widget = new widgets.Button(fibAtom.x, fibAtom.y, width, height, target);
 				//fibAtom.tabstop
 				//fibAtom.hotKeyModifiers
 				//fibAtom.hotKey
@@ -217,20 +218,7 @@ void load(string filename, inout Screen[string] screens)
 				//fibAtom.tabstop
 				break;
 
-			//case FA.ListViewExpandButton:  // unused?
-			//	widget = new widgets.ListViewExpandButton(fibAtom.x, fibAtom.y, width, height);
-			//	break;
-
-			//case FA.TitleBar:  // unused?
-			//	widget = new widgets.TitleBar(fibAtom.x, fibAtom.y, width, height);
-			//	break;
-
-			//case FA.StatusBar:  // unused?
-			//	widget = new widgets.StatusBar(fibAtom.x, fibAtom.y, width, height);
-			//	break;
-
 			case FA.MenuItem:
-				assert (fibAtom.name_fixup != 0);
 				assert (fibAtom.attribs_fixup == 0);
 				assert (fibAtom.pData_fixup == 0);
 				assert (fibAtom.status == 0xCDCDCDCD);
@@ -240,11 +228,15 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.pad2 == [cast(ubyte)0,0xCD]);
 				assert (fibAtom.pad == [0xCDCDCDCD,0xCDCDCDCD]);
 
+				assert (fibAtom.name_fixup != 0);
 				assert (fibAtom.flags & FAF.Function || fibAtom.flags & FAF.Link);
 				assert (!(fibAtom.flags & FAF.Function && fibAtom.flags & FAF.Link));
-				// FIXME: link or function
-				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
-				widget = new widgets.MenuItem(fibAtom.x, fibAtom.y, width, height, callback_name);
+				string target;
+				if (fibAtom.flags & FAF.Function)
+					target = "function:" ~ toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				else
+					target = "link:" ~ toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
+				widget = new widgets.MenuItem(fibAtom.x, fibAtom.y, width, height, target);
 				break;
 
 			case FA.RadioButton:  // HACK: don't fix-up radio button pointers
@@ -450,6 +442,18 @@ void load(string filename, inout Screen[string] screens)
 				//writefln("  drawstyle:%s", fibAtom.drawstyle);
 				//writefln("  reserved:%s", fibAtom.reserved);
 				//writefln("  pad:%s", fibAtom.pad);
+
+			//case FA.ListViewExpandButton:  // unused?
+			//	widget = new widgets.ListViewExpandButton(fibAtom.x, fibAtom.y, width, height);
+			//	break;
+
+			//case FA.TitleBar:  // unused?
+			//	widget = new widgets.TitleBar(fibAtom.x, fibAtom.y, width, height);
+			//	break;
+
+			//case FA.StatusBar:  // unused?
+			//	widget = new widgets.StatusBar(fibAtom.x, fibAtom.y, width, height);
+			//	break;
 			}
 
 			if (fibAtom.flags & FAF.Link)
@@ -460,7 +464,7 @@ void load(string filename, inout Screen[string] screens)
 			if (fibAtom.flags & FAF.ContentsVisible)
 			{
 				widget.ContentsVisible = true;
-				//writefln("WARNING! : %s", widget);
+				//writefln("WARNING! ContentsVisible: %s", widget);
 			}
 			if (fibAtom.flags & FAF.DefaultOK)
 			{
@@ -475,12 +479,12 @@ void load(string filename, inout Screen[string] screens)
 			if (fibAtom.flags & FAF.BorderVisible)
 			{
 				widget.BorderVisible = true;
-				//writefln("WARNING! : %s", widget);
+				//writefln("WARNING! BorderVisible: %s", widget);
 			}
 			if (fibAtom.flags & FAF.Disabled)
 			{
 				widget.Disabled = true;
-				//writefln("WARNING! : %s", widget);
+				//writefln("WARNING! Disabled: %s", widget);
 			}
 			if (fibAtom.flags & FAF.DontCutoutBase)
 			{
@@ -492,6 +496,7 @@ void load(string filename, inout Screen[string] screens)
 				widget.CallOnCreate = true;
 				//writefln("WARNING! CallOnCreate: %s", widget);
 			}
+			//else writefln("WARNING! CallOnCreate: %s", widget);
 			if (fibAtom.flags & FAF.CallOnDelete)
 			{
 				widget.CallOnDelete = true;
@@ -767,10 +772,10 @@ void main()
 						"feman/TaskBar.fib",
 						"feman/Trader_Interface.FIB"])
 	{
-		//writefln("Loading %s ...", filename);
+		writefln("Loading %s ...", filename);
 		load(filename, screens);
 	}
-return;
+//return;
 	auto screen = screens["Main_game_screen"];
 	//foreach (ref screen; screens)
 	{
