@@ -9,12 +9,11 @@ class Widget
 	mixin(bitfields!(
 		bool, "ContentsVisible", 1, // BaseRegion, StaticRectangle
 		bool, "BorderVisible",   1, // BaseRegion, StaticRectangle, color picker?
-		bool, "Background",      1, // Button, ToggleButton
 		bool, "CallOnCreate",    1, // any?
 		bool, "CallOnDelete",    1, // any?
 		bool, "Disabled",        1, // Button, ScrollBar, ListWindow, TextEntry, (any?)
 		bool, "Hidden",          1, // (any?); rationale?
-		uint, "",  1));  // padding to 8-bit
+		uint, "",  2));  // padding to 8-bit
 	uint[2] drawstyle;
 
 	this(short x, short y, short w, short h)
@@ -50,7 +49,7 @@ class Widget
 		  //if (DontCutoutBase)  repr ~= "|DontCutoutBase";
 			if (CallOnDelete)    repr ~= "|CallOnDelete";
 			if (Hidden)          repr ~= "|Hidden";
-			if (Background)      repr ~= "|Background";
+		  //if (Background)      repr ~= "|Background";
 			return repr.length ? repr[1..$] : repr;
 		}
 

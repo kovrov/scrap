@@ -161,6 +161,7 @@ void load(string filename, inout Screen[string] screens)
 				// connect to parent's events
 				if (fibAtom.flags & FAF.DefaultOK) {}
 				if (fibAtom.flags & FAF.DefaultBack) {}
+				if (fibAtom.flags & FAF.Background) {}  // TODO: draw colors ()
 
 				break;
 
@@ -200,6 +201,7 @@ void load(string filename, inout Screen[string] screens)
 				//fibAtom.tabstop
 				//fibAtom.hotKeyModifiers
 				//fibAtom.hotKey
+				if (fibAtom.flags & FAF.Background) {}  // TODO: draw colors (uicToggleDraw)
 				break;
 
 			case FA.ScrollBar:
@@ -522,16 +524,6 @@ void load(string filename, inout Screen[string] screens)
 				widget.BorderVisible = true;
 				//writefln("WARNING! BorderVisible: %s", widget);
 			} //else writefln("WARNING! !BorderVisible: %s", widget);
-			if (fibAtom.flags & FAF.Background)
-			{
-				widget.Background = true;
-				//writefln("WARNING! Background: %s", widget);
-			}
-			if (fibAtom.flags & FAF.Disabled)
-			{
-				widget.Disabled = true;
-				//writefln("WARNING! Disabled: %s", widget);
-			}
 			if (fibAtom.flags & FAF.CallOnCreate)
 			{
 				widget.CallOnCreate = true;
@@ -541,6 +533,11 @@ void load(string filename, inout Screen[string] screens)
 			{
 				widget.CallOnDelete = true;
 				//writefln("WARNING! CallOnDelete: %s", widget);
+			}
+			if (fibAtom.flags & FAF.Disabled)
+			{
+				widget.Disabled = true;
+				//writefln("WARNING! Disabled: %s", widget);
 			}
 			assert (!(fibAtom.flags & FAF.Hidden));
 			assert (!(fibAtom.flags & FAF.Bitmap));
@@ -555,6 +552,7 @@ void load(string filename, inout Screen[string] screens)
 			{
 				if (fibAtom.flags & FAF.Background)
 				{
+					// for BaseRegion, NullWidget, Button (more?) - special flag for rescale/reposition on create/resolution change
 					//feResRescaleBackground(&fibAtom);
 				}
 				else
@@ -800,7 +798,7 @@ void main()
 		//writefln("Loading %s ...", filename);
 		load(filename, screens);
 	}
-	//return;
+	return;
 
 	auto screen = screens["Video_Options"];
 	//foreach (ref screen; screens)
