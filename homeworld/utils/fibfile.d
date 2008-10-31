@@ -112,6 +112,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				//assert (!(fibAtom.flags & FAF.ContentsVisible));
+				//assert (!(fibAtom.flags & FAF.BorderVisible));
 
 				assert (fibAtom.flags & FAF.Function);
 				assert (fibAtom.name_fixup != 0);
@@ -130,6 +132,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				//assert (!(fibAtom.flags & FAF.ContentsVisible));
+				//assert (!(fibAtom.flags & FAF.BorderVisible));
 
 				string text = toString(cast(char*)fibAtom.pData_fixup + fib.mem_offset);
 				string font_name = toString(cast(char*)fibAtom.attribs_fixup + fib.mem_offset);
@@ -142,6 +146,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (fibAtom.attribs_fixup == 0);
 				assert (fibAtom.pData_fixup == 0);
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
+				//assert (!(fibAtom.flags & FAF.ContentsVisible));
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				string target;
 				if (fibAtom.flags & FAF.Function)
@@ -162,7 +168,7 @@ void load(string filename, inout Screen[string] screens)
 				// connect to parent's events
 				if (fibAtom.flags & FAF.DefaultOK) {}
 				if (fibAtom.flags & FAF.DefaultBack) {}
-				if (fibAtom.flags & FAF.Background) {}  // TODO: draw colors ()
+				if (fibAtom.flags & FAF.Background) {}  // draw colors //useless?
 
 				break;
 
@@ -177,6 +183,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				//assert (!(fibAtom.flags & FAF.ContentsVisible));
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -192,6 +200,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultOK));
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
+				//assert (!(fibAtom.flags & FAF.ContentsVisible));
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -199,7 +209,7 @@ void load(string filename, inout Screen[string] screens)
 				//fibAtom.tabstop
 				//fibAtom.hotKeyModifiers
 				//fibAtom.hotKey
-				if (fibAtom.flags & FAF.Background) {}  // TODO: draw colors (uicToggleDraw)
+				if (fibAtom.flags & FAF.Background) {}  // draw colors //useless?
 				break;
 
 			case FA.ScrollBar:
@@ -214,6 +224,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -231,11 +243,14 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				//assert (!(fibAtom.flags & FAF.ContentsVisible));
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function); // WTF?
 				// TODO: font ...
 				widget = new widgets.TextEntry(fibAtom.x, fibAtom.y, width, height);
 				//fibAtom.tabstop
+				//widget.parentHasBorder = fibAtom.flags & FAF.BorderVisible; // uicChildTextEntryAlloc
 				break;
 
 			case FA.MenuItem:
@@ -248,6 +263,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.name_fixup != 0);
 				assert (fibAtom.flags & FAF.Function || fibAtom.flags & FAF.Link);
@@ -268,6 +285,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -289,6 +308,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultOK));
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (!(fibAtom.flags & FAF.ContentsVisible));
+				//assert (!(fibAtom.flags & FAF.BorderVisible));
 
 				bool cutout_base = !(fibAtom.flags & FAF.DontCutoutBase);
 				widget = new widgets.CutoutRegion(fibAtom.x, fibAtom.y, width, height, cutout_base);
@@ -307,6 +328,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				string img_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.DecorativeRegion(fibAtom.x, fibAtom.y, width, height, img_name);
@@ -325,6 +348,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				widget = new widgets.Divider(fibAtom.x, fibAtom.y, width, height);
 				break;
@@ -340,6 +365,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				//assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -361,6 +388,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -379,6 +408,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -397,6 +428,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string callback_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -412,6 +445,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				assert (fibAtom.flags & FAF.Function);
 				string function_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
@@ -434,6 +469,8 @@ void load(string filename, inout Screen[string] screens)
 				assert (!(fibAtom.flags & FAF.DefaultBack));
 				assert (!(fibAtom.flags & FAF.DontCutoutBase));
 				assert (!(fibAtom.flags & FAF.Background));
+				assert (fibAtom.flags & FAF.ContentsVisible);
+				assert (fibAtom.flags & FAF.BorderVisible);
 
 				string img_name = toString(cast(char*)fibAtom.name_fixup + fib.mem_offset);
 				widget = new widgets.OpaqueDecorativeRegion(fibAtom.x, fibAtom.y, width, height, img_name);
@@ -465,7 +502,12 @@ void load(string filename, inout Screen[string] screens)
 						(cast(widgets.BaseRegion)widget).draggable = true;
 				}
 				else
-					widget = new widgets.NullWidget(fibAtom.x, fibAtom.y, width, height);
+				{
+					widget = new widgets.StaticRectangle(fibAtom.x, fibAtom.y, width, height);
+				}
+
+				(cast(widgets.StaticRectangle)widget).transparentBackground = !(fibAtom.flags & FAF.ContentsVisible);
+				(cast(widgets.StaticRectangle)widget).bordered = cast(bool)(fibAtom.flags & FAF.BorderVisible);
 				// something todo with fibAtom.flags & FAF.Background ? 
 				break;
 
@@ -484,16 +526,6 @@ void load(string filename, inout Screen[string] screens)
 
 			assert (!(fibAtom.flags & FAF.Hidden));
 			assert (!(fibAtom.flags & FAF.Bitmap));
-			if (fibAtom.flags & FAF.ContentsVisible)
-			{
-				widget.ContentsVisible = true;
-				//writefln("WARNING! ContentsVisible: %s", widget);
-			} //else writefln("WARNING! !ContentsVisible: %s", widget);
-			if (fibAtom.flags & FAF.BorderVisible)
-			{
-				widget.BorderVisible = true;
-				//writefln("WARNING! BorderVisible: %s", widget);
-			} //else writefln("WARNING! !BorderVisible: %s", widget);
 			if (fibAtom.flags & FAF.CallOnCreate)
 			{
 				widget.CallOnCreate = true;
@@ -520,7 +552,7 @@ void load(string filename, inout Screen[string] screens)
 			{
 				if (fibAtom.flags & FAF.Background)
 				{
-					// for BaseRegion, NullWidget, Button (more?) - special flag for rescale/reposition on create/resolution change
+					// for BaseRegion, StaticRectangle, Button (more?) - special flag for rescale/reposition on create/resolution change
 					//feResRescaleBackground(&fibAtom);
 				}
 				else

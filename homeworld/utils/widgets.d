@@ -7,13 +7,11 @@ class Widget
 	short x, y;
 	short width, height;
 	mixin(bitfields!(
-		bool, "ContentsVisible", 1, // BaseRegion, StaticRectangle
-		bool, "BorderVisible",   1, // BaseRegion, StaticRectangle, color picker?
 		bool, "CallOnCreate",    1, // any?
 		bool, "CallOnDelete",    1, // any?
 		bool, "Disabled",        1, // Button, ScrollBar, ListWindow, TextEntry, (any?)
 		bool, "Hidden",          1, // (any?); rationale?
-		uint, "",  2));  // padding to 8-bit
+		uint, "",  4));  // padding to 8-bit
 	uint[2] drawstyle;
 
 	this(short x, short y, short w, short h)
@@ -39,12 +37,12 @@ class Widget
 		  //if (Modal)           repr ~= "|Modal";
 		  //if (Popup)           repr ~= "|Popup";
 			if (CallOnCreate)    repr ~= "|CallOnCreate";
-			if (ContentsVisible) repr ~= "|Contents";
+		  //if (ContentsVisible) repr ~= "|Contents";
 		  //if (DefaultOK)       repr ~= "|DefaultOK";
 		  //if (DefaultBack)     repr ~= "|DefaultBack";
 		  //if (AlwaysOnTop)     repr ~= "|AlwaysOnTop";
 		  //if (Draggable)       repr ~= "|Draggable";
-			if (BorderVisible)   repr ~= "|Border";
+		  //if (BorderVisible)   repr ~= "|Border";
 			if (Disabled)        repr ~= "|Disabled";
 		  //if (DontCutoutBase)  repr ~= "|DontCutoutBase";
 			if (CallOnDelete)    repr ~= "|CallOnDelete";
@@ -57,17 +55,19 @@ class Widget
 	}
 }
 
-class BaseRegion: Widget
+class StaticRectangle : Widget
+{
+	bool transparentBackground;
+	bool bordered;
+	this(short x, short y, short w, short h) { super(x,y,w,h); }
+}
+
+class BaseRegion: StaticRectangle
 {
 	bool popup;
 	bool modal;
 	//bool alwaysOnTop;
 	bool draggable;
-	this(short x, short y, short w, short h) { super(x,y,w,h); }
-}
-
-class NullWidget : Widget
-{
 	this(short x, short y, short w, short h) { super(x,y,w,h); }
 }
 
