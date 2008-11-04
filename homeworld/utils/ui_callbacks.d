@@ -1,3 +1,12 @@
+import widgets;
+
+void function(widgets.Widget)[string] onCreate;
+
+static this()
+{
+	onCreate = [
+
+/*
 Advanced:
 	OP_BattleChatter
 	OP_Voice0
@@ -59,29 +68,28 @@ Advanced_speech:
 Allies_Chatting_Screen:
 	InGameChatEntry
 Audio:
-	"OP_AutoChannels":
-		"onCreate"
-			delegate(char* name, featom* atom)
-			{
-				feToggleButtonSet(name, opAutoChannel);
-			}
-		"onClick"
-			delegate(char* name, featom* atom)
-			{
-				opAutoChannel = FECHECKED(atom) ? SOUND_MODE_AUTO : SOUND_MODE_NORM;
-			}
+*/
+	"OP_AutoChannels": function void(widgets.Widget button)
+		{
+			button.checked = op.autoChannel == SOUND_MODE_AUTO;
+			button.flag = DrawThisFrame;
+		},
+		//"onClick"
+		//	delegate(ToggleButton button)
+		//	{
+		//		opAutoChannel = button.checked ? SOUND_MODE_AUTO : SOUND_MODE_NORM;
+		//	}
+/+
 	"OP_DCTQuality":
 		"onCreate"
-			delegate(char* name, featom* atom)
+			delegate(RadioButtonGroup buttons)
 			{
-				feRadioButtonSet(name, opSoundQuality);
-				soundMixerSetMode(opSoundQuality);
+				buttons.checked = opSoundQuality;
 			}
 		"onClick"
-			delegate(char* name, featom* atom)
+			delegate(RadioButtonGroup buttons)
 			{
-				opSoundQuality = (sdword)atom->pData;
-				soundMixerSetMode(opSoundQuality);
+				opSoundQuality = buttons.checked;
 			}
 	"OP_Music_Volume":
 		"onCreate"
@@ -189,6 +197,8 @@ Audio:
 				opSpeechVolumeProcess(atom->region, 0, 0, 0);
 				//AddSmoothie(&speechsmoothie);
 			}
++/
+/*
 Audio_Options:
 	"OP_AutoChannels":dupe
 	"OP_DCTQuality":dupe
@@ -591,3 +601,6 @@ Video_Options:
 	OP_NumEffects
 	OP_Render
 	OP_Resolution
+*/
+		];
+}
