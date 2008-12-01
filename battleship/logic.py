@@ -10,7 +10,7 @@ BATTLE_STARTED='BATTLE_STARTED';PLAYER_TURN='PLAYER_TURN';BATTLE_ENDED='BATTLE_E
 SETUP='SETUP';SHOOT='SHOOT';RESTART='RESTART' # events
 SEA_SIDE = 10
 
-# Just a "nice" client helper
+# A "facade" around particular gamelogic implementation
 class Game:
 	"""
 	Usage like this:

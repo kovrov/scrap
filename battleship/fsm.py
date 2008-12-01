@@ -26,21 +26,21 @@ class Transducer:
 		self.states = states
 		self.__set_state(initial_state)
 
-	def __set_state(self, state):
-		st = self.states[state]
+	def __set_state(self, state_id):
+		st = self.states[state_id]
 		if st.on_enter:
 			st.on_enter(self.context)
-		self.state = state
-		return state
+		self.current_state_id = state_id
+		return state_id
 
-	def dispatch(self, event, input):
-		st = self.states.get(self.state)
-		assert st, "STATE %s" % self.state
-		ev = st.events.get(event)
-		if not ev:
-			raise Exception("STATE %s have no EVENT %s" % (self.state, event))
-		ev.input(self.context, input)
-		for tr in ev.transitions:
+	def dispatch(self, event_id, input_data):
+		st = self.states.get(self.current_state_id)
+		assert st, "STATE %s" % self.current_state_id
+		event = st.events.get(event_id)
+		if event is None:
+			raise Exception("STATE %s have no EVENT %s" % (self.current_state_id, event_id))
+		event.input(self.context, input_data)
+		for tr in event.transitions:
 			if tr.condition and tr.condition(self.context):
 				if tr.action:
 					tr.action(self.context)
@@ -48,4 +48,4 @@ class Transducer:
 				return
 
 	def get_state(self):
-		return self.state
+		return self.current_state_id

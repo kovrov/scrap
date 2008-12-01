@@ -25,7 +25,7 @@ void print_sea(logic::Game& game, logic::PLAYER_HANDLE player_id, board::Pos& la
 	int side = rows * 2 + 1;
 	std::vector<char> grid(rows * side, ' ');
 
-	foreach (const board::Pos& shot, game.GetPlayerShots(player_id))
+	foreach (const board::Shot& shot, game.GetPlayerShots(player_id))
 		grid[shot.y * side + shot.x * 2 + 1] = '.';
 
 	foreach (const board::Ship& ship, game.GetOpponentShips(player_id))
