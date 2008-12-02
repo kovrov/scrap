@@ -24,16 +24,79 @@ struct Rect
 }
 
 
+class TargetNode
+{
+	private typeof(this) parent, child, next;
+	union
+	{
+		Rect rect;
+		struct
+		{
+			short x, y;
+			ushort width, height;
+		}
+	}
+	string name;
+
+	this(string name, typeof(this) parent=null)
+	{
+		if (parent)
+			this.setParent(parent);
+		this.name = name;
+	}
+	//TODO: refactor to mixin
+	private void setParent(typeof(this) new_parent)
+	{
+		if (this.parent !is null)
+		{
+			if (this.parent is new_parent)
+				return;
+			//this.parent.remove(this)
+		}
+
+		if (new_parent.child is null)
+			new_parent.child = this;
+		else
+		{
+			auto child = new_parent.child;
+			while (child.next !is null)
+				child = child.next;
+			child.next = this;
+		}
+		this.parent = new_parent;
+	}
+	/*
+	private void append(typeof(this) new_child)
+	{
+		if (new_child.parent !is null)
+		{
+			if (new_child.parent is this)
+				return;
+			//new_child.parent.remove(new_child)
+		}
+
+		if (this.child is null)
+			this.child = new_child;
+		else
+		{
+			auto child = this.child;
+			while (child.next !is null)
+				child = child.next;
+			child.next = new_child;
+		}
+		new_child.parent = this;
+	}
+	*/
+}
 
 
-void findControl(Node root)
+TargetNode findControl(TargetNode root, const ref Point point)
 {
 	auto node = root;
 	while (node !is null)
 	{
-		// sinking phase
-		writefln("depth-first.. %s", node.name);
-		//
+		writefln("%s(%s)", node.classinfo.name, node.name);
+
 		if (node.child !is null)
 			node = node.child;
 		else if (node.next !is null)
@@ -53,36 +116,39 @@ void findControl(Node root)
 			}
 		}
 	}
+	return null;
 }
 
 
-class Node
+class Window : TargetNode
 {
-	Node child, next, parent;
-	string name;
-
-	this(string name, Node parent=null)
-	{
-		if (parent)
-			parent.append(this);
-		this.name = name;
-	}
-	void append(Node new_child)
-	{
-		if (this.child is null)
-			this.child = new_child;
-		else
-		{
-			auto child = this.child;
-			while (child.next !is null)
-				child = child.next;
-			child.next = new_child;
-			new_child.parent = this;
-		}
-	}
+	this(string name, TargetNode parent) { super(name, parent); }
 }
 
+class Group : TargetNode
+{
+	this(string name, TargetNode parent) { super(name, parent); }
+}
 
+class Radio : TargetNode
+{
+	this(string name, TargetNode parent) { super(name, parent); }
+}
+
+class Button : TargetNode
+{
+	this(string name, TargetNode parent) { super(name, parent); }
+}
+
+class Label : TargetNode
+{
+	this(string name, TargetNode parent) { super(name, parent); }
+}
+
+class Dialog : TargetNode
+{
+	this(string name, TargetNode parent) { super(name, parent); }
+}
 
 
 
@@ -90,29 +156,19 @@ import std.stdio;
 
 void main()
 {
-	/*
-	Rect r;
-	r.x = 1;
-	r.y = 2;
-	r.width = 32;
-	r.height = 18;
-	Point p = Point(34,20);
-	writefln("%s contains %s: ", r, p, r.contains(p));
-	*/
+	auto root = new TargetNode("root");
+	root.rect.size = Size(640,480);
+	auto wnd = new Window("wnd", root);
+	auto grp = new Group("grp", wnd);
+	auto r1 = new Radio("r1", grp);
+	auto r2 = new Radio("r2", grp);
+	auto b1 = new Button("b1", wnd);
+	auto l1 = new Label("l1", wnd);
+	auto dlg = new Dialog("dlg", root);
+	auto b2 = new Button("b2", dlg);
+	auto b3 = new Button("b3", dlg);
+	auto l2 = new Label("l2", dlg);
 
-	auto root = new Node("root");
-	auto wnd = new Node("wnd", root);
-	auto grp = new Node("grp", wnd);
-	auto r1 = new Node("r1", grp);
-	auto r2 = new Node("r2", grp);
-	auto b1 = new Node("b1", wnd);
-	auto l1 = new Node("l1", wnd);
-	auto dlg = new Node("dlg", root);
-	auto b2 = new Node("b2", dlg);
-	auto b3 = new Node("b3", dlg);
-	auto l2 = new Node("l2", dlg);
-
-	//print root
-	findControl(root);
+	findControl(root, Point(1,2));
 }
 
