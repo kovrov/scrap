@@ -1,6 +1,11 @@
 
 
-struct Point { short x, y; }
+struct Point
+{
+	short x, y;
+	void opAddAssign(const ref Point other) { x += other.x; y += other.y; }
+	void opSubAssign(const ref Point other) { x -= other.x; y -= other.y; }
+}
 struct Size { ushort width, height; }
 
 struct Rect
@@ -36,6 +41,7 @@ class TargetNode
 			short x, y;
 			ushort width, height;
 		}
+		static assert (Rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
 	string name;
 	mixin tree.Node;
@@ -52,34 +58,45 @@ class TargetNode
 
 TargetNode findControl(TargetNode root, const ref Point point)
 {
-	TargetNode target;
-	auto node = root;
+	TargetNode best_match;
 	int indent = 0;
+	Point parent_abs_pos;
+	auto node = root;
 	while (node !is null)
 	{
 		writefln("%*s%s", indent*2, "" , node.name);
 
 		if (node.child !is null)
 		{
-			// we in an internal (inner) node
-			node = node.child;
+			// the node is an internal (inner) node
+		//	if (match(node))
+		//		best_match = node;
+			parent_abs_pos += node.rect.position;
 			indent++;
+			node = node.child;
 		}
 		else if (node.next !is null)
 		{
-			// we in a leaf
+			// the node is a leaf
+		//	if (match(node))
+		//		return node;
 			node = node.next;
 		}
 		else
 		{
-			// we in a last leaf
+			// the node is a last leaf
+		//	if (match(node))
+		//		return node;
+		//	if (best_match is node.parent)
+		//		return best_match;
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)
 			{
+				indent--;
+				parent_abs_pos -= parent.rect.position;
 				if (parent.next)
 				{
-					indent--;
 					node = parent.next;
 					break;
 				}
@@ -87,7 +104,7 @@ TargetNode findControl(TargetNode root, const ref Point point)
 			}
 		}
 	}
-	return target;
+	return best_match;
 }
 
 
@@ -131,16 +148,16 @@ void main()
 	root.rect.size = Size(640,480);
 	auto wnd = new Window("wnd", root);
 	wnd.rect = Rect((100,100),(400,200));
+	auto b1 = new Button("b1", wnd);
+	b1.rect = Rect((10,170),(20,30));
+	auto l1 = new Label("l1", wnd);
+	l1.rect = Rect((40,170),(20,30));
 	auto grp = new Group("grp", wnd);
 	grp.rect = Rect((10,10),(290,150));
 	auto r1 = new Radio("r1", grp);
 	r1.rect = Rect((10,10),(10,50));
 	auto r2 = new Radio("r2", grp);
 	r2.rect = Rect((10,30),(10,50));
-	auto b1 = new Button("b1", wnd);
-	b1.rect = Rect((10,170),(20,30));
-	auto l1 = new Label("l1", wnd);
-	l1.rect = Rect((40,170),(20,30));
 	auto dlg = new Dialog("dlg", root);
 	dlg.rect = Rect((200,200),(400,200));
 	auto b2 = new Button("b2", dlg);
