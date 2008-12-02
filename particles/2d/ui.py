@@ -65,7 +65,7 @@ class Button:
 	def __init__(self, callback, pos, text, size=None, anchor=(0,0)):
 		self.callback = callback
 		self.pos = pos
-		self.text = pyglet.text.Label(text, valign='bottom',
+		self.text = pyglet.text.Label(text,
 		                              font_name='Verdana', font_size=14,
 		                              color=theme['text_color'])
 		self.size = size
