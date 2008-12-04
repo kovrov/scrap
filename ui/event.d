@@ -75,11 +75,8 @@ TargetNode findControl(TargetNode root, const ref Point point)
 		{
 			if (node.rect.contains(point - parent_abs_pos))
 			{
-				if (best_match is node.parent)
-				{
-					writef(" #best_match");
-					best_match = node;
-				}
+				writef(" #best_match");
+				best_match = node;
 			}
 			parent_abs_pos += node.rect.position;
 			indent++;
