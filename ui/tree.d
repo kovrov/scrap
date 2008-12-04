@@ -2,7 +2,7 @@
 
 template Node()
 {
-	private typeof(this) parent, child, prev, next;
+	typeof(this) parent, child, prev, next;
 }
 
 
@@ -88,6 +88,44 @@ T deepSearch(T, P)(T root, P predicate)
 		else
 		{
 			// we in a last leaf
+			auto parent = node.parent;
+			node = null;
+			while (parent !is null)
+			{
+				if (parent.next)
+				{
+					node = parent.next;
+					break;
+				}
+				parent = parent.parent;
+			}
+		}
+	}
+	return target;
+}
+
+T traverse(T, C)(T root, C visitor)
+{
+	T target;
+	auto node = root;
+	while (node !is null)
+	{
+		if (node.child !is null)
+		{
+			// we in an internal (inner) node
+			visitor(node);
+			node = node.child;
+		}
+		else if (node.next !is null)
+		{
+			// we in a leaf
+			visitor(node);
+			node = node.next;
+		}
+		else
+		{
+			// we in a last leaf
+			visitor(node);
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)
