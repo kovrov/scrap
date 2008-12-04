@@ -2,7 +2,7 @@
 
 template Node()
 {
-	typeof(this) parent, child, prev, next;
+	typeof(this) parent, child, lastChild, prev, next;
 }
 
 
@@ -31,15 +31,17 @@ void setParent()(typeof(this) new_parent)
 	}
 
 	if (new_parent.child is null)
+	{
+		assert (new_parent.lastChild is null);
 		new_parent.child = this;
+	}
 	else
 	{
-		auto last_child = new_parent.child;
-		while (last_child.next !is null)
-			last_child = last_child.next;
-		last_child.next = this;
-		this.prev = last_child;
+		assert (new_parent.lastChild !is null);
+		new_parent.lastChild.next = this;
+		this.prev = new_parent.lastChild;
 	}
+	new_parent.lastChild = this;
 	this.parent = new_parent;
 }
 
@@ -75,19 +77,16 @@ T deepSearch(T, P)(T root, P predicate)
 	auto node = root;
 	while (node !is null)
 	{
-		if (node.child !is null)
+		if (node.child !is null)  // the node is an internal (inner) node
 		{
-			// we in an internal (inner) node
 			node = node.child;
 		}
-		else if (node.next !is null)
+		else if (node.next !is null)  // the node is a leaf
 		{
-			// we in a leaf
 			node = node.next;
 		}
-		else
+		else  // the node is a last leaf
 		{
-			// we in a last leaf
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)
@@ -104,40 +103,39 @@ T deepSearch(T, P)(T root, P predicate)
 	return target;
 }
 
-T traverse(T, C)(T root, C visitor)
+int opApplyReverse()(int delegate(ref typeof(this)) dg)
 {
-	T target;
-	auto node = root;
+	int result = 0;
+	auto node = this;
 	while (node !is null)
 	{
-		if (node.child !is null)
+		if (node.lastChild !is null)  // the node is an internal (inner) node
 		{
-			// we in an internal (inner) node
-			visitor(node);
-			node = node.child;
+			assert (node.child !is null);
+			result = dg(node);
+			node = node.lastChild;
 		}
-		else if (node.next !is null)
+		else if (node.prev !is null)  // the node is a leaf
 		{
-			// we in a leaf
-			visitor(node);
-			node = node.next;
+			result = dg(node);
+			node = node.prev;
 		}
-		else
+		else  // the node is a last leaf in sequence
 		{
-			// we in a last leaf
-			visitor(node);
+			assert (node is node.parent.child);
+			result = dg(node);
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)
 			{
-				if (parent.next)
+				if (parent.prev)
 				{
-					node = parent.next;
+					node = parent.prev;
 					break;
 				}
 				parent = parent.parent;
 			}
 		}
 	}
-	return target;
+	return result;
 }

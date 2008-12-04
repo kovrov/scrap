@@ -46,6 +46,7 @@ class TargetNode
 	string name;
 	mixin tree.Node;
 	mixin tree.setParent;
+	mixin tree.opApplyReverse;
 
 	this(string name, typeof(this) parent=null)
 	{
@@ -75,60 +76,54 @@ TargetNode findControl(TargetNode root, const ref Point point)
 	auto node = root;
 	while (node !is null)
 	{
-		auto pos = parent_abs_pos + node.rect.position;
-		writef("%*s%s [%d,%d]", indent*2, "" , node.name, pos.x, pos.y);
-		auto tmp = point - parent_abs_pos;
-		writef("   {[%d,%d].contains([%d,%d])}", node.rect.position.x, node.rect.position.y, tmp.x, tmp.y);
-
 		if (node.child !is null)  // the node is an internal (inner) node
 		{
 			if (node.rect.contains(point - parent_abs_pos))
 			{
-				writef(" #best_match");
+				// save so far best matched target
 				best_match = node;
 			}
 			parent_abs_pos += node.rect.position;
 			indent++;
 			node = node.child;
 		}
-		else if (node.next !is null)  // the node is a leaf
+		else
 		{
 			if (node.rect.contains(point - parent_abs_pos))
 			{
-				writefln(" #found");
+				// first matched terminal node (leaf) is what we need
 				return node;
 			}
-			node = node.next;
-		}
-		else  // the node is a last leaf
-		{
-			if (node.rect.contains(point - parent_abs_pos))
+
+			if (node.next !is null)  // the node is a leaf
 			{
-				writefln(" #found");
-				return node;
+				node = node.next;
+				continue;
 			}
-			if (best_match is node.parent)
+			else  // the node is a last leaf
 			{
-				writefln(" #found best_match");
-				return best_match;
-			}
-			auto parent = node.parent;
-			node = null;
-			while (parent !is null)
-			{
-				indent--;
-				parent_abs_pos -= parent.rect.position;
-				if (parent.next)
+				assert (node is node.parent.lastChild);
+				if (best_match is node.parent)
 				{
-					node = parent.next;
-					break;
+					// found best match
+					return best_match;
 				}
-				parent = parent.parent;
+				auto parent = node.parent;
+				node = null;
+				while (parent !is null)
+				{
+					indent--;
+					parent_abs_pos -= parent.rect.position;
+					if (parent.next)
+					{
+						node = parent.next;
+						break;
+					}
+					parent = parent.parent;
+				}
 			}
 		}
-		writefln();
 	}
-	writefln(" #return best_match");
 	return best_match;
 }
 
@@ -200,6 +195,7 @@ TargetNode genTestData()
 }
 
 TargetNode root;
+TargetNode tracked;
 
 extern (Windows)
 win32.LRESULT WndProc(win32.HWND hWnd, win32.UINT message, win32.WPARAM wParam, win32.LPARAM lParam)
@@ -209,17 +205,39 @@ win32.LRESULT WndProc(win32.HWND hWnd, win32.UINT message, win32.WPARAM wParam, 
 	case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
 		win32.PAINTSTRUCT ps;
 		win32.HDC hdc = win32.BeginPaint(hWnd, &ps);
+		// http://msdn.microsoft.com/en-us/library/ms969905.aspx
+		win32.HDC buffer_dc = win32.CreateCompatibleDC(hdc);
+		win32.HBITMAP bitmap = win32.CreateCompatibleBitmap(hdc, ps.rcPaint.right, ps.rcPaint.bottom);
+		win32.HBITMAP old_bitmap = win32.SelectObject(buffer_dc, bitmap);
 
-		//win32.SelectObject(ps.hdc, win32.GetStockObject(win32.GRAY_BRUSH));
-		tree.traverse(root, (ref TargetNode node)
-			{
-				Point pos = node.position_abs();
-				win32.Rectangle(ps.hdc,
-						pos.x, pos.y,
-						pos.x+node.rect.size.width, pos.y+node.rect.size.height);
-			});
+		auto original = win32.GetCurrentObject(buffer_dc, win32.OBJ_BRUSH);
+		foreach_reverse(ref node; root)
+		{
+			if (node is tracked)
+				win32.SelectObject(buffer_dc, win32.GetStockObject(win32.GRAY_BRUSH));
 
+			Point pos = node.position_abs();
+			win32.Rectangle(buffer_dc,
+					pos.x, pos.y,
+					pos.x+node.rect.size.width+1, pos.y+node.rect.size.height+1);
+
+			if (node is tracked)
+				win32.SelectObject(buffer_dc, original);
+		}
+
+		win32.BitBlt(hdc, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, buffer_dc, 0, 0, win32.SRCCOPY);
+		win32.SelectObject(buffer_dc, old_bitmap);
+		win32.DeleteObject(bitmap);
+		win32.DeleteDC(buffer_dc);
 		win32.EndPaint(hWnd, &ps);
+		break;
+	case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
+		auto target = findControl(root, Point(win32.LOWORD(lParam), win32.HIWORD(lParam)));
+		if (tracked !is target)
+		{
+			tracked = target;
+			win32.InvalidateRect(hWnd, null, false);
+		}
 		break;
 	case win32.WM_DESTROY:
 		win32.PostQuitMessage(0);
@@ -241,7 +259,6 @@ void main()
 	wcex.lpfnWndProc	= &WndProc;
 	wcex.hInstance		= win32.GetModuleHandle(null);
 	wcex.hCursor        = win32.LoadCursor(null,  win32.IDC_ARROW);
-	wcex.hbrBackground	= cast(win32.HBRUSH)(win32.COLOR_WINDOW+1);
 	wcex.lpszClassName	= "test_window";
 	if (!win32.RegisterClassEx(&wcex))
 		throw new Exception("RegisterClass failed");
