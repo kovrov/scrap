@@ -107,6 +107,7 @@ int opApplyReverse()(int delegate(ref typeof(this)) dg)
 {
 	int result = 0;
 	auto node = this;
+	//int level;
 	while (node !is null)
 	{
 		if (node.lastChild !is null)  // the node is an internal (inner) node
@@ -114,6 +115,7 @@ int opApplyReverse()(int delegate(ref typeof(this)) dg)
 			assert (node.child !is null);
 			result = dg(node);
 			node = node.lastChild;
+			//level++;
 		}
 		else if (node.prev !is null)  // the node is a leaf
 		{
@@ -128,6 +130,7 @@ int opApplyReverse()(int delegate(ref typeof(this)) dg)
 			node = null;
 			while (parent !is null)
 			{
+				//level--;
 				if (parent.prev)
 				{
 					node = parent.prev;
