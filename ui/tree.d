@@ -7,6 +7,11 @@ template Node()
 
 
 void setParent()(typeof(this) new_parent)
+in
+{
+	assert (new_parent !is null);
+}
+body
 {
 	if (this.parent !is null)
 	{
