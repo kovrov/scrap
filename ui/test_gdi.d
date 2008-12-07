@@ -1,5 +1,6 @@
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
+import std.string;
 static import generic;
 alias generic.Point!(short) Point;
 alias generic.Size!(ushort) Size;
@@ -57,17 +58,68 @@ class SysWindow
 		if (!win32.RegisterClassEx(&wcex))
 			throw new Exception("RegisterClass failed");
 	}
+
+
+	enum STYLE
+	{
+		DEFAULT,
+		BORDERLESS,
+		DIALOG,
+		TOOL
+	}
+	struct Settings
+	{
+		string title;
+		bool visible = true;
+		int width = win32.CW_USEDEFAULT;
+		int height = 0;
+		bool resizable = false;
+		bool fullscreen = false;
+		bool vsync = true;
+		STYLE style;
+		//display=null;
+		//screen=null;
+		//config=null;
+		//context=null;
+	}
+
 	this()
 	{
+		this(Settings());
+	}
+
+import std.stdio;
+	this(ref Settings settings)
+	{
 		event_mgr = new event.Manager;
-		handle = win32.CreateWindow(_classnamez, "test",
-					win32.WS_OVERLAPPEDWINDOW, win32.CW_USEDEFAULT,
-					0, win32.CW_USEDEFAULT, 0, null, null, win32.GetModuleHandle(null), null);
+		win32.DWORD style = win32.WS_OVERLAPPEDWINDOW;
+		if (settings.width > 0 && settings.height > 0)
+		{
+			win32.RECT rect = win32.RECT(0,0, settings.width, settings.height);
+			assert (win32.AdjustWindowRect(&rect, style, win32.FALSE));
+			settings.width = rect.right - rect.left;
+			settings.height = rect.bottom - rect.top;
+		}
+		else
+		{
+			settings.width = win32.CW_USEDEFAULT;
+			settings.height = 0; // ignored
+		}
+		handle = win32.CreateWindow(_classnamez, toStringz(settings.title),
+					style,
+					win32.CW_USEDEFAULT, 0,
+					settings.width, settings.height,
+					null, null, win32.GetModuleHandle(null), null);
 		if (!handle)
 			throw new Exception("CreateWindow failed");
 		_windows[handle] = this;
 		_windows.rehash;
-		win32.ShowWindow(handle, win32.SW_SHOWNORMAL);
+		if (settings.visible)
+			this.visible(true);
+	}
+	void visible(bool show)
+	{
+		win32.ShowWindow(handle, show?win32.SW_SHOWNORMAL:win32.SW_HIDE);
 		win32.UpdateWindow(handle);
 	}
 	void redraw()
@@ -141,7 +193,14 @@ void main()
 {
 	event.TargetNode tracked;
 	event.TargetNode root = genTestData();
-	auto window = new SysWindow;
+
+	SysWindow.Settings settings;
+	settings.title = "test";
+	settings.visible = false;
+	settings.width = 640;
+	settings.height = 480;
+	auto window = new SysWindow(settings);
+
 	window.event_mgr.register(
 		delegate (ref event.MouseEvent ev)
 		{
@@ -163,13 +222,13 @@ void main()
 			Point pos = node.position_abs();
 			win32.Rectangle(hdc,
 					pos.x, pos.y,
-					pos.x+node.rect.size.width+1, pos.y+node.rect.size.height+1);
+					pos.x+node.rect.size.width, pos.y+node.rect.size.height);
 
 			if (node is tracked)
 				win32.SelectObject(hdc, original);
 		}
 	};
-	window.redraw();
+	window.visible(true);
 
 	// Main message loop:
 	win32.MSG msg;

@@ -25,6 +25,6 @@ struct Rect(PT, ST)
 	bool contains(const ref typeof(this.position) point)
 	{
 		return position.x <= point.x && position.y <= point.y &&
-				point.x <= position.x + size.width && point.y <= position.y + size.height;
+				point.x < position.x + size.width && point.y < position.y + size.height;
 	}
 }
