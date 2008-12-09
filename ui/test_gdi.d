@@ -71,14 +71,7 @@ void main()
 {
 	event.TargetNode tracked;
 	event.TargetNode root = genTestData();
-
-	sys.Window.Settings settings;
-	settings.title = "test";
-	settings.visible = false;
-	settings.width = 640;
-	settings.height = 480;
-	auto window = new sys.Window(settings);
-
+	auto window = sys.Window("test", Size(640,480), sys.Window.FLAG.hidden);
 	window.event_mgr.register(
 		delegate (ref event.MouseEvent ev)
 		{

@@ -2,6 +2,8 @@ pragma(lib, "win32.lib");
 static import win32 = win32.windows;
 import std.string;
 import event;
+import generic; 
+alias generic.Size!(ushort) Size;
 
 class Window
 {
@@ -9,6 +11,7 @@ class Window
 	private win32.HWND handle;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
+
 	private static extern (Windows)
 	win32.LRESULT WndProc(win32.HWND hWnd, win32.UINT message, win32.WPARAM wParam, win32.LPARAM lParam)
 	{
@@ -34,7 +37,7 @@ class Window
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
 			_windows[hWnd].event_mgr.dispatch(
-				event.MouseEvent(event.MOUSE.MOVE, Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
+				event.MouseEvent(event.MOUSE.MOVE, event.Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
 			break;
 		case win32.WM_DESTROY:
 			win32.PostQuitMessage(0);
@@ -44,6 +47,7 @@ class Window
 		}
 		return 0;
 	}
+
 	static this()
 	{
 		win32.WNDCLASSEX wcex;
@@ -56,7 +60,6 @@ class Window
 			throw new Exception("RegisterClass failed");
 	}
 
-
 	enum STYLE
 	{
 		DEFAULT,
@@ -64,54 +67,73 @@ class Window
 		DIALOG,
 		TOOL
 	}
-	struct Settings
+	enum FLAG
 	{
-		string title;
-		bool visible = true;
-		int width = win32.CW_USEDEFAULT;
-		int height = 0;
-		bool resizable = false;
-		bool fullscreen = false;
-		bool vsync = true;
-		STYLE style;
+		hidden     = 1,
+		resizable  = 1<<1,
+		fullscreen = 1<<2,
+		vsync      = 1<<3
+	}
+	/* Factory method */
+	static Window opCall(T...)(T tuple)
+	{
 		//display=null;
 		//screen=null;
 		//config=null;
 		//context=null;
+		string title = "default";
+		bool fullscreen, vsync, hidden;
+		win32.DWORD style = win32.WS_OVERLAPPEDWINDOW, style_ex = 0;
+		win32.DWORD width = win32.CW_USEDEFAULT, height = 0;
+		foreach (e; tuple)
+		{
+			static if (typeid(typeof(e)) is typeid(FLAG))
+			{
+				if (!(e&FLAG.resizable))
+				{
+					style ^= (win32.WS_THICKFRAME | win32.WS_MAXIMIZEBOX);
+					style_ex |= win32.WS_EX_DLGMODALFRAME;
+				}
+				fullscreen = cast(bool)(e&FLAG.fullscreen);
+				vsync      = cast(bool)(e&FLAG.vsync);
+				hidden     = cast(bool)(e&FLAG.hidden);
+			}
+			static if (typeid(typeof(e)) is typeid(Size))
+			{
+				width = e.width;
+				height = e.height;
+			}
+			static if (typeid(typeof(e)) is typeid(string))
+			{
+				title = e;
+			}
+		}
+
+		if (width > 0 && height > 0)
+		{
+			win32.RECT rect = win32.RECT(0,0, width, height);
+			assert (win32.AdjustWindowRectEx(&rect, style, win32.FALSE, style_ex));
+			width = rect.right - rect.left;
+			height = rect.bottom - rect.top;
+		}
+
+		win32.HWND hwnd = win32.CreateWindowEx(style_ex,
+					_classnamez, toStringz(title), style,
+					win32.CW_USEDEFAULT, 0, width, height,
+					null, null, win32.GetModuleHandle(null), null);
+		if (!hwnd)
+			throw new Exception("CreateWindow failed");
+
+		auto window = new typeof(this);
+		window.event_mgr = new event.Manager;
+		window.handle = hwnd;
+		_windows[hwnd] = window;
+		_windows.rehash;
+		if (!hidden)
+			window.visible(true);
+		return window;
 	}
 
-	this()
-	{
-		this(Settings());
-	}
-	this(ref Settings settings)
-	{
-		event_mgr = new event.Manager;
-		win32.DWORD style = win32.WS_OVERLAPPEDWINDOW;
-		if (settings.width > 0 && settings.height > 0)
-		{
-			win32.RECT rect = win32.RECT(0,0, settings.width, settings.height);
-			assert (win32.AdjustWindowRect(&rect, style, win32.FALSE));
-			settings.width = rect.right - rect.left;
-			settings.height = rect.bottom - rect.top;
-		}
-		else
-		{
-			settings.width = win32.CW_USEDEFAULT;
-			settings.height = 0; // ignored
-		}
-		handle = win32.CreateWindow(_classnamez, toStringz(settings.title),
-					style,
-					win32.CW_USEDEFAULT, 0,
-					settings.width, settings.height,
-					null, null, win32.GetModuleHandle(null), null);
-		if (!handle)
-			throw new Exception("CreateWindow failed");
-		_windows[handle] = this;
-		_windows.rehash;
-		if (settings.visible)
-			this.visible(true);
-	}
 	void visible(bool show)
 	{
 		win32.ShowWindow(handle, show?win32.SW_SHOWNORMAL:win32.SW_HIDE);
