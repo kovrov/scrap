@@ -84,25 +84,21 @@ class Window
 		string title = "default";
 		bool fullscreen, vsync, hidden;
 		win32.DWORD style = win32.WS_OVERLAPPEDWINDOW, style_ex = 0;
-		win32.DWORD width = win32.CW_USEDEFAULT, height = 0;
+		win32.RECT size_rect = win32.RECT(0,0, win32.CW_USEDEFAULT, 0);
 		foreach (e; tuple)
 		{
 			static if (typeid(typeof(e)) is typeid(FLAG))
 			{
 				if (!(e&FLAG.resizable))
-				{
-					//style ^= (win32.WS_THICKFRAME | win32.WS_MAXIMIZEBOX);
-					//style_ex |= win32.WS_EX_DLGMODALFRAME;
-					style = win32.WS_CLIPCHILDREN|win32.WS_BORDER|win32.WS_CAPTION|win32.WS_SYSMENU|win32.WS_MINIMIZEBOX;//|win32.WS_POPUP
-				}
+					style ^= (win32.WS_THICKFRAME | win32.WS_MAXIMIZEBOX);
 				fullscreen = cast(bool)(e&FLAG.fullscreen);
 				vsync      = cast(bool)(e&FLAG.vsync);
 				hidden     = cast(bool)(e&FLAG.hidden);
 			}
 			static if (typeid(typeof(e)) is typeid(Size))
 			{
-				width = e.width;
-				height = e.height;
+				size_rect.right = e.width;
+				size_rect.bottom = e.height;
 			}
 			static if (typeid(typeof(e)) is typeid(string))
 			{
@@ -110,17 +106,15 @@ class Window
 			}
 		}
 
-		if (width > 0 && height > 0)
+		if (size_rect.right > 0 && size_rect.bottom > 0)
 		{
-			win32.RECT rect = win32.RECT(0,0, width, height);
-			assert (win32.AdjustWindowRectEx(&rect, style, win32.FALSE, style_ex));
-			width = rect.right - rect.left;
-			height = rect.bottom - rect.top;
+			win32.AdjustWindowRectEx(&size_rect, style, win32.FALSE, style_ex);
 		}
 
 		win32.HWND hwnd = win32.CreateWindowEx(style_ex,
 					_classnamez, toStringz(title), style,
-					win32.CW_USEDEFAULT, 0, width, height,
+					win32.CW_USEDEFAULT, 0,
+					size_rect.right - size_rect.left, size_rect.bottom - size_rect.top,
 					null, null, win32.GetModuleHandle(null), null);
 		if (!hwnd)
 			throw new Exception("CreateWindow failed");
