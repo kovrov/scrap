@@ -51,10 +51,10 @@ class Window
 	static this()
 	{
 		win32.WNDCLASSEX wcex;
-		wcex.style			= win32.CS_HREDRAW | win32.CS_VREDRAW;
+		wcex.style			= win32.CS_HREDRAW | win32.CS_VREDRAW; // CS_DBLCLKS
 		wcex.lpfnWndProc	= &WndProc;
-		wcex.hInstance		= win32.GetModuleHandle(null);
-		wcex.hCursor        = win32.LoadCursor(null,  win32.IDC_ARROW);
+		wcex.hInstance      = win32.GetModuleHandle(null);
+		wcex.hCursor		= win32.LoadCursor(null, win32.IDC_ARROW);
 		wcex.lpszClassName	= _classnamez;
 		if (!win32.RegisterClassEx(&wcex))
 			throw new Exception("RegisterClass failed");
@@ -91,8 +91,9 @@ class Window
 			{
 				if (!(e&FLAG.resizable))
 				{
-					style ^= (win32.WS_THICKFRAME | win32.WS_MAXIMIZEBOX);
-					style_ex |= win32.WS_EX_DLGMODALFRAME;
+					//style ^= (win32.WS_THICKFRAME | win32.WS_MAXIMIZEBOX);
+					//style_ex |= win32.WS_EX_DLGMODALFRAME;
+					style = win32.WS_CLIPCHILDREN|win32.WS_BORDER|win32.WS_CAPTION|win32.WS_SYSMENU|win32.WS_MINIMIZEBOX;//|win32.WS_POPUP
 				}
 				fullscreen = cast(bool)(e&FLAG.fullscreen);
 				vsync      = cast(bool)(e&FLAG.vsync);
