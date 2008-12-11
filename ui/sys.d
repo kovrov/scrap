@@ -40,7 +40,11 @@ class Window
 				event.MouseEvent(event.MOUSE.MOVE, event.Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
 			break;
 		case win32.WM_DESTROY:
-			win32.PostQuitMessage(0);
+			_windows.remove(hWnd);
+			if (_windows.length > 0)
+				_windows.rehash;
+			else
+				win32.PostQuitMessage(0);
 			break;
 		default:
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);
@@ -75,7 +79,7 @@ class Window
 		vsync      = 1<<3
 	}
 	/* Factory method */
-	static Window opCall(T...)(T tuple)
+	static typeof(this) opCall(T...)(T tuple)
 	{
 		//display=null;
 		//screen=null;
