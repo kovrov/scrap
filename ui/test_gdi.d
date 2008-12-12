@@ -66,23 +66,39 @@ event.TargetNode genTestData()
 }
 
 
+struct App
+{
+	struct 
+	{
+		Size winsize = Size(640,480);
+		void loadSettings() {}
+	}
+	string name = "test";
+	sys.Window window;
+	void* render;
+	void* simulation;
+}
+
+
 static import event;
 void main()
 {
 	event.TargetNode tracked;
 	event.TargetNode root = genTestData();
-	auto window = sys.Window("test", Size(640,480), sys.Window.FLAG.hidden);
-	window.event_mgr.register(
+	App app;
+	app.loadSettings();
+	app.window = sys.Window(app.name, app.winsize, sys.Window.FLAG.hidden);
+	app.window.event_mgr.register(
 		delegate (ref event.MouseEvent ev)
 		{
 			auto target = event.findControl(root, ev.pos);
 			if (tracked !is target)
 			{
 				tracked = target;
-				window.redraw();
+				app.window.redraw();
 			}
 		});
-	window.paint_handler = delegate(win32.HDC hdc)
+	app.window.paint_handler = delegate(win32.HDC hdc)
 	{
 		auto original = win32.GetCurrentObject(hdc, win32.OBJ_BRUSH);
 		foreach_reverse(ref node; root)
@@ -99,7 +115,7 @@ void main()
 				win32.SelectObject(hdc, original);
 		}
 	};
-	window.visible(true);
+	app.window.visible(true);
 
 	// Main message loop:
 	win32.MSG msg;
