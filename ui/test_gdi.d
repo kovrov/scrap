@@ -83,6 +83,25 @@ struct App
 static import event;
 void main()
 {
+/*
+	auto window = sys.Window();
+	event.Manager ui_event_mgr;
+	void delegate(gdi grapgics) ui_draw;
+
+
+	void* ui; // something could be binded to input/output
+
+	auto mouse_handler = delegate (ref event.MouseEvent ev)
+		{
+			auto target = event.findControl(ui.root, ev.pos);
+			if (target !is null && target.onMouse !is null)
+				target.onMouse(ev);
+		}
+
+	window.event_mgr = ui_event_mgr;
+
+	void* simulation;  // something could be binded to input/output
+*/
 	event.TargetNode tracked;
 	event.TargetNode root = genTestData();
 	App app;
