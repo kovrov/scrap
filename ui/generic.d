@@ -1,30 +1,30 @@
 struct Point(T)
 {
 	T x, y;
-	const Point opAdd(const ref Point other) { return Point(x +  other.x, y +  other.y); }
-	const Point opSub(const ref Point other) { return Point(x -  other.x, y -  other.y); }
-	void opAddAssign(const ref Point other)               { x += other.x; y += other.y; }
-	void opSubAssign(const ref Point other)               { x -= other.x; y -= other.y; }
+	typeof(this) opAdd(const ref typeof(this) other) const { return typeof(this)(x + other.x, y + other.y); }
+	typeof(this) opSub(const ref typeof(this) other) const { return typeof(this)(x - other.x, y - other.y); }
+	void opAddAssign(const ref typeof(this) other)               { x += other.x; y += other.y; }
+	void opSubAssign(const ref typeof(this) other)               { x -= other.x; y -= other.y; }
 }
 
 struct Size(T) { T width, height; }
 
 struct Rect(PT, ST)
 {
-	//union
-	//{
-		generic.Point!(PT) position;//origin;
-	//	struct{ PT x, y; }
-	//}
-	//union
-	//{
-		generic.Size!(ST) size;
-	//	struct{ ST width, height; }
-	//}
-
+	union
+	{
+		Point!(PT) position;
+		struct{ PT x, y; }
+	}
+	union
+	{
+		Size!(ST) size;
+		struct{ ST width, height; }
+	}
+	this(const ref typeof(this.position) pt, const ref typeof(this.size) sz) { position=pt; size=sz; }
 	bool contains(const ref typeof(this.position) point)
 	{
-		return position.x <= point.x && position.y <= point.y &&
-				point.x < position.x + size.width && point.y < position.y + size.height;
+		return this.x <= point.x && this.y <= point.y &&
+				point.x < this.x + this.width && point.y < this.y + this.height;
 	}
 }

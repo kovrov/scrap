@@ -18,20 +18,12 @@ class Window
 		switch (message)
 		{
 		case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
-			auto paint = _windows[hWnd].paint_handler;
-			if (paint !is null)
+			auto paint_handler = _windows[hWnd].paint_handler;
+			if (paint_handler !is null)
 			{
 				win32.PAINTSTRUCT ps;
 				win32.HDC hdc = win32.BeginPaint(hWnd, &ps);
-				// http://msdn.microsoft.com/en-us/library/ms969905.aspx
-				win32.HDC buffer_dc = win32.CreateCompatibleDC(hdc);
-				win32.HBITMAP bitmap = win32.CreateCompatibleBitmap(hdc, ps.rcPaint.right, ps.rcPaint.bottom);
-				win32.HBITMAP old_bitmap = win32.SelectObject(buffer_dc, bitmap);
-				paint(buffer_dc);
-				win32.BitBlt(hdc, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, buffer_dc, 0, 0, win32.SRCCOPY);
-				win32.SelectObject(buffer_dc, old_bitmap);
-				win32.DeleteObject(bitmap);
-				win32.DeleteDC(buffer_dc);
+				offScreenDraw(hdc, &ps.rcPaint, paint_handler);
 				win32.EndPaint(hWnd, &ps);
 			}
 			break;
@@ -138,9 +130,31 @@ class Window
 		win32.ShowWindow(handle, show?win32.SW_SHOWNORMAL:win32.SW_HIDE);
 		win32.UpdateWindow(handle);
 	}
+
+	static void offScreenDraw(win32.HDC hdc, win32.RECT* rect, void delegate(win32.HDC hdc) paint_handler)
+	{
+			// http://msdn.microsoft.com/library/ms969905
+			win32.HDC buffer_dc = win32.CreateCompatibleDC(hdc);
+			win32.HBITMAP bitmap = win32.CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
+			win32.HBITMAP old_bitmap = win32.SelectObject(buffer_dc, bitmap);
+			paint_handler(buffer_dc);
+			win32.BitBlt(hdc, 0, 0, rect.right, rect.bottom, buffer_dc, 0, 0, win32.SRCCOPY);
+			win32.SelectObject(buffer_dc, old_bitmap);
+			win32.DeleteObject(bitmap);
+			win32.DeleteDC(buffer_dc);
+	}
+
 	void redraw()
 	{
-		win32.InvalidateRect(this.handle, null, false);
+		//win32.InvalidateRect(this.handle, null, false);
+		if (this.paint_handler !is null)
+		{
+			win32.HDC hdc = win32.GetDC(this.handle);
+			win32.RECT rc;
+			win32.GetClientRect(this.handle, &rc);
+			offScreenDraw(hdc, &rc, this.paint_handler);
+			win32.ReleaseDC(this.handle, hdc);
+		}
 	}
 	void delegate(win32.HDC hdc) paint_handler;
 }
