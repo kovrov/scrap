@@ -1,9 +1,17 @@
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
 import std.string;
-import ui;
-import generic; 
-alias generic.Size!(ushort) Size;
+static import ui;
+
+int messageLoop()
+{
+	win32.MSG msg;
+	while (win32.GetMessage(&msg, null, 0, 0))
+	{
+		win32.DispatchMessage(&msg);
+	}
+	return 0;
+}
 
 class Window
 {
@@ -91,7 +99,7 @@ class Window
 				vsync      = cast(bool)(e&FLAG.vsync);
 				hidden     = cast(bool)(e&FLAG.hidden);
 			}
-			static if (typeid(typeof(e)) is typeid(Size))
+			static if (typeid(typeof(e)) is typeid(ui.Size))
 			{
 				size_rect.right = e.width;
 				size_rect.bottom = e.height;

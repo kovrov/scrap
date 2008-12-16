@@ -1,5 +1,6 @@
 static import generic;
 alias generic.Point!(short) Point;
+alias generic.Size!(ushort) Size;
 alias generic.Rect!(short, ushort) Rect;
 
 static import tree;

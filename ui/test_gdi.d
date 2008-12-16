@@ -1,11 +1,4 @@
-pragma(lib, "win32.lib");
-static import win32 = win32.windows;
-static import generic;
-alias generic.Point!(short) Point;
-alias generic.Size!(ushort) Size;
-alias generic.Rect!(short, ushort) Rect;
-import std.stdio;
-import sys;
+static import sys;
 static import ui;
 
 
@@ -42,27 +35,27 @@ class Dialog : ui.TargetNode
 ui.TargetNode genTestData()
 {
 	auto root = new ui.TargetNode("root");
-	root.rect.size = Size(640,480);
+	root.rect.size = ui.Size(640,480);
 	  auto dlg = new Dialog("dlg", root);
-	  dlg.rect = Rect(Point(200,200),Size(400,200));  // [200,200-600,400]
+	  dlg.rect = ui.Rect(ui.Point(200,200),ui.Size(400,200));  // [200,200-600,400]
 	    auto b2 = new Button("b2", dlg);
-	    b2.rect = Rect(Point(10,10),Size(48,18));     // [210,210-228,258]
+	    b2.rect = ui.Rect(ui.Point(10,10),ui.Size(48,18));     // [210,210-228,258]
 	    auto b3 = new Button("b3", dlg);
-	    b3.rect = Rect(Point(10,40),Size(50,20));     // [210,240-230,290]
+	    b3.rect = ui.Rect(ui.Point(10,40),ui.Size(50,20));     // [210,240-230,290]
 	    auto l2 = new Label("l2", dlg);
-	    l2.rect = Rect(Point(10,70),Size(50,20));     // [210,270-230,320]
+	    l2.rect = ui.Rect(ui.Point(10,70),ui.Size(50,20));     // [210,270-230,320]
 	  auto wnd = new Window("wnd", root);
-	  wnd.rect = Rect(Point(100,100),Size(400,200));  // [100,100-500,300]
+	  wnd.rect = ui.Rect(ui.Point(100,100),ui.Size(400,200));  // [100,100-500,300]
 	    auto b1 = new Button("b1", wnd);
-	    b1.rect = Rect(Point(10,170),Size(30,20));    // [110,270-130,300]
+	    b1.rect = ui.Rect(ui.Point(10,170),ui.Size(30,20));    // [110,270-130,300]
 	    auto l1 = new Label("l1", wnd);
-	    l1.rect = Rect(Point(50,170),Size(30,20));    // [150,440-170,470]
+	    l1.rect = ui.Rect(ui.Point(50,170),ui.Size(30,20));    // [150,440-170,470]
 	    auto grp = new Group("grp", wnd);
-	    grp.rect = Rect(Point(10,10),Size(290,150));  // [110,110-400,260]
+	    grp.rect = ui.Rect(ui.Point(10,10),ui.Size(290,150));  // [110,110-400,260]
 	      auto r1 = new Radio("r1", grp);
-	      r1.rect = Rect(Point(10,10),Size(30,10));   // [120,120-130,170]
+	      r1.rect = ui.Rect(ui.Point(10,10),ui.Size(30,10));   // [120,120-130,170]
 	      auto r2 = new Radio("r2", grp);
-	      r2.rect = Rect(Point(10,30),Size(30,10));   // [120,140-130,190]
+	      r2.rect = ui.Rect(ui.Point(10,30),ui.Size(30,10));   // [120,140-130,190]
 	return root;
 }
 
@@ -71,7 +64,7 @@ struct App
 {
 	struct 
 	{
-		Size winsize = Size(640,480);
+		ui.Size winsize = ui.Size(640,480);
 		void loadSettings() {}
 	}
 	string name = "test";
@@ -80,6 +73,8 @@ struct App
 	void* simulation;
 }
 
+
+static import win32 = win32.windows;
 
 void main()
 {
@@ -125,7 +120,7 @@ void main()
 			if (node is tracked)
 				win32.SelectObject(hdc, win32.GetStockObject(win32.GRAY_BRUSH));
 
-			Point pos = node.position_abs();
+			auto pos = node.position_abs();
 			win32.Rectangle(hdc,
 					pos.x, pos.y,
 					pos.x+node.rect.size.width, pos.y+node.rect.size.height);
@@ -137,9 +132,5 @@ void main()
 	app.window.visible(true);
 
 	// Main message loop:
-	win32.MSG msg;
-	while (win32.GetMessage(&msg, null, 0, 0))
-	{
-		win32.DispatchMessage(&msg);
-	}
+	sys.messageLoop();
 }
