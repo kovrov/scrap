@@ -55,7 +55,7 @@ struct MouseEvent
 	}
 }
 
-class Manager
+class EventManager
 {
 	alias void delegate (ref MouseEvent ev) MouseHandler;
 	MouseHandler callback;

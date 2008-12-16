@@ -1,13 +1,13 @@
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
 import std.string;
-import event;
+import ui;
 import generic; 
 alias generic.Size!(ushort) Size;
 
 class Window
 {
-	event.Manager event_mgr;
+	ui.EventManager event_mgr;
 	private win32.HWND handle;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
@@ -29,7 +29,7 @@ class Window
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
 			_windows[hWnd].event_mgr.dispatch(
-				event.MouseEvent(event.MOUSE.MOVE, event.Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
+				ui.MouseEvent(ui.MOUSE.MOVE, ui.Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
 			break;
 		case win32.WM_DESTROY:
 			_windows.remove(hWnd);
@@ -116,7 +116,7 @@ class Window
 			throw new Exception("CreateWindow failed");
 
 		auto window = new typeof(this);
-		window.event_mgr = new event.Manager;
+		window.event_mgr = new ui.EventManager;
 		window.handle = hwnd;
 		_windows[hwnd] = window;
 		_windows.rehash;

@@ -6,41 +6,42 @@ alias generic.Size!(ushort) Size;
 alias generic.Rect!(short, ushort) Rect;
 import std.stdio;
 import sys;
+static import ui;
 
 
-class Window : event.TargetNode
+class Window : ui.TargetNode
 {
-	this(string name, event.TargetNode parent) { super(name, parent); }
+	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Group : event.TargetNode
+class Group : ui.TargetNode
 {
-	this(string name, event.TargetNode parent) { super(name, parent); }
+	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Radio : event.TargetNode
+class Radio : ui.TargetNode
 {
-	this(string name, event.TargetNode parent) { super(name, parent); }
+	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Button : event.TargetNode
+class Button : ui.TargetNode
 {
-	this(string name, event.TargetNode parent) { super(name, parent); }
+	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Label : event.TargetNode
+class Label : ui.TargetNode
 {
-	this(string name, event.TargetNode parent) { super(name, parent); }
+	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Dialog : event.TargetNode
+class Dialog : ui.TargetNode
 {
-	this(string name, event.TargetNode parent) { super(name, parent); }
+	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-event.TargetNode genTestData()
+ui.TargetNode genTestData()
 {
-	auto root = new event.TargetNode("root");
+	auto root = new ui.TargetNode("root");
 	root.rect.size = Size(640,480);
 	  auto dlg = new Dialog("dlg", root);
 	  dlg.rect = Rect(Point(200,200),Size(400,200));  // [200,200-600,400]
@@ -80,20 +81,19 @@ struct App
 }
 
 
-static import event;
 void main()
 {
 /*
 	auto window = sys.Window();
-	event.Manager ui_event_mgr;
+	ui.EventManager ui_event_mgr;
 	void delegate(gdi grapgics) ui_draw;
 
 
 	void* ui; // something could be binded to input/output
 
-	auto mouse_handler = delegate (ref event.MouseEvent ev)
+	auto mouse_handler = delegate (ref ui.MouseEvent ev)
 		{
-			auto target = event.findControl(ui.root, ev.pos);
+			auto target = ui.findControl(ui.root, ev.pos);
 			if (target !is null && target.onMouse !is null)
 				target.onMouse(ev);
 		}
@@ -102,15 +102,15 @@ void main()
 
 	void* simulation;  // something could be binded to input/output
 */
-	event.TargetNode tracked;
-	event.TargetNode root = genTestData();
+	ui.TargetNode tracked;
+	ui.TargetNode root = genTestData();
 	App app;
 	app.loadSettings();
 	app.window = sys.Window(app.name, app.winsize, sys.Window.FLAG.hidden);
 	app.window.event_mgr.register(
-		delegate (ref event.MouseEvent ev)
+		delegate (ref ui.MouseEvent ev)
 		{
-			auto target = event.findControl(root, ev.pos);
+			auto target = ui.findControl(root, ev.pos);
 			if (tracked !is target)
 			{
 				tracked = target;
