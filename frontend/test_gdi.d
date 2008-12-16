@@ -1,40 +1,65 @@
 static import sys;
+static import gdi;
 static import ui;
+static import win32 = win32.windows;
+pragma(lib, "win32.lib");
+
+class GdiWindow : ui.TargetNode
+{
+	bool tracked;
+	this(string name, ui.TargetNode parent)
+	{
+		super(name, parent);
+		this.mouseEventMask = ui.MOUSE.MOVE;
+	}
+	void paint(win32.HDC hdc)
+	{
+		auto pos = node.position_abs();
+		win32.Rectangle(hdc,
+				pos.x, pos.y,
+				pos.x+node.rect.size.width, pos.y+node.rect.size.height);
+	}
+	override void onMouse(ref ui.MouseEvent ev)
+	{
+		//this.tracked = true;
+		//app.window.redraw();
+	}
+}
 
 
-class Window : ui.TargetNode
+class Window : GdiWindow
 {
 	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Group : ui.TargetNode
+class Group : GdiWindow
 {
 	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Radio : ui.TargetNode
+class Radio : GdiWindow
 {
 	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Button : ui.TargetNode
+class Button : GdiWindow
 {
 	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Label : ui.TargetNode
+class Label : GdiWindow
 {
 	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
-class Dialog : ui.TargetNode
+class Dialog : GdiWindow
 {
 	this(string name, ui.TargetNode parent) { super(name, parent); }
 }
 
 ui.TargetNode genTestData()
 {
-	auto root = new ui.TargetNode("root");
+	auto root = new GdiWindow("root");
 	root.rect.size = ui.Size(640,480);
 	  auto dlg = new Dialog("dlg", root);
 	  dlg.rect = ui.Rect(ui.Point(200,200),ui.Size(400,200));  // [200,200-600,400]
@@ -60,75 +85,16 @@ ui.TargetNode genTestData()
 }
 
 
-struct App
-{
-	struct 
-	{
-		ui.Size winsize = ui.Size(640,480);
-		void loadSettings() {}
-	}
-	string name = "test";
-	sys.Window window;
-	void* render;
-	void* simulation;
-}
-
-
-static import win32 = win32.windows;
-
 void main()
 {
-/*
-	auto window = sys.Window();
-	ui.EventManager ui_event_mgr;
-	void delegate(gdi grapgics) ui_draw;
-
-
-	void* ui; // something could be binded to input/output
-
-	auto mouse_handler = delegate (ref ui.MouseEvent ev)
-		{
-			auto target = ui.findControl(ui.root, ev.pos);
-			if (target !is null && target.onMouse !is null)
-				target.onMouse(ev);
-		}
-
-	window.event_mgr = ui_event_mgr;
-
-	void* simulation;  // something could be binded to input/output
-*/
-	ui.TargetNode tracked;
-	ui.TargetNode root = genTestData();
-	App app;
-	app.loadSettings();
-	app.window = sys.Window(app.name, app.winsize, sys.Window.FLAG.hidden);
-	app.window.event_mgr.register(
-		delegate (ref ui.MouseEvent ev)
-		{
-			auto target = ui.findControl(root, ev.pos);
-			if (tracked !is target)
-			{
-				tracked = target;
-				app.window.redraw();
-			}
-		});
+	auto window = sys.Window!(ui.IoManager)("test", ui.Size(640,480), sys.Window.FLAG.hidden);
+	ui.TargetNode main_ui = genTestData();  // load main UI
+	window.io.bind(main_ui);
 	app.window.paint_handler = delegate(win32.HDC hdc)
-	{
-		auto original = win32.GetCurrentObject(hdc, win32.OBJ_BRUSH);
-		foreach_reverse(ref node; root)
 		{
-			if (node is tracked)
-				win32.SelectObject(hdc, win32.GetStockObject(win32.GRAY_BRUSH));
-
-			auto pos = node.position_abs();
-			win32.Rectangle(hdc,
-					pos.x, pos.y,
-					pos.x+node.rect.size.width, pos.y+node.rect.size.height);
-
-			if (node is tracked)
-				win32.SelectObject(hdc, original);
-		}
-	};
+			foreach_reverse(ref node; root)
+				(cast(GdiWindow)node).paint(hdc);
+		};
 	app.window.visible(true);
 
 	// Main message loop:

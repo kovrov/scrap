@@ -1,7 +1,9 @@
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
 import std.string;
-static import ui;
+static import generic;
+alias generic.Point!(short) Point;
+alias generic.Size!(ushort) Size;
 
 int messageLoop()
 {
@@ -13,9 +15,22 @@ int messageLoop()
 	return 0;
 }
 
-class Window
+enum MOUSE {MOVE}
+
+struct MouseEvent
 {
-	ui.EventManager event_mgr;
+	MOUSE type;
+	Point pos;
+	this (MOUSE type, ref Point pos)
+	{
+		this.type = type;
+		this.pos = pos;
+	}
+}
+
+class Window(T)
+{
+	T io;
 	private win32.HWND handle;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
@@ -26,18 +41,11 @@ class Window
 		switch (message)
 		{
 		case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
-			auto paint_handler = _windows[hWnd].paint_handler;
-			if (paint_handler !is null)
-			{
-				win32.PAINTSTRUCT ps;
-				win32.HDC hdc = win32.BeginPaint(hWnd, &ps);
-				offScreenDraw(hdc, &ps.rcPaint, paint_handler);
-				win32.EndPaint(hWnd, &ps);
-			}
+			_windows[hWnd].io.on_paint();
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
-			_windows[hWnd].event_mgr.dispatch(
-				ui.MouseEvent(ui.MOUSE.MOVE, ui.Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
+			_windows[hWnd].io.dispatch(
+				MouseEvent(MOUSE.MOVE, Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
 			break;
 		case win32.WM_DESTROY:
 			_windows.remove(hWnd);
@@ -99,7 +107,7 @@ class Window
 				vsync      = cast(bool)(e&FLAG.vsync);
 				hidden     = cast(bool)(e&FLAG.hidden);
 			}
-			static if (typeid(typeof(e)) is typeid(ui.Size))
+			static if (typeid(typeof(e)) is typeid(Size))
 			{
 				size_rect.right = e.width;
 				size_rect.bottom = e.height;
@@ -124,7 +132,7 @@ class Window
 			throw new Exception("CreateWindow failed");
 
 		auto window = new typeof(this);
-		window.event_mgr = new ui.EventManager;
+		window.io = new T;
 		window.handle = hwnd;
 		_windows[hwnd] = window;
 		_windows.rehash;
@@ -139,30 +147,9 @@ class Window
 		win32.UpdateWindow(handle);
 	}
 
-	static void offScreenDraw(win32.HDC hdc, win32.RECT* rect, void delegate(win32.HDC hdc) paint_handler)
-	{
-			// http://msdn.microsoft.com/library/ms969905
-			win32.HDC buffer_dc = win32.CreateCompatibleDC(hdc);
-			win32.HBITMAP bitmap = win32.CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
-			win32.HBITMAP old_bitmap = win32.SelectObject(buffer_dc, bitmap);
-			paint_handler(buffer_dc);
-			win32.BitBlt(hdc, 0, 0, rect.right, rect.bottom, buffer_dc, 0, 0, win32.SRCCOPY);
-			win32.SelectObject(buffer_dc, old_bitmap);
-			win32.DeleteObject(bitmap);
-			win32.DeleteDC(buffer_dc);
-	}
-
 	void redraw()
 	{
 		//win32.InvalidateRect(this.handle, null, false);
-		if (this.paint_handler !is null)
-		{
-			win32.HDC hdc = win32.GetDC(this.handle);
-			win32.RECT rc;
-			win32.GetClientRect(this.handle, &rc);
-			offScreenDraw(hdc, &rc, this.paint_handler);
-			win32.ReleaseDC(this.handle, hdc);
-		}
+		_windows[hWnd].io.redraw();
 	}
-	void delegate(win32.HDC hdc) paint_handler;
 }

@@ -1,9 +1,10 @@
 static import generic;
 alias generic.Point!(short) Point;
-alias generic.Size!(ushort) Size;
 alias generic.Rect!(short, ushort) Rect;
-
 static import tree;
+static import sys;
+
+typedef sys.Window!(ui.IoManager) Window;
 
 class TargetNode
 {
@@ -40,39 +41,27 @@ class TargetNode
 		}
 		return abs_pos;
 	}
+
+	sys.MOUSE mouseEventMask;
+	abstract void onMouse(ref sys.MouseEvent ev);
 }
 
 
-enum MOUSE {MOVE}
 
-struct MouseEvent
+class IoManager
 {
-	MOUSE type;
-	Point pos;
-	this (MOUSE type, ref Point pos)
+	TargetNode root;
+	void dispatch(ref sys.MouseEvent ev)
 	{
-		this.type = type;
-		this.pos = pos;
+		auto target = findControl(this.root, ev.pos);
+		if (target.mouseEventMask & ev.type)
+			target.onMouse(ev);
 	}
-}
-
-class EventManager
-{
-	alias void delegate (ref MouseEvent ev) MouseHandler;
-	MouseHandler callback;
-	void register(MouseHandler cb)
+	void on_paint()
 	{
-		this.callback = cb;
 	}
-	void dispatch(ref MouseEvent ev)
+	void redraw()
 	{
-		switch (ev.type)
-		{
-		case MOUSE.MOVE:
-			if (this.callback !is null)
-				this.callback(ev);
-			break;
-		}
 	}
 }
 
