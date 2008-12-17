@@ -6,13 +6,13 @@ static import ui;
 static import widget;
 static import gdi;
 
-alias widget.Widget!(gdi.paint_simple_window) Widget;
-alias widget.Window!(gdi.paint_simple_window) Window;
-alias widget.Dialog!(gdi.paint_simple_window) Dialog;
-alias widget.Group!(gdi.paint_simple_window)  Group;
-alias widget.Button!(gdi.paint_simple_window) Button;
-alias widget.Radio!(gdi.paint_simple_window)  Radio;
-alias widget.Label!(gdi.paint_simple_window)  Label;
+alias widget.Widget!(gdi.paint_simple_window)         Widget;
+alias widget.Window!(gdi.paint_simple_window, Widget) Window;
+alias widget.Dialog!(gdi.paint_simple_window, Widget) Dialog;
+alias widget.Group !(gdi.paint_simple_window, Widget) Group;
+alias widget.Button!(gdi.paint_simple_window, Widget) Button;
+alias widget.Radio !(gdi.paint_simple_window, Widget) Radio;
+alias widget.Label !(gdi.paint_simple_window, Widget) Label;
 
 static import generic;
 alias generic.Rect!(short, ushort) Rect;

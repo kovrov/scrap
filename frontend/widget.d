@@ -1,7 +1,7 @@
 static import ui;
 static import sys;
 
-class Widget(alias PAINT=null) : ui.TargetNode
+class Widget(alias PAINT) : ui.TargetNode
 {
 	this(string name, ui.TargetNode parent=null)
 	{
@@ -9,8 +9,7 @@ class Widget(alias PAINT=null) : ui.TargetNode
 		this.mouseEventMask = sys.MOUSE.MOVE;
 	}
 
-	static if (typeid(typeof(PAINT)) !is typeid(typeof(null)))
-		mixin PAINT;
+	mixin PAINT;
 
 	//bool tracked;
 	override void onMouse(ref sys.MouseEvent ev)
@@ -24,37 +23,37 @@ class Widget(alias PAINT=null) : ui.TargetNode
 template parent_ctor() { this(string name, ui.TargetNode parent) { super(name, parent); }}
 
 
-class Window(alias PAINT) : Widget!()
+class Window(alias PAINT, BASE) : BASE
 {
 	mixin parent_ctor;
 	mixin PAINT;
 }
 
-class Group(alias PAINT) : Widget!()
+class Group(alias PAINT, BASE) : BASE
 {
 	mixin parent_ctor;
 	mixin PAINT;
 }
 
-class Radio(alias PAINT) : Widget!()
+class Radio(alias PAINT, BASE) : BASE
 {
 	mixin parent_ctor;
 	mixin PAINT;
 }
 
-class Button(alias PAINT) : Widget!()
+class Button(alias PAINT, BASE) : BASE
 {
 	mixin parent_ctor;
 	mixin PAINT;
 }
 
-class Label(alias PAINT) : Widget!()
+class Label(alias PAINT, BASE) : BASE
 {
 	mixin parent_ctor;
 	mixin PAINT;
 }
 
-class Dialog(alias PAINT) : Widget!()
+class Dialog(alias PAINT, BASE) : BASE
 {
 	mixin parent_ctor;
 	mixin PAINT;

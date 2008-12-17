@@ -51,7 +51,7 @@ class IoManager(alias PAINT)
 	void dispatch(ref sys.MouseEvent ev)
 	{
 		auto target = findControl(this.root, ev.pos);
-		if (target.mouseEventMask & ev.type)
+		if (target !is null && target.mouseEventMask & ev.type)
 			target.onMouse(ev);
 	}
 	mixin PAINT;
