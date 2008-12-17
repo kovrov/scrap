@@ -1,6 +1,5 @@
 static import generic;
 alias generic.Point!(short) Point;
-alias generic.Rect!(short, ushort) Rect;
 static import tree;
 static import sys;
 
@@ -9,13 +8,13 @@ class TargetNode
 {
 	union
 	{
-		Rect rect;
+		generic.Rect!(short, ushort) rect;
 		struct
 		{
 			short x, y;
 			ushort width, height;
 		}
-		static assert (Rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
+		static assert (rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
 	string name;
 

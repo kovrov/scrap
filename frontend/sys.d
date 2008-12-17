@@ -87,7 +87,7 @@ class Window(T)
 		vsync      = 1<<3
 	}
 	/* Factory method */
-	static typeof(this) opCall(T...)(T tuple)
+	static typeof(this) opCall(TUPLE...)(TUPLE tuple)
 	{
 		//display=null;
 		//screen=null;
@@ -150,6 +150,6 @@ class Window(T)
 	void redraw()
 	{
 		//win32.InvalidateRect(this.handle, null, false);
-		_windows[hWnd].io.redraw(this.handle);
+//		_windows[hWnd].io.redraw(this.handle);
 	}
 }

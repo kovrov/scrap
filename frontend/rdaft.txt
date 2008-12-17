@@ -12,3 +12,40 @@ ui
 sys
 	eventmanager
 	window
+
+
+
+[SYS]
+window_gdi
+	win_proc
+		on_paint { UI.event_mgr.paint(hwnd) }
+
+[GDI]
+template widget_1_paint()
+{
+	override void paint(hwnd)
+}
+draw_widget(UI.widget_2, hwnd)
+draw_widget(UI.widget_3, hwnd)
+draw_widget(UI.widget_4, hwnd)
+
+[UI]
+event_mgr
+	paint(hwnd)
+		foreach target_node
+			GDI.draw_widget(target_node, hwnd)
+target_node
+
+[WIDGETS]
+UI.target_node
+	widget_1 [PAINT_FN]
+	widget_2 [PAINT_FN]
+	widget_3 [PAINT_FN]
+	widget_4 [PAINT_FN]
+
+[TEST]
+	widget_1 ![GDI.draw_widget]
+	widget_2 ![GDI.draw_widget]
+	widget_3 ![GDI.draw_widget]
+	widget_4 ![GDI.draw_widget]
+
