@@ -4,7 +4,6 @@ alias generic.Rect!(short, ushort) Rect;
 static import tree;
 static import sys;
 
-typedef sys.Window!(ui.IoManager) Window;
 
 class TargetNode
 {
@@ -47,8 +46,7 @@ class TargetNode
 }
 
 
-
-class IoManager
+class IoManager(alias PAINT)
 {
 	TargetNode root;
 	void dispatch(ref sys.MouseEvent ev)
@@ -57,12 +55,7 @@ class IoManager
 		if (target.mouseEventMask & ev.type)
 			target.onMouse(ev);
 	}
-	void on_paint()
-	{
-	}
-	void redraw()
-	{
-	}
+	mixin PAINT;
 }
 
 

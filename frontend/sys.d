@@ -41,7 +41,7 @@ class Window(T)
 		switch (message)
 		{
 		case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
-			_windows[hWnd].io.on_paint();
+			_windows[hWnd].io.on_paint(hWnd);
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
 			_windows[hWnd].io.dispatch(
@@ -150,6 +150,6 @@ class Window(T)
 	void redraw()
 	{
 		//win32.InvalidateRect(this.handle, null, false);
-		_windows[hWnd].io.redraw();
+		_windows[hWnd].io.redraw(this.handle);
 	}
 }
