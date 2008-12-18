@@ -1,8 +1,20 @@
 static import generic;
 alias generic.Point!(short) Point;
 static import tree;
-static import sys;
 
+
+enum MOUSE {MOVE}
+
+struct MouseEvent
+{
+	MOUSE type;
+	Point pos;
+	this (MOUSE type, ref Point pos)
+	{
+		this.type = type;
+		this.pos = pos;
+	}
+}
 
 class TargetNode
 {
@@ -40,19 +52,18 @@ class TargetNode
 		return abs_pos;
 	}
 
-	sys.MOUSE mouseEventMask;
-	abstract void onMouse(ref sys.MouseEvent ev);
+	MOUSE mouseEventMask;
+	abstract void onMouse(ref MouseEvent ev);
 }
-
 
 class IoManager(alias PAINT)
 {
 	TargetNode root;
-	void dispatch(ref sys.MouseEvent ev)
+	void dispatch_mouse_move(const ref Point pos)
 	{
-		auto target = findControl(this.root, ev.pos);
-		if (target !is null && target.mouseEventMask & ev.type)
-			target.onMouse(ev);
+		auto target = findControl(this.root, pos);
+		if (target !is null && target.mouseEventMask & MOUSE.MOVE)
+			target.onMouse(MouseEvent(MOUSE.MOVE, pos));
 	}
 	mixin PAINT;
 }

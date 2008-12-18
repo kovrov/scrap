@@ -15,19 +15,6 @@ int messageLoop()
 	return 0;
 }
 
-enum MOUSE {MOVE}
-
-struct MouseEvent
-{
-	MOUSE type;
-	Point pos;
-	this (MOUSE type, ref Point pos)
-	{
-		this.type = type;
-		this.pos = pos;
-	}
-}
-
 class Window(T)
 {
 	T io;
@@ -44,8 +31,7 @@ class Window(T)
 			_windows[hWnd].io.on_paint(hWnd);
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
-			_windows[hWnd].io.dispatch(
-				MouseEvent(MOUSE.MOVE, Point(win32.LOWORD(lParam), win32.HIWORD(lParam))));
+			_windows[hWnd].io.dispatch_mouse_move(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)));
 			break;
 		case win32.WM_DESTROY:
 			_windows.remove(hWnd);

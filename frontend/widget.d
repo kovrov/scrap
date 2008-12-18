@@ -1,18 +1,17 @@
 static import ui;
-static import sys;
 
 class Widget(alias PAINT) : ui.TargetNode
 {
 	this(string name, ui.TargetNode parent=null)
 	{
 		super(name, parent);
-		this.mouseEventMask = sys.MOUSE.MOVE;
+		this.mouseEventMask = ui.MOUSE.MOVE;
 	}
 
 	mixin PAINT;
 
 	//bool tracked;
-	override void onMouse(ref sys.MouseEvent ev)
+	override void onMouse(ref ui.MouseEvent ev)
 	{
 	//	this.tracked = true;
 	//	app.window.redraw();
