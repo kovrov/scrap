@@ -1,44 +1,115 @@
-/* Drawing routines using Microsoft Windows "Graphics Device Interface" */
+/* UI drawing routines using Microsoft Windows Graphics Device Interface
+   http://msdn.microsoft.com/library/ms534906 */
+
+
+// inject "panit" methods into widget hierarchy
+static import widget;
+
+
+template paint_simple_widget()
+{
+	static import win32 = win32.windows;
+	/*override*/
+	void paint(win32.HDC hdc)
+	{
+		auto pos = this.position_abs();
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+
+		win32.COLORREF color = win32.GetSysColor(win32.COLOR_APPWORKSPACE);
+		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
+		win32.FillRect(hdc, &rect, hbrush);
+	}
+}
+alias widget.Widget!(paint_simple_widget) Widget;
 
 
 template paint_simple_window()
 {
-	static import win32 = win32.windows;
-
-	/*override*/ void paint(win32.HDC hdc)
+	/*override*/
+	void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
-		win32.Rectangle(hdc,
-				pos.x, pos.y,
-				pos.x + this.width, pos.y + this.height);
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+
+		win32.COLORREF color = win32.GetSysColor(win32.COLOR_3DFACE);
+		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
+		win32.FillRect(hdc, &rect, hbrush);
+
+		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}
 }
+alias widget.Window!(paint_simple_window, Widget) Window;
+
+
+template paint_group()
+{
+	/*override*/
+	void paint(win32.HDC hdc)
+	{
+		auto pos = this.position_abs();
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+
+		win32.DrawEdge(hdc, &rect, win32.EDGE_ETCHED, win32.BF_RECT);
+	}
+}
+alias widget.Group !(paint_group, Widget) Group;
+
 /*
-template gdi_paint_group()
+template paint_radio()
 {
-	override void paint(win32.HDC hdc) {}
+	override void paint(win32.HDC hdc)
+	{
+		win32.HGDIOBJ old_gdiobj = win32.SelectObject(hdc, win32.GetStockObject(win32.NULL_BRUSH));
+		win32.Rectangle(hdc, pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+		win32.SelectObject(hdc, old_gdiobj);
+	}
 }
+*/
 
-template gdi_paint_radio()
+template paint_button()
 {
-	override void paint(win32.HDC hdc) {}
-}
+	/*override*/
+	void paint(win32.HDC hdc)
+	{
+		auto pos = this.position_abs();
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-template gdi_paint_button()
-{
-	override void paint(win32.HDC hdc) {}
-}
+		win32.COLORREF color = win32.GetSysColor(win32.COLOR_3DFACE);
+		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
+		win32.FillRect(hdc, &rect, hbrush);
 
-template gdi_paint_label()
-{
-	override void paint(win32.HDC hdc) {}
+		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
+	}
 }
+alias widget.Button!(paint_button, Widget) Button;
 
-template gdi_paint_dialog()
+/*
+template paint_label()
 {
 	override void paint(win32.HDC hdc) {}
 }
 */
+
+template paint_dialog()
+{
+	/*override*/
+	void paint(win32.HDC hdc)
+	{
+		auto pos = this.position_abs();
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+
+		win32.COLORREF color = win32.GetSysColor(win32.COLOR_3DFACE);
+		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
+		win32.FillRect(hdc, &rect, hbrush);
+
+		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
+	}
+}
+alias widget.Dialog!(paint_dialog, Widget) Dialog;
+
+
+alias widget.Radio !(paint_simple_widget, Widget) Radio;
+alias widget.Label !(paint_simple_widget, Widget) Label;
 
 /*
 	void redraw(win32.HWND hwnd)
@@ -51,23 +122,8 @@ template gdi_paint_dialog()
 	}
 */
 
-static import widget;
-// inject "panit" methods into widget hierarchy
-alias widget.Widget!(gdi.paint_simple_window)         Widget;
-alias widget.Window!(gdi.paint_simple_window, Widget) Window;
-alias widget.Dialog!(gdi.paint_simple_window, Widget) Dialog;
-alias widget.Group !(gdi.paint_simple_window, Widget) Group;
-alias widget.Button!(gdi.paint_simple_window, Widget) Button;
-alias widget.Radio !(gdi.paint_simple_window, Widget) Radio;
-alias widget.Label !(gdi.paint_simple_window, Widget) Label;
-
 static import ui;
-alias ui.IoManager!(gdi.paint_events) IoManager;
-
 static import sys;
-alias sys.Window!(IoManager) SysWindow;
-
-
 
 template paint_events()
 {
@@ -96,3 +152,5 @@ template paint_events()
 		win32.DeleteDC(buffer_dc);
 	}
 }
+alias ui.IoManager!(paint_events) IoManager;
+alias sys.Window!(IoManager) SysWindow;
