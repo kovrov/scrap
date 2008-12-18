@@ -5,7 +5,7 @@ set GUI=-L/EXETYPE:NT/SUBSYSTEM:WINDOWS:4.0
 @rem set GUI=-L/EXETYPE:NT/SUBSYSTEM:CONSOLE
 
 
-dmd %GUI% -g -debug ui.d sys.d -run test_gdi.d
+dmd %GUI% -g -debug ui.d sys.d gdi.d -run test_gdi.d
 
 IF ERRORLEVEL 1 GOTO ERROR
 GOTO END
