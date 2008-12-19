@@ -63,8 +63,9 @@ template paint_radio()
 		win32.Rectangle(hdc, pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 		win32.SelectObject(hdc, old_gdiobj);
 	}
-}
-*/
+}*/
+alias widget.Radio !(paint_simple_widget, Widget) Radio;
+
 
 template paint_button()
 {
@@ -87,8 +88,9 @@ alias widget.Button!(paint_button, Widget) Button;
 template paint_label()
 {
 	override void paint(win32.HDC hdc) {}
-}
-*/
+}*/
+alias widget.Label !(paint_simple_widget, Widget) Label;
+
 
 template paint_dialog()
 {
@@ -106,10 +108,6 @@ template paint_dialog()
 	}
 }
 alias widget.Dialog!(paint_dialog, Widget) Dialog;
-
-
-alias widget.Radio !(paint_simple_widget, Widget) Radio;
-alias widget.Label !(paint_simple_widget, Widget) Label;
 
 /*
 	void redraw(win32.HWND hwnd)
