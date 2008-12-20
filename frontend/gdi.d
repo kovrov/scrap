@@ -69,17 +69,43 @@ alias widget.Radio !(paint_simple_widget, Widget) Radio;
 
 template paint_button()
 {
+	static extern (Windows)
+	win32.BOOL DrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
+	{
+		auto rect = win32.RECT(0, 0, cx, cy);
+		auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
+		win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
+		return win32.TRUE;
+	}
 	/*override*/
 	void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-		win32.COLORREF color = win32.GetSysColor(win32.COLOR_3DFACE);
-		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
+		win32.DrawEdge(hdc, &rect,
+					win32.EDGE_RAISED, //win32.EDGE_SUNKEN,
+					win32.BF_RECT|win32.BF_ADJUST);  // BF_ADJUST will change the rect values
+
+		auto color = win32.GetSysColor(win32.COLOR_3DFACE);
+		auto hbrush = win32.CreateSolidBrush(color);
 		win32.FillRect(hdc, &rect, hbrush);
 
-		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
+		win32.SetBkColor(hdc, win32.GetSysColor(win32.COLOR_3DFACE));
+		win32.SetTextColor(hdc, win32.GetSysColor(win32.COLOR_BTNTEXT));
+
+		win32.NONCLIENTMETRICS ncmetrics;
+		win32.SystemParametersInfo(win32.SPI_GETNONCLIENTMETRICS, ncmetrics.sizeof, &ncmetrics, 0);
+		auto font = win32.CreateFontIndirect(&ncmetrics.lfMessageFont);
+		auto old_gdiobj = win32.SelectObject(hdc, font);
+
+		win32.DrawState(hdc, null,
+					&DrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
+					rect.left, rect.top, rect.right, rect.bottom,
+					0);  // win32.DSS_DISABLED
+
+		win32.SelectObject(hdc, old_gdiobj);
+		win32.DeleteObject(font);
 	}
 }
 alias widget.Button!(paint_button, Widget) Button;
