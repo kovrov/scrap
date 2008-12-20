@@ -73,7 +73,8 @@ template paint_button()
 	win32.BOOL DrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
 	{
 		auto rect = win32.RECT(0, 0, cx, cy);
-		auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
+		//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
+		auto flags = win32.DT_CENTER|win32.DT_VCENTER|win32.DT_SINGLELINE;
 		win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
 		return win32.TRUE;
 	}
@@ -101,7 +102,7 @@ template paint_button()
 
 		win32.DrawState(hdc, null,
 					&DrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
-					rect.left, rect.top, rect.right, rect.bottom,
+					rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
 					0);  // win32.DSS_DISABLED
 
 		win32.SelectObject(hdc, old_gdiobj);
