@@ -13,7 +13,7 @@ sys
 	eventmanager
 	window
 
-
+--------------------------------------------------------------------------------
 
 [SYS]
 window_gdi
@@ -49,3 +49,18 @@ UI.target_node
 	widget_3 ![GDI.draw_widget]
 	widget_4 ![GDI.draw_widget]
 
+--------------------------------------------------------------------------------
+
+[sys]
+	gdi_window<>
+[ui]
+	io_mgr<>
+	template<>
+		target_node<>
+		widgets<>
+
+[gdi]
+	widget = ui.target_node<gdi_code>
+
+[test]
+	sys.gdi_win<ui.io_mgr<ui.target_node<gdi.code>>>
