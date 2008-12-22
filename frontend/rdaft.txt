@@ -53,14 +53,14 @@ UI.target_node
 
 [sys]
 	gdi_window<>
+
 [ui]
 	io_mgr<>
-	template<>
-		target_node<>
-		widgets<>
+	target_node<>
+		... widgets
 
 [gdi]
-	widget = ui.target_node<gdi_code>
+	paint_code
 
 [test]
-	sys.gdi_win<ui.io_mgr<ui.target_node<gdi.code>>>
+	sys.gdi_win!<ui.io_mgr!<ui.target_node!<gdi.paint_code>>>

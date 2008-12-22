@@ -16,8 +16,10 @@ struct MouseEvent
 	}
 }
 
-class TargetNode
+class TargetNode(alias PAINT_INTERFACE)
 {
+	mixin PAINT_INTERFACE;
+
 	union
 	{
 		generic.Rect!(short, ushort) rect;
@@ -56,22 +58,20 @@ class TargetNode
 	abstract void onMouse(ref MouseEvent ev);
 }
 
-class IoManager(alias PAINT)
+class EventManager(T)
 {
-	TargetNode root;
+	T root;  // TargetNode
 	void dispatch_mouse_move(const ref Point pos)
 	{
 		auto target = findControl(this.root, pos);
 		if (target !is null && target.mouseEventMask & MOUSE.MOVE)
 			target.onMouse(MouseEvent(MOUSE.MOVE, pos));
 	}
-	mixin PAINT;
 }
 
-
-TargetNode findControl(TargetNode root, const ref Point point)
+T findControl(T)(T root, const ref Point point)
 {
-	TargetNode best_match;
+	T best_match;
 	Point parent_abs_pos;
 	auto node = root;
 	while (node !is null)

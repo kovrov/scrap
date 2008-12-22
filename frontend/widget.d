@@ -1,8 +1,8 @@
 static import ui;
 
-class Widget(alias PAINT) : ui.TargetNode
+class Widget(alias PAINT, BASE) : BASE  //ui.TargetNode!(paint_interface)
 {
-	this(string name, ui.TargetNode parent=null)
+	this(string name, BASE parent=null)
 	{
 		super(name, parent);
 		this.mouseEventMask = ui.MOUSE.MOVE;
@@ -19,41 +19,41 @@ class Widget(alias PAINT) : ui.TargetNode
 }
 
 
-template parent_ctor() { this(string name, ui.TargetNode parent) { super(name, parent); }}
+template parent_ctor(BASE) { this(string name, BASE parent) { super(name, parent); }}
 
 
-class Window(alias PAINT, BASE) : BASE
+class Window(alias PAINT, ANCESTOR, BASE) : ANCESTOR
 {
-	mixin parent_ctor;
+	mixin parent_ctor!(BASE);
 	mixin PAINT;
 }
 
-class Group(alias PAINT, BASE) : BASE
+class Group(alias PAINT, ANCESTOR, BASE) : ANCESTOR
 {
-	mixin parent_ctor;
+	mixin parent_ctor!(BASE);
 	mixin PAINT;
 }
 
-class Radio(alias PAINT, BASE) : BASE
+class Radio(alias PAINT, ANCESTOR, BASE) : ANCESTOR
 {
-	mixin parent_ctor;
+	mixin parent_ctor!(BASE);
 	mixin PAINT;
 }
 
-class Button(alias PAINT, BASE) : BASE
+class Button(alias PAINT, ANCESTOR, BASE) : ANCESTOR
 {
-	mixin parent_ctor;
+	mixin parent_ctor!(BASE);
 	mixin PAINT;
 }
 
-class Label(alias PAINT, BASE) : BASE
+class Label(alias PAINT, ANCESTOR, BASE) : ANCESTOR
 {
-	mixin parent_ctor;
+	mixin parent_ctor!(BASE);
 	mixin PAINT;
 }
 
-class Dialog(alias PAINT, BASE) : BASE
+class Dialog(alias PAINT, ANCESTOR, BASE) : ANCESTOR
 {
-	mixin parent_ctor;
+	mixin parent_ctor!(BASE);
 	mixin PAINT;
 }

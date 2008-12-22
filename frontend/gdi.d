@@ -1,16 +1,26 @@
 /* UI drawing routines using Microsoft Windows Graphics Device Interface
    http://msdn.microsoft.com/library/ms534906 */
 
+static import win32 = win32.windows;
+
 
 // inject "panit" methods into widget hierarchy
+
+static import ui;
 static import widget;
+
+template node_paint_interface()
+{
+	static import win32 = win32.windows;
+	abstract void paint(win32.HDC hdc);
+}
+alias ui.TargetNode!(node_paint_interface) BaseNode;
 
 
 template paint_simple_widget()
 {
 	static import win32 = win32.windows;
-	/*override*/
-	void paint(win32.HDC hdc)
+	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
@@ -20,13 +30,12 @@ template paint_simple_widget()
 		win32.FillRect(hdc, &rect, hbrush);
 	}
 }
-alias widget.Widget!(paint_simple_widget) Widget;
+alias widget.Widget!(paint_simple_widget, BaseNode) Widget;
 
 
 template paint_simple_window()
 {
-	/*override*/
-	void paint(win32.HDC hdc)
+	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
@@ -38,13 +47,12 @@ template paint_simple_window()
 		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}
 }
-alias widget.Window!(paint_simple_window, Widget) Window;
+alias widget.Window!(paint_simple_window, Widget, BaseNode) Window;
 
 
 template paint_group()
 {
-	/*override*/
-	void paint(win32.HDC hdc)
+	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
@@ -52,7 +60,7 @@ template paint_group()
 		win32.DrawEdge(hdc, &rect, win32.EDGE_ETCHED, win32.BF_RECT);
 	}
 }
-alias widget.Group !(paint_group, Widget) Group;
+alias widget.Group !(paint_group, Widget, BaseNode) Group;
 
 /*
 template paint_radio()
@@ -64,7 +72,7 @@ template paint_radio()
 		win32.SelectObject(hdc, old_gdiobj);
 	}
 }*/
-alias widget.Radio !(paint_simple_widget, Widget) Radio;
+alias widget.Radio !(paint_simple_widget, Widget, BaseNode) Radio;
 
 
 template paint_button()
@@ -78,8 +86,7 @@ template paint_button()
 		win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
 		return win32.TRUE;
 	}
-	/*override*/
-	void paint(win32.HDC hdc)
+	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
@@ -109,20 +116,19 @@ template paint_button()
 		win32.DeleteObject(font);
 	}
 }
-alias widget.Button!(paint_button, Widget) Button;
+alias widget.Button!(paint_button, Widget, BaseNode) Button;
 
 /*
 template paint_label()
 {
 	override void paint(win32.HDC hdc) {}
 }*/
-alias widget.Label !(paint_simple_widget, Widget) Label;
+alias widget.Label !(paint_simple_widget, Widget, BaseNode) Label;
 
 
 template paint_dialog()
 {
-	/*override*/
-	void paint(win32.HDC hdc)
+	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
@@ -134,7 +140,7 @@ template paint_dialog()
 		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}
 }
-alias widget.Dialog!(paint_dialog, Widget) Dialog;
+alias widget.Dialog!(paint_dialog, Widget, BaseNode) Dialog;
 
 /*
 	void redraw(win32.HWND hwnd)
@@ -147,14 +153,11 @@ alias widget.Dialog!(paint_dialog, Widget) Dialog;
 	}
 */
 
-static import ui;
 static import sys;
+static import win32 = win32.windows;
 
-template paint_events()
+class IoManager : ui.EventManager!(ui.TargetNode!(node_paint_interface))
 {
-	static import win32 = win32.windows;
-	static import gdi;
-
 	void on_paint(win32.HWND hwnd)
 	{
 		win32.PAINTSTRUCT ps;
@@ -169,13 +172,13 @@ template paint_events()
 		win32.HDC buffer_dc = win32.CreateCompatibleDC(hdc);
 		win32.HBITMAP bitmap = win32.CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
 		win32.HBITMAP old_bitmap = win32.SelectObject(buffer_dc, bitmap);
-		foreach_reverse(ref node; root)
-			(cast(gdi.Widget)node).paint(buffer_dc);
+		foreach_reverse(ref node; this.root)
+			node.paint(buffer_dc);
 		win32.BitBlt(hdc, 0, 0, rect.right, rect.bottom, buffer_dc, 0, 0, win32.SRCCOPY);
 		win32.SelectObject(buffer_dc, old_bitmap);
 		win32.DeleteObject(bitmap);
 		win32.DeleteDC(buffer_dc);
 	}
 }
-alias ui.IoManager!(paint_events) IoManager;
+
 alias sys.Window!(IoManager) SysWindow;

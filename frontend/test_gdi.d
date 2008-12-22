@@ -39,7 +39,7 @@ gdi.Widget genTestData()
 void main()
 {
 	auto window = gdi.SysWindow("test", sys.Size(640,480), gdi.SysWindow.FLAG.hidden);
-	ui.TargetNode main_ui = genTestData();  // load main UI
+	auto main_ui = genTestData();  // load main UI
 	window.io.root = main_ui;  //bind
 	window.visible(true);
 	// Main message loop:
