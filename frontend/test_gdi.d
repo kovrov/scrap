@@ -1,8 +1,5 @@
-pragma(lib, "win32.lib");
-static import win32 = win32.windows;
 
 static import sys;
-static import ui;
 static import gdi;
 
 static import generic;

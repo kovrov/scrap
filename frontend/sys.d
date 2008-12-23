@@ -1,9 +1,12 @@
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
+
 import std.string;
+
 static import generic;
 alias generic.Point!(short) Point;
 alias generic.Size!(ushort) Size;
+
 
 int messageLoop()
 {

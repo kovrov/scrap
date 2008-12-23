@@ -1,6 +1,6 @@
+static import tree;
 static import generic;
 alias generic.Point!(short) Point;
-static import tree;
 
 
 enum MOUSE {MOVE}

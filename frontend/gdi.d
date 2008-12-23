@@ -1,14 +1,14 @@
 /* UI drawing routines using Microsoft Windows Graphics Device Interface
    http://msdn.microsoft.com/library/ms534906 */
 
+pragma(lib, "win32.lib");
 static import win32 = win32.windows;
-
-
-// inject "panit" methods into widget hierarchy
-
+static import sys;
 static import ui;
 static import widget;
 
+
+// inject "panit" interface into widget hierarchy
 template node_paint_interface()
 {
 	static import win32 = win32.windows;
@@ -17,9 +17,9 @@ template node_paint_interface()
 alias ui.TargetNode!(node_paint_interface) BaseNode;
 
 
-template paint_simple_widget()
+class Widget : widget.base!(BaseNode).Widget
 {
-	static import win32 = win32.windows;
+	this(string name, BaseNode parent=null) { super(name, parent); }
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
@@ -30,11 +30,14 @@ template paint_simple_widget()
 		win32.FillRect(hdc, &rect, hbrush);
 	}
 }
-alias widget.Widget!(paint_simple_widget, BaseNode) Widget;
 
 
-template paint_simple_window()
+template parent_ctor() { this(string name, BaseNode parent) { super(name, parent); }}
+
+
+class Window : widget.base!(BaseNode).Window
 {
+	mixin parent_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
@@ -47,11 +50,11 @@ template paint_simple_window()
 		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}
 }
-alias widget.Window!(paint_simple_window, Widget, BaseNode) Window;
 
 
-template paint_group()
+class Group : widget.base!(BaseNode).Group
 {
+	mixin parent_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
@@ -60,32 +63,26 @@ template paint_group()
 		win32.DrawEdge(hdc, &rect, win32.EDGE_ETCHED, win32.BF_RECT);
 	}
 }
-alias widget.Group !(paint_group, Widget, BaseNode) Group;
 
-/*
-template paint_radio()
+
+class Radio : widget.base!(BaseNode).Radio
 {
+	mixin parent_ctor;
 	override void paint(win32.HDC hdc)
 	{
-		win32.HGDIOBJ old_gdiobj = win32.SelectObject(hdc, win32.GetStockObject(win32.NULL_BRUSH));
-		win32.Rectangle(hdc, pos.x, pos.y, pos.x + this.width, pos.y + this.height);
-		win32.SelectObject(hdc, old_gdiobj);
+		auto pos = this.position_abs();
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+
+		win32.COLORREF color = win32.GetSysColor(win32.COLOR_APPWORKSPACE);
+		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
+		win32.FillRect(hdc, &rect, hbrush);
 	}
-}*/
-alias widget.Radio !(paint_simple_widget, Widget, BaseNode) Radio;
+}
 
 
-template paint_button()
+class Button : widget.base!(BaseNode).Button
 {
-	static extern (Windows)
-	win32.BOOL DrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
-	{
-		auto rect = win32.RECT(0, 0, cx, cy);
-		//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
-		auto flags = win32.DT_CENTER|win32.DT_VCENTER|win32.DT_SINGLELINE;
-		win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
-		return win32.TRUE;
-	}
+	mixin parent_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
@@ -115,19 +112,28 @@ template paint_button()
 		win32.SelectObject(hdc, old_gdiobj);
 		win32.DeleteObject(font);
 	}
+	static extern (Windows)
+	win32.BOOL DrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
+	{
+		auto rect = win32.RECT(0, 0, cx, cy);
+		//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
+		auto flags = win32.DT_CENTER|win32.DT_VCENTER|win32.DT_SINGLELINE;
+		win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
+		return win32.TRUE;
+	}
 }
-alias widget.Button!(paint_button, Widget, BaseNode) Button;
 
-/*
-template paint_label()
+
+class Label : widget.base!(BaseNode).Label
 {
+	mixin parent_ctor;
 	override void paint(win32.HDC hdc) {}
-}*/
-alias widget.Label !(paint_simple_widget, Widget, BaseNode) Label;
+}
 
 
-template paint_dialog()
+class Dialog : widget.base!(BaseNode).Dialog
 {
+	mixin parent_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
@@ -140,7 +146,6 @@ template paint_dialog()
 		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}
 }
-alias widget.Dialog!(paint_dialog, Widget, BaseNode) Dialog;
 
 /*
 	void redraw(win32.HWND hwnd)
@@ -153,8 +158,6 @@ alias widget.Dialog!(paint_dialog, Widget, BaseNode) Dialog;
 	}
 */
 
-static import sys;
-static import win32 = win32.windows;
 
 class IoManager : ui.EventManager!(ui.TargetNode!(node_paint_interface))
 {
