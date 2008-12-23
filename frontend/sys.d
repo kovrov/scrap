@@ -18,9 +18,9 @@ int messageLoop()
 	return 0;
 }
 
-class Window(T)
+class Window(IOMANAGER)
 {
-	T io;
+	IOMANAGER io;
 	private win32.HWND handle;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
@@ -35,6 +35,9 @@ class Window(T)
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
 			_windows[hWnd].io.dispatch_mouse_move(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)));
+			break;
+		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
+			assert (false);
 			break;
 		case win32.WM_DESTROY:
 			_windows.remove(hWnd);
@@ -121,7 +124,7 @@ class Window(T)
 			throw new Exception("CreateWindow failed");
 
 		auto window = new typeof(this);
-		window.io = new T;
+		window.io = new IOMANAGER;
 		window.handle = hwnd;
 		_windows[hwnd] = window;
 		_windows.rehash;

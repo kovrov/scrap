@@ -8,6 +8,39 @@ static import ui;
 static import widget;
 
 
+struct Style
+{
+	win32.COLORREF buttonColor;
+	win32.COLORREF buttonTextColor;
+	win32.HBRUSH appWorkspace;
+	win32.HBRUSH buttonFace;
+	win32.HFONT buttonFont;
+	void load()
+	{
+		this.buttonColor = win32.GetSysColor(win32.COLOR_3DFACE);
+		this.buttonTextColor = win32.GetSysColor(win32.COLOR_BTNTEXT);
+
+		this.appWorkspace = win32.GetSysColorBrush(win32.COLOR_APPWORKSPACE);
+		this.buttonFace = win32.GetSysColorBrush(win32.COLOR_3DFACE);
+
+		win32.NONCLIENTMETRICS nc_metrics;
+		win32.SystemParametersInfo(win32.SPI_GETNONCLIENTMETRICS, nc_metrics.sizeof, &nc_metrics, 0);
+		this.buttonFont = win32.CreateFontIndirect(&nc_metrics.lfMessageFont);
+	}
+	~this()
+	{
+		win32.DeleteObject(this.appWorkspace);
+		win32.DeleteObject(this.buttonFace);
+		win32.DeleteObject(this.buttonFont);
+	}
+}
+Style style;
+static this()
+{
+	style.load();
+}
+
+
 // inject "panit" interface into widget hierarchy
 template node_paint_interface()
 {
@@ -15,46 +48,41 @@ template node_paint_interface()
 	abstract void paint(win32.HDC hdc);
 }
 alias ui.TargetNode!(node_paint_interface) BaseNode;
+alias widget.base!(BaseNode) widgets;
+
+template forward_ctor() { this(string name, BaseNode parent=null) { super(name, parent); }}
 
 
-class Widget : widget.base!(BaseNode).Widget
+class Widget : widgets.Widget
 {
-	this(string name, BaseNode parent=null) { super(name, parent); }
+	mixin forward_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-		win32.COLORREF color = win32.GetSysColor(win32.COLOR_APPWORKSPACE);
-		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
-		win32.FillRect(hdc, &rect, hbrush);
+		win32.FillRect(hdc, &rect, style.appWorkspace);
 	}
 }
 
 
-template parent_ctor() { this(string name, BaseNode parent) { super(name, parent); }}
-
-
-class Window : widget.base!(BaseNode).Window
+class Window : widgets.Window
 {
-	mixin parent_ctor;
+	mixin forward_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-		win32.COLORREF color = win32.GetSysColor(win32.COLOR_3DFACE);
-		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
-		win32.FillRect(hdc, &rect, hbrush);
-
+		win32.FillRect(hdc, &rect, style.buttonFace);
 		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}
 }
 
 
-class Group : widget.base!(BaseNode).Group
+class Group : widgets.Group
 {
-	mixin parent_ctor;
+	mixin forward_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
@@ -65,55 +93,44 @@ class Group : widget.base!(BaseNode).Group
 }
 
 
-class Radio : widget.base!(BaseNode).Radio
+class Radio : widgets.Radio
 {
-	mixin parent_ctor;
+	mixin forward_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-		win32.COLORREF color = win32.GetSysColor(win32.COLOR_APPWORKSPACE);
-		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
-		win32.FillRect(hdc, &rect, hbrush);
+		win32.FillRect(hdc, &rect, style.appWorkspace);
 	}
 }
 
 
-class Button : widget.base!(BaseNode).Button
+class Button : widgets.Button
 {
-	mixin parent_ctor;
+	mixin forward_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
 		win32.DrawEdge(hdc, &rect,
-					win32.EDGE_RAISED, //win32.EDGE_SUNKEN,
+					this.tracked ? win32.EDGE_RAISED : win32.EDGE_SUNKEN,
 					win32.BF_RECT|win32.BF_ADJUST);  // BF_ADJUST will change the rect values
 
-		auto color = win32.GetSysColor(win32.COLOR_3DFACE);
-		auto hbrush = win32.CreateSolidBrush(color);
-		win32.FillRect(hdc, &rect, hbrush);
+		win32.FillRect(hdc, &rect, style.buttonFace);
 
-		win32.SetBkColor(hdc, win32.GetSysColor(win32.COLOR_3DFACE));
-		win32.SetTextColor(hdc, win32.GetSysColor(win32.COLOR_BTNTEXT));
-
-		win32.NONCLIENTMETRICS ncmetrics;
-		win32.SystemParametersInfo(win32.SPI_GETNONCLIENTMETRICS, ncmetrics.sizeof, &ncmetrics, 0);
-		auto font = win32.CreateFontIndirect(&ncmetrics.lfMessageFont);
-		auto old_gdiobj = win32.SelectObject(hdc, font);
-
+		win32.SetBkColor(hdc, style.buttonColor);
+		win32.SetTextColor(hdc, style.buttonTextColor);
+		auto old_gdiobj = win32.SelectObject(hdc, style.buttonFont);
 		win32.DrawState(hdc, null,
-					&DrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
+					&TextDrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
 					rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
 					0);  // win32.DSS_DISABLED
-
 		win32.SelectObject(hdc, old_gdiobj);
-		win32.DeleteObject(font);
 	}
 	static extern (Windows)
-	win32.BOOL DrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
+	win32.BOOL TextDrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
 	{
 		auto rect = win32.RECT(0, 0, cx, cy);
 		//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
@@ -124,24 +141,28 @@ class Button : widget.base!(BaseNode).Button
 }
 
 
-class Label : widget.base!(BaseNode).Label
+class Label : widgets.Label
 {
-	mixin parent_ctor;
-	override void paint(win32.HDC hdc) {}
-}
-
-
-class Dialog : widget.base!(BaseNode).Dialog
-{
-	mixin parent_ctor;
+	mixin forward_ctor;
 	override void paint(win32.HDC hdc)
 	{
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-		win32.COLORREF color = win32.GetSysColor(win32.COLOR_3DFACE);
-		win32.HBRUSH hbrush = win32.CreateSolidBrush(color);
-		win32.FillRect(hdc, &rect, hbrush);
+		win32.FillRect(hdc, &rect, style.appWorkspace);
+	}
+}
+
+
+class Dialog : widgets.Dialog
+{
+	mixin forward_ctor;
+	override void paint(win32.HDC hdc)
+	{
+		auto pos = this.position_abs();
+		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
+
+		win32.FillRect(hdc, &rect, style.buttonFace);
 
 		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
 	}

@@ -3,7 +3,7 @@ static import generic;
 alias generic.Point!(short) Point;
 
 
-enum MOUSE {MOVE}
+enum MOUSE {MOVE=1}
 
 struct MouseEvent
 {
@@ -20,6 +20,11 @@ class TargetNode(alias PAINT_INTERFACE)
 {
 	mixin PAINT_INTERFACE;
 
+	mixin tree.Node;
+	mixin tree.setParent;
+	mixin tree.opApplyReverse;
+
+	string name;
 	union
 	{
 		generic.Rect!(short, ushort) rect;
@@ -30,11 +35,6 @@ class TargetNode(alias PAINT_INTERFACE)
 		}
 		static assert (rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
-	string name;
-
-	mixin tree.Node;
-	mixin tree.setParent;
-	mixin tree.opApplyReverse;
 
 	this(string name, typeof(this) parent=null)
 	{
@@ -42,6 +42,7 @@ class TargetNode(alias PAINT_INTERFACE)
 			this.setParent(parent);
 		this.name = name;
 	}
+
 	Point position_abs()
 	{
 		auto abs_pos = this.rect.position;
@@ -58,9 +59,9 @@ class TargetNode(alias PAINT_INTERFACE)
 	abstract void onMouse(ref MouseEvent ev);
 }
 
-class EventManager(T)
+class EventManager(T /* : TargetNode */)
 {
-	T root;  // TargetNode
+	T root;
 	void dispatch_mouse_move(const ref Point pos)
 	{
 		auto target = findControl(this.root, pos);

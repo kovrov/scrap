@@ -1,6 +1,6 @@
 static import ui;
 
-template base(BASE)  // BASE : ui.TargetNode
+template base(BASE /* : ui.TargetNode */)
 {
 	class Widget : BASE
 	{
@@ -10,12 +10,7 @@ template base(BASE)  // BASE : ui.TargetNode
 			this.mouseEventMask = ui.MOUSE.MOVE;
 		}
 
-		//bool tracked;
-		override void onMouse(ref ui.MouseEvent ev)
-		{
-		//	this.tracked = true;
-		//	app.window.redraw();
-		}
+		override void onMouse(ref ui.MouseEvent ev) {}
 	}
 
 
@@ -40,6 +35,12 @@ template base(BASE)  // BASE : ui.TargetNode
 	class Button : Widget
 	{
 		mixin parent_ctor;
+		bool tracked;
+		override void onMouse(ref ui.MouseEvent ev)
+		{
+			this.tracked = true;
+			//window.redraw
+		}
 	}
 
 	class Label : Widget
