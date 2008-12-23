@@ -7,21 +7,9 @@ enum MOUSE {MOVE=1}
 
 template io(alias PAINT_INTERFACE)
 {
-	struct MouseEvent(T)
-	{
-		T src;
-		MOUSE type;
-		Point pos;
-		this (T src, MOUSE type, ref Point pos)
-		{
-			this.src = src;
-			this.type = type;
-			this.pos = pos;
-		}
-	}
-
 	class TargetNode
 	{
+		alias MouseEvent EventType;  //HACK =(
 		mixin PAINT_INTERFACE;
 
 		mixin tree.Node;
@@ -71,6 +59,19 @@ template io(alias PAINT_INTERFACE)
 			auto target = findControl(this.root, pos);
 			if (target !is null && target.mouseEventMask & MOUSE.MOVE)
 				target.onMouse(MouseEvent(this, MOUSE.MOVE, pos));
+		}
+	}
+
+	struct MouseEvent
+	{
+		EventManager!(TargetNode) src;
+		MOUSE type;
+		Point pos;
+		this (typeof(this.src) src, MOUSE type, ref Point pos)
+		{
+			this.src = src;
+			this.type = type;
+			this.pos = pos;
 		}
 	}
 }

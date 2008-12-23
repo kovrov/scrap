@@ -180,7 +180,7 @@ class Dialog : widgets.Dialog
 */
 
 
-class IoManager : ui.EventManager!(BaseNode)
+class IoManager : ui.io!(node_paint_interface).EventManager!(BaseNode)
 {
 	void on_paint(win32.HWND hwnd)
 	{

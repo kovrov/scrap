@@ -10,7 +10,8 @@ template base(BASE /* : ui.TargetNode */)
 			this.mouseEventMask = ui.MOUSE.MOVE;
 		}
 
-		override void onMouse(ref ui.MouseEvent ev) {}
+		//override void onMouse(ref ui.MouseEvent ev) {}
+		override void onMouse(ref BASE.EventType ev) {}
 	}
 
 
@@ -36,7 +37,8 @@ template base(BASE /* : ui.TargetNode */)
 	{
 		mixin parent_ctor;
 		bool tracked;
-		override void onMouse(ref ui.MouseEvent ev)
+		//override void onMouse(ref ui.MouseEvent ev)
+		override void onMouse(ref BASE.EventType ev)
 		{
 			this.tracked = true;
 			//window.redraw
