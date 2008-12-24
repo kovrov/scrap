@@ -6,94 +6,91 @@ alias generic.Point!(short) Point;
 
 enum MOUSE {MOVE=1}
 
-template io(alias PAINT_INTERFACE)
+/* this is important concept - injecting an interface into root of the class hierarchy */
+class TargetNode(alias PAINT_INTERFACE)
 {
-	class TargetNode
+	mixin PAINT_INTERFACE;
+
+	mixin tree.Node;
+	mixin tree.setParent;
+	mixin tree.opApplyReverse;
+
+	string name;
+	union
 	{
-		alias MouseEvent EventType;  //HACK =(
-		mixin PAINT_INTERFACE;
-
-		mixin tree.Node;
-		mixin tree.setParent;
-		mixin tree.opApplyReverse;
-
-		string name;
-		union
+		generic.Rect!(short, ushort) rect;
+		struct
 		{
-			generic.Rect!(short, ushort) rect;
-			struct
-			{
-				short x, y;
-				ushort width, height;
-			}
-			static assert (rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
+			short x, y;
+			ushort width, height;
 		}
-
-		this(string name, typeof(this) parent=null)
-		{
-			if (parent)
-				this.setParent(parent);
-			this.name = name;
-		}
-
-		Point position_abs()
-		{
-			auto abs_pos = this.rect.position;
-			auto parent = this.parent;
-			while (parent)
-			{
-				abs_pos += parent.rect.position;
-				parent = parent.parent;
-			}
-			return abs_pos;
-		}
-
-		MOUSE mouseEventMask;
-		abstract void onMouse(ref MouseEvent);
+		static assert (rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
 
-	class EventManager(T /* : TargetNode */)
+	this(string name, typeof(this) parent=null)
 	{
-		T root;
-		sys.Window window;
-		this(sys.Window window)
+		if (parent)
+			this.setParent(parent);
+		this.name = name;
+	}
+
+	Point position_abs()
+	{
+		auto abs_pos = this.rect.position;
+		auto parent = this.parent;
+		while (parent)
 		{
-			this.window = window;
+			abs_pos += parent.rect.position;
+			parent = parent.parent;
 		}
-		void dispatch_mouse_move(const ref Point pos)
+		return abs_pos;
+	}
+
+	MOUSE mouseEventMask;
+	abstract void onMouse(ref MouseEvent);
+}
+
+class EventManager(T /* : TargetNode */)
+{
+	T root;
+	sys.Window window;
+	this(sys.Window window)
+	{
+		this.window = window;
+	}
+	void dispatch_mouse_move(const ref Point pos)
+	{
+		auto target = findControl(this.root, pos);
+		if (target !is null && target.mouseEventMask & MOUSE.MOVE)
 		{
-			auto target = findControl(this.root, pos);
-			if (target !is null && target.mouseEventMask & MOUSE.MOVE)
-			{
-				target.onMouse(MouseEvent(
-						(MouseEvent.FEEDBACK note)
+			target.onMouse(MouseEvent(
+					(MouseEvent.FEEDBACK note)
+					{
+						switch (note)
 						{
-							switch (note)
-							{
-							case MouseEvent.FEEDBACK.REDRAW:
-								this.window.redraw();
-								break;
-							}
-						},
-						MOUSE.MOVE, pos));
-			}
+						case MouseEvent.FEEDBACK.REDRAW:
+							this.window.redraw();
+							break;
+						}
+					},
+					MOUSE.MOVE, pos));
 		}
 	}
+}
 
-	struct MouseEvent
+struct MouseEvent
+{
+	enum FEEDBACK { REDRAW }
+	void delegate (FEEDBACK) feedback;
+
+	MOUSE type;
+	Point pos;
+
+	this (typeof(this.feedback) feedback, MOUSE type, ref Point pos)
 	{
-		enum FEEDBACK { REDRAW }
-		void delegate (FEEDBACK) feedback;
-
-		MOUSE type;
-		Point pos;
-
-		this (typeof(this.feedback) feedback, MOUSE type, ref Point pos)
-		{
-			this.feedback = feedback;
-			this.type = type;
-			this.pos = pos;
-		}
+		this.feedback = feedback;
+		this.type = type;
+		this.pos = pos;
 	}
 }
 

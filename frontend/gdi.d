@@ -47,7 +47,7 @@ template node_paint_interface()
 	static import win32 = win32.windows;
 	abstract void paint(win32.HDC hdc);
 }
-alias ui.io!(node_paint_interface).TargetNode BaseNode;
+alias ui.TargetNode!(node_paint_interface) BaseNode;
 alias widget.base!(BaseNode) widgets;
 
 template forward_ctor() { this(string name, BaseNode parent=null) { super(name, parent); }}
@@ -180,7 +180,7 @@ class Dialog : widgets.Dialog
 */
 
 
-class IoManager : ui.io!(node_paint_interface).EventManager!(BaseNode)
+class IoManager : ui.EventManager!(BaseNode)
 {
 	this (typeof(super.window) window)
 	{
