@@ -41,7 +41,7 @@ template base(BASE /* : ui.TargetNode */)
 		override void onMouse(ref BASE.EventType ev)
 		{
 			this.tracked = true;
-			//window.redraw
+			ev.feedback(ev.FEEDBACK.REDRAW); // window.redraw
 		}
 	}
 

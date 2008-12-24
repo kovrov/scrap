@@ -1,3 +1,4 @@
+static import sys;
 static import tree;
 static import generic;
 alias generic.Point!(short) Point;
@@ -54,22 +55,42 @@ template io(alias PAINT_INTERFACE)
 	class EventManager(T /* : TargetNode */)
 	{
 		T root;
+		sys.Window window;
+		this(sys.Window window)
+		{
+			this.window = window;
+		}
 		void dispatch_mouse_move(const ref Point pos)
 		{
 			auto target = findControl(this.root, pos);
 			if (target !is null && target.mouseEventMask & MOUSE.MOVE)
-				target.onMouse(MouseEvent(this, MOUSE.MOVE, pos));
+			{
+				target.onMouse(MouseEvent(
+						(MouseEvent.FEEDBACK note)
+						{
+							switch (note)
+							{
+							case MouseEvent.FEEDBACK.REDRAW:
+								this.window.redraw();
+								break;
+							}
+						},
+						MOUSE.MOVE, pos));
+			}
 		}
 	}
 
 	struct MouseEvent
 	{
-		EventManager!(TargetNode) src;
+		enum FEEDBACK { REDRAW }
+		void delegate (FEEDBACK) feedback;
+
 		MOUSE type;
 		Point pos;
-		this (typeof(this.src) src, MOUSE type, ref Point pos)
+
+		this (typeof(this.feedback) feedback, MOUSE type, ref Point pos)
 		{
-			this.src = src;
+			this.feedback = feedback;
 			this.type = type;
 			this.pos = pos;
 		}

@@ -18,7 +18,29 @@ int messageLoop()
 	return 0;
 }
 
-class Window(IOMANAGER)
+interface Window
+{
+	enum STYLE
+	{
+		DEFAULT,
+		BORDERLESS,
+		DIALOG,
+		TOOL
+	}
+	enum FLAG
+	{
+		hidden     = 1,
+		resizable  = 1<<1,
+		fullscreen = 1<<2,
+		vsync      = 1<<3
+	}
+	/* Factory method */
+
+	abstract void visible(bool);
+	abstract void redraw();
+}
+
+class WindowGDI(IOMANAGER) : Window
 {
 	IOMANAGER io;
 	private win32.HWND handle;
@@ -34,7 +56,7 @@ class Window(IOMANAGER)
 			_windows[hWnd].io.on_paint(hWnd);
 			break;
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
-			_windows[hWnd].io.dispatch_mouse_move(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)));
+			_windows[hWnd].io.dispatch_mouse_move(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)) );
 			break;
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
 			assert (false);
@@ -64,20 +86,6 @@ class Window(IOMANAGER)
 			throw new Exception("RegisterClass failed");
 	}
 
-	enum STYLE
-	{
-		DEFAULT,
-		BORDERLESS,
-		DIALOG,
-		TOOL
-	}
-	enum FLAG
-	{
-		hidden     = 1,
-		resizable  = 1<<1,
-		fullscreen = 1<<2,
-		vsync      = 1<<3
-	}
 	/* Factory method */
 	static typeof(this) opCall(TUPLE...)(TUPLE tuple)
 	{
@@ -124,7 +132,7 @@ class Window(IOMANAGER)
 			throw new Exception("CreateWindow failed");
 
 		auto window = new typeof(this);
-		window.io = new IOMANAGER;
+		window.io = new IOMANAGER(window);
 		window.handle = hwnd;
 		_windows[hwnd] = window;
 		_windows.rehash;
@@ -133,15 +141,14 @@ class Window(IOMANAGER)
 		return window;
 	}
 
-	void visible(bool show)
+	override void visible(bool show)
 	{
 		win32.ShowWindow(handle, show?win32.SW_SHOWNORMAL:win32.SW_HIDE);
 		win32.UpdateWindow(handle);
 	}
 
-	void redraw()
+	override void redraw()
 	{
-		//win32.InvalidateRect(this.handle, null, false);
-//		_windows[hWnd].io.redraw(this.handle);
+		win32.InvalidateRect(this.handle, null, false);
 	}
 }

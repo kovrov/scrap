@@ -182,6 +182,10 @@ class Dialog : widgets.Dialog
 
 class IoManager : ui.io!(node_paint_interface).EventManager!(BaseNode)
 {
+	this (typeof(super.window) window)
+	{
+		super(window);
+	}
 	void on_paint(win32.HWND hwnd)
 	{
 		win32.PAINTSTRUCT ps;
@@ -205,4 +209,4 @@ class IoManager : ui.io!(node_paint_interface).EventManager!(BaseNode)
 	}
 }
 
-alias sys.Window!(IoManager) SysWindow;
+alias sys.WindowGDI!(IoManager) SysWindow;
