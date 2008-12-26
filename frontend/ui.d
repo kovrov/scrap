@@ -4,7 +4,7 @@ static import generic;
 alias generic.Point!(short) Point;
 
 
-enum MOUSE {MOVE=1}
+enum MOUSE { MOVE=1, LEAVE, UP, DOWN }
 
 /* this is important concept - injecting an interface into root of the class hierarchy */
 class TargetNode(alias PAINT_INTERFACE)
@@ -47,48 +47,61 @@ class TargetNode(alias PAINT_INTERFACE)
 	}
 
 	MOUSE mouseEventMask;
-	abstract void onMouse(ref MouseEvent);
+	abstract ui.FEEDBACK onMouse(ref MouseEvent);
+}
+
+enum FEEDBACK
+{
+	NONE = 0,
+	Redraw = 1,
+	TrackMouse = 1<<1,
+	CaptureMouse = 1<<2,
 }
 
 class EventManager(T /* : TargetNode */)
 {
 	T root;
+	T tracked;
 	sys.Window window;
 	this(sys.Window window)
 	{
 		this.window = window;
 	}
-	void dispatch_mouse_move(const ref Point pos)
+
+	protected
+	void process(FEEDBACK feedback, T target)
+	{
+		if (feedback & FEEDBACK.TrackMouse)
+			this.tracked = target;
+		if (feedback & FEEDBACK.Redraw)
+			this.window.redraw();  // render manager - redraw scene
+	}
+
+	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type)
 	{
 		auto target = findControl(this.root, pos);
+
+		if (this.tracked !is null && this.tracked !is target)
+		{
+			auto old_target = this.tracked;
+			this.tracked = null;
+			this.process(old_target.onMouse(MouseEvent(MOUSE.LEAVE, pos)), old_target);
+		}
+
 		if (target !is null && target.mouseEventMask & MOUSE.MOVE)
 		{
-			target.onMouse(MouseEvent(
-					(MouseEvent.FEEDBACK note)
-					{
-						switch (note)
-						{
-						case MouseEvent.FEEDBACK.REDRAW:
-							this.window.redraw();
-							break;
-						}
-					},
-					MOUSE.MOVE, pos));
+			this.process(target.onMouse(MouseEvent(MOUSE.MOVE, pos)), target);
 		}
 	}
 }
 
 struct MouseEvent
 {
-	enum FEEDBACK { REDRAW }
-	void delegate (FEEDBACK) feedback;
-
 	MOUSE type;
 	Point pos;
 
-	this (typeof(this.feedback) feedback, MOUSE type, ref Point pos)
+	this (MOUSE type, ref Point pos)
 	{
-		this.feedback = feedback;
 		this.type = type;
 		this.pos = pos;
 	}

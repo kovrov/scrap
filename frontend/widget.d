@@ -10,7 +10,7 @@ template base(BASE /* : ui.TargetNode */)
 			this.mouseEventMask = ui.MOUSE.MOVE;
 		}
 
-		override void onMouse(ref ui.MouseEvent ev) {}
+		override ui.FEEDBACK onMouse(ref ui.MouseEvent ev) { return ui.FEEDBACK.NONE; }
 	}
 
 
@@ -36,10 +36,28 @@ template base(BASE /* : ui.TargetNode */)
 	{
 		mixin parent_ctor;
 		bool tracked;
-		override void onMouse(ref ui.MouseEvent ev)
+		bool pressed;
+		override ui.FEEDBACK onMouse(ref ui.MouseEvent ev)
 		{
-			this.tracked = true;
-			ev.feedback(ev.FEEDBACK.REDRAW); // window.redraw
+			switch (ev.type)
+			{
+			case ui.MOUSE.MOVE:
+				assert (!this.tracked);
+				this.mouseEventMask ^= ui.MOUSE.MOVE;
+				this.tracked = true;
+				return ui.FEEDBACK.Redraw | ui.FEEDBACK.TrackMouse;
+			case ui.MOUSE.LEAVE:
+				this.tracked = false;
+				this.mouseEventMask |= ui.MOUSE.MOVE;
+				return ui.FEEDBACK.Redraw;
+			//case ui.MOUSE.DBLCLK:
+			case ui.MOUSE.DOWN:
+				this.pressed = true;
+				return ui.FEEDBACK.Redraw;
+			case ui.MOUSE.UP:
+				this.pressed = false;
+				return ui.FEEDBACK.Redraw;
+			}
 		}
 	}
 

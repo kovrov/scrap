@@ -115,7 +115,7 @@ class Button : widgets.Button
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
 		win32.DrawEdge(hdc, &rect,
-					this.tracked ? win32.EDGE_RAISED : win32.EDGE_SUNKEN,
+					this.pressed ? win32.EDGE_SUNKEN : win32.EDGE_RAISED,
 					win32.BF_RECT|win32.BF_ADJUST);  // BF_ADJUST will change the rect values
 
 		win32.FillRect(hdc, &rect, style.buttonFace);
