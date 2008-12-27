@@ -7,7 +7,7 @@ template base(BASE /* : ui.TargetNode */)
 		this(string name, BASE parent=null)
 		{
 			super(name, parent);
-			this.mouseEventMask = ui.MOUSE.MOVE;
+			this.mouseEventMask = ui.MouseEventMask.MOVE | ui.MouseEventMask.UP | ui.MouseEventMask.DOWN;
 		}
 
 		override ui.FEEDBACK onMouse(ref ui.MouseEvent ev) { return ui.FEEDBACK.NONE; }
@@ -43,12 +43,12 @@ template base(BASE /* : ui.TargetNode */)
 			{
 			case ui.MOUSE.MOVE:
 				assert (!this.tracked);
-				this.mouseEventMask ^= ui.MOUSE.MOVE;
+				this.mouseEventMask ^= ui.MouseEventMask.MOVE;
 				this.tracked = true;
 				return ui.FEEDBACK.Redraw | ui.FEEDBACK.TrackMouse;
 			case ui.MOUSE.LEAVE:
 				this.tracked = false;
-				this.mouseEventMask |= ui.MOUSE.MOVE;
+				this.mouseEventMask |= ui.MouseEventMask.MOVE;
 				return ui.FEEDBACK.Redraw;
 			//case ui.MOUSE.DBLCLK:
 			case ui.MOUSE.DOWN:

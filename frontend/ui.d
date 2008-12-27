@@ -4,8 +4,6 @@ static import generic;
 alias generic.Point!(short) Point;
 
 
-enum MOUSE { MOVE=1, LEAVE, UP, DOWN }
-
 /* this is important concept - injecting an interface into root of the class hierarchy */
 class TargetNode(alias PAINT_INTERFACE)
 {
@@ -46,15 +44,53 @@ class TargetNode(alias PAINT_INTERFACE)
 		return abs_pos;
 	}
 
-	MOUSE mouseEventMask;
+	MouseEventMask mouseEventMask;
 	abstract ui.FEEDBACK onMouse(ref MouseEvent);
+	/*
+on_mouse_enter  (pos)
+on_mouse_leave  (pos)
+on_mouse_motion (pos, vect)
+on_mouse_drag   (pos, vect, buttons, modifiers)
+on_mouse_press  (pos, button, modifiers)
+on_mouse_release(pos, button, modifiers)
+on_mouse_scroll (pos, scroll_x, scroll_y)
+	*/
+}
+
+enum MouseEventMask
+{
+	NONE  = 0,
+	MOVE  = 1,
+	LEAVE = 1<<1,
+	UP    = 1<<2,
+	DOWN  = 1<<3,
+}
+
+enum MOUSE
+{
+	MOVE  = 1,
+	LEAVE,
+	UP,
+	DOWN,
+}
+
+struct MouseEvent
+{
+	MOUSE type;
+	Point pos;
+
+	this (MOUSE type, ref Point pos)
+	{
+		this.type = type;
+		this.pos = pos;
+	}
 }
 
 enum FEEDBACK
 {
-	NONE = 0,
-	Redraw = 1,
-	TrackMouse = 1<<1,
+	NONE         = 0,
+	Redraw       = 1,
+	TrackMouse   = 1<<1,
 	CaptureMouse = 1<<2,
 }
 
@@ -81,29 +117,35 @@ class EventManager(T /* : TargetNode */)
 	{
 		auto target = findControl(this.root, pos);
 
-		if (this.tracked !is null && this.tracked !is target)
+		switch (type)
 		{
-			auto old_target = this.tracked;
-			this.tracked = null;
-			this.process(old_target.onMouse(MouseEvent(MOUSE.LEAVE, pos)), old_target);
+		case sys.MOUSE.LEFT_DOWN:
+			if (target !is null && target.mouseEventMask & MouseEventMask.DOWN)
+				this.process(target.onMouse(MouseEvent(MOUSE.DOWN, pos)), target);
+			break;
+		case sys.MOUSE.LEFT_UP:
+			if (target !is null && target.mouseEventMask & MouseEventMask.UP)
+				this.process(target.onMouse(MouseEvent(MOUSE.UP, pos)), target);
+			break;
+		case sys.MOUSE.MIDDLE_DOWN:
+			break;
+		case sys.MOUSE.MIDDLE_UP:
+			break;
+		case sys.MOUSE.RIGTH_DOWN:
+			break;
+		case sys.MOUSE.RIGTH_UP:
+			break;
+		case sys.MOUSE.MOVE:
+			if (this.tracked !is null && this.tracked !is target)
+			{
+				auto old_target = this.tracked;
+				this.tracked = null;
+				this.process(old_target.onMouse(MouseEvent(MOUSE.LEAVE, pos)), old_target);
+			}
+			if (target !is null && target.mouseEventMask & MouseEventMask.MOVE)
+				this.process(target.onMouse(MouseEvent(MOUSE.MOVE, pos)), target);
+			break;
 		}
-
-		if (target !is null && target.mouseEventMask & MOUSE.MOVE)
-		{
-			this.process(target.onMouse(MouseEvent(MOUSE.MOVE, pos)), target);
-		}
-	}
-}
-
-struct MouseEvent
-{
-	MOUSE type;
-	Point pos;
-
-	this (MOUSE type, ref Point pos)
-	{
-		this.type = type;
-		this.pos = pos;
 	}
 }
 

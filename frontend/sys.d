@@ -42,13 +42,10 @@ interface Window
 
 enum MOUSE
 {
-	LEFT_DBLCLK,
 	LEFT_DOWN,
 	LEFT_UP,
-	MIDDLE_DBLCLK,
 	MIDDLE_DOWN,
 	MIDDLE_UP,
-	RIGTH_DBLCLK,
 	RIGTH_DOWN,
 	RIGTH_UP,
 	MOVE,
@@ -69,18 +66,31 @@ class WindowGDI(IOMANAGER) : Window
 		case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
 			_windows[hWnd].io.on_paint(hWnd);
 			break;
-		// The left mouse button
-		case win32.WM_LBUTTONDBLCLK: // double-clicked http://msdn.microsoft.com/library/ms645606
-		case win32.WM_LBUTTONDOWN:   // pressed.
-		case win32.WM_LBUTTONUP:     // released.
-		// The middle mouse button
-		case win32.WM_MBUTTONDBLCLK: // double-clicked.
-		case win32.WM_MBUTTONDOWN:   // pressed.
-		case win32.WM_MBUTTONUP:     // released.
-		// The right mouse button
-		case win32.WM_RBUTTONDBLCLK: // double-clicked.
-		case win32.WM_RBUTTONDOWN:   // pressed.
-		case win32.WM_RBUTTONUP:     // released.
+		// mouse input
+		case win32.WM_LBUTTONDBLCLK:
+			assert (false);  // break;
+		case win32.WM_LBUTTONDOWN:  // left mouse button pressed.
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.LEFT_DOWN);
+			break;
+		case win32.WM_LBUTTONUP:  // left mouse button released.
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.LEFT_UP);
+			break;
+		case win32.WM_MBUTTONDBLCLK:
+			assert (false);  // break;
+		case win32.WM_MBUTTONDOWN:  // middle mouse button pressed.
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MIDDLE_DOWN);
+			break;
+		case win32.WM_MBUTTONUP:  // middle mouse button released.
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MIDDLE_UP);
+			break;
+		case win32.WM_RBUTTONDBLCLK:
+			assert (false);  // break;
+		case win32.WM_RBUTTONDOWN:  // right mouse button pressed.
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.RIGTH_DOWN);
+			break;
+		case win32.WM_RBUTTONUP:  // right mouse button released.
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.RIGTH_UP);
+			break;
 		// Windows 2000/Windows XP: An X mouse button
 		//case win32.WM_XBUTTONDBLCLK: // double-clicked.
 		//case win32.WM_XBUTTONDOWN:   // pressed.
@@ -88,21 +98,10 @@ class WindowGDI(IOMANAGER) : Window
 		break;
 		// Mouse cursor has moved (if not captured, within the client area)
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
-/*	MOUSE.LEFT_DBLCLK
-	MOUSE.LEFT_DOWN
-	MOUSE.LEFT_UP
-	MOUSE.MIDDLE_DBLCLK
-	MOUSE.MIDDLE_DOWN
-	MOUSE.MIDDLE_UP
-	MOUSE.RIGTH_DBLCLK
-	MOUSE.RIGTH_DOWN
-	MOUSE.RIGTH_UP
-*/
 			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
 			break;
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
-			assert (false);  // temp
-			break;
+			assert (false);  // break;
 		case win32.WM_DESTROY:
 			_windows.remove(hWnd);
 			if (_windows.length > 0)
