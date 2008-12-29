@@ -13,6 +13,15 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.setParent;
 	mixin tree.opApplyReverse;
 
+	static typeof(this) focused;
+	/*
+	disabled?
+	visible?
+	tabstop?
+	parentnotify?
+	group?
+	*/
+
 	string name;
 	union
 	{
