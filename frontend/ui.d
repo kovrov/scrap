@@ -44,27 +44,15 @@ class TargetNode(alias PAINT_INTERFACE)
 		return abs_pos;
 	}
 
-	MouseEventMask mouseEventMask;
-	abstract ui.FEEDBACK onMouse(ref MouseEvent);
-	/*
-on_mouse_enter  (pos)
-on_mouse_leave  (pos)
-on_mouse_motion (pos, vect)
-on_mouse_drag   (pos, vect, buttons, modifiers)
-on_mouse_press  (pos, button, modifiers)
-on_mouse_release(pos, button, modifiers)
-on_mouse_scroll (pos, scroll_x, scroll_y)
-	*/
+	abstract FEEDBACK onMousePass(MOUSE_DIRECTION dir);
+	abstract FEEDBACK onMouseMove(const ref Point pos/*, vect*/);
+	abstract FEEDBACK onMouseDrag(const ref Point pos/*, vect*/, uint[] buttons/*, modifiers*/);
+	abstract FEEDBACK onMouseButton(const ref Point pos, MOUSE_ACTION action, uint button/*, modifiers*/);
+	abstract FEEDBACK onMouseScroll(int x, int y);
 }
 
-enum MouseEventMask
-{
-	NONE  = 0,
-	MOVE  = 1,
-	LEAVE = 1<<1,
-	UP    = 1<<2,
-	DOWN  = 1<<3,
-}
+enum MOUSE_DIRECTION { ENTER, LEAVE }
+enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 
 enum MOUSE
 {
@@ -74,30 +62,19 @@ enum MOUSE
 	DOWN,
 }
 
-struct MouseEvent
-{
-	MOUSE type;
-	Point pos;
-
-	this (MOUSE type, ref Point pos)
-	{
-		this.type = type;
-		this.pos = pos;
-	}
-}
-
 enum FEEDBACK
 {
 	NONE         = 0,
 	Redraw       = 1,
-	TrackMouse   = 1<<1,
-	CaptureMouse = 1<<2,
+	CaptureMouse = 1<<1,
+	ReleaseMouse = 1<<2,
 }
 
 class EventManager(T /* : TargetNode */)
 {
 	T root;
 	T tracked;
+	T mouseOwner;
 	sys.Window window;
 	this(sys.Window window)
 	{
@@ -107,25 +84,33 @@ class EventManager(T /* : TargetNode */)
 	protected
 	void process(FEEDBACK feedback, T target)
 	{
-		if (feedback & FEEDBACK.TrackMouse)
-			this.tracked = target;
+		if (feedback & FEEDBACK.CaptureMouse)
+		{
+			assert (this.mouseOwner is null);
+			this.mouseOwner = target;
+		}
+		if (feedback & FEEDBACK.ReleaseMouse)
+		{
+			assert (this.mouseOwner !is null);
+			this.mouseOwner = null;
+		}
 		if (feedback & FEEDBACK.Redraw)
 			this.window.redraw();  // render manager - redraw scene
 	}
-
+import std.stdio;
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type)
 	{
-		auto target = findControl(this.root, pos);
+		auto target = (this.mouseOwner !is null) ? this.mouseOwner : findControl(this.root, pos);
 
 		switch (type)
 		{
 		case sys.MOUSE.LEFT_DOWN:
-			if (target !is null && target.mouseEventMask & MouseEventMask.DOWN)
-				this.process(target.onMouse(MouseEvent(MOUSE.DOWN, pos)), target);
+			if (target !is null)
+				this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, 0/*, modifiers*/), target);
 			break;
 		case sys.MOUSE.LEFT_UP:
-			if (target !is null && target.mouseEventMask & MouseEventMask.UP)
-				this.process(target.onMouse(MouseEvent(MOUSE.UP, pos)), target);
+			if (target !is null)
+				this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, 0/*, modifiers*/), target);
 			break;
 		case sys.MOUSE.MIDDLE_DOWN:
 			break;
@@ -136,14 +121,32 @@ class EventManager(T /* : TargetNode */)
 		case sys.MOUSE.RIGTH_UP:
 			break;
 		case sys.MOUSE.MOVE:
-			if (this.tracked !is null && this.tracked !is target)
+			if (this.mouseOwner !is null)
 			{
-				auto old_target = this.tracked;
-				this.tracked = null;
-				this.process(old_target.onMouse(MouseEvent(MOUSE.LEAVE, pos)), old_target);
+				if (!this.mouseOwner.rect.contains(pos - this.mouseOwner.parent.position_abs() ))
+					target = null;
 			}
-			if (target !is null && target.mouseEventMask & MouseEventMask.MOVE)
-				this.process(target.onMouse(MouseEvent(MOUSE.MOVE, pos)), target);
+
+			if (this.tracked !is target)
+			{
+				if (this.tracked !is null)
+				{
+					this.process(this.tracked.onMousePass(MOUSE_DIRECTION.LEAVE), this.tracked);
+					//if (this.mouseOwner !is null)  // in case this.tracked just captured mouse
+					//	target = this.mouseOwner;
+				}
+				this.tracked = target;
+				if (target !is null)
+				{
+					this.process(target.onMousePass(MOUSE_DIRECTION.ENTER), target);
+				}
+			}
+
+			if (this.mouseOwner !is null)  // tmp
+				target = this.mouseOwner;
+
+			if (target !is null)
+				this.process(target.onMouseMove(pos), target);
 			break;
 		}
 	}

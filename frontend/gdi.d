@@ -120,6 +120,10 @@ class Button : widgets.Button
 
 		win32.FillRect(hdc, &rect, style.buttonFace);
 
+		win32.InflateRect(&rect, -win32.GetSystemMetrics(win32.SM_CXBORDER), -win32.GetSystemMetrics(win32.SM_CYBORDER));
+		if (this.hot)
+			win32.DrawFocusRect(hdc, &rect);
+
 		win32.SetBkColor(hdc, style.buttonColor);
 		win32.SetTextColor(hdc, style.buttonTextColor);
 		auto old_gdiobj = win32.SelectObject(hdc, style.buttonFont);

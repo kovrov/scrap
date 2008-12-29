@@ -35,7 +35,7 @@ gdi.Widget genTestData()
 
 void main()
 {
-	auto window = gdi.SysWindow("test", sys.Size(640,480), gdi.SysWindow.FLAG.hidden);
+	auto window = gdi.SysWindow("test", sys.Size(640,480), sys.Window.FLAG.hidden|sys.Window.FLAG.resizable);
 	auto main_ui = genTestData();  // load main UI
 	window.io.root = main_ui;  //bind
 	window.visible(true);

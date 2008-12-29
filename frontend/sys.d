@@ -179,6 +179,10 @@ class WindowGDI(IOMANAGER) : Window
 		_windows.rehash;
 		if (!hidden)
 			window.visible(true);
+
+		// temp hack to be able to output to console
+		win32.AttachConsole(win32.ATTACH_PARENT_PROCESS);
+
 		return window;
 	}
 
