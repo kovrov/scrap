@@ -121,7 +121,7 @@ class Button : widgets.Button
 		win32.FillRect(hdc, &rect, style.buttonFace);
 
 		win32.InflateRect(&rect, -win32.GetSystemMetrics(win32.SM_CXBORDER), -win32.GetSystemMetrics(win32.SM_CYBORDER));
-		if (this.hot)  // if (this.focused is this)
+		if (this.focusedNode is this)
 			win32.DrawFocusRect(hdc, &rect);
 
 		win32.SetBkColor(hdc, style.buttonColor);

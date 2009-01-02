@@ -1,5 +1,11 @@
 static import ui;
 
+interface TopLevelWindow  // active window interface
+{
+	ui.FB activate();
+	//ui.FB deactivate();
+}
+
 template base(BASE /* : ui.TargetNode */)
 {
 	class Widget : BASE
@@ -9,20 +15,29 @@ template base(BASE /* : ui.TargetNode */)
 			super(name, parent);
 		}
 
-		override ui.FEEDBACK onMousePass(ui.MOUSE_DIRECTION dir) { return ui.FEEDBACK.NONE; }
-		override ui.FEEDBACK onMouseMove(const ref ui.Point pos/*, vect*/) { return ui.FEEDBACK.NONE; }
-		override ui.FEEDBACK onMouseDrag(const ref ui.Point pos/*, vect*/, uint[] buttons/*, modifiers*/) { return ui.FEEDBACK.NONE; }
-		override ui.FEEDBACK onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/) { return ui.FEEDBACK.NONE; }
-		override ui.FEEDBACK onMouseScroll(int x, int y) { return ui.FEEDBACK.NONE; }
+		override ui.FB onMousePass(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
+		override ui.FB onMouseMove(const ref ui.Point pos/*, vect*/) { return ui.FB.NONE; }
+		override ui.FB onMouseDrag(const ref ui.Point pos/*, vect*/, uint[] buttons/*, modifiers*/) { return ui.FB.NONE; }
+		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/) { return ui.FB.NONE; }
+		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
 	}
 
 
 	template parent_ctor() { this(string name, BASE parent) { super(name, parent); }}
 
 
-	class Window : Widget
+	class Window : Widget, TopLevelWindow
 	{
-		mixin parent_ctor;
+		BASE focusedChild;
+		this(string name, BASE parent)
+		{
+			super(name, parent);
+		}
+		override ui.FB activate()
+		{
+			BASE.focusedNode = focusedChild;
+			return ui.FB.NONE;
+		}
 	}
 
 	class Group : Widget
@@ -37,11 +52,15 @@ template base(BASE /* : ui.TargetNode */)
 
 	class Button : Widget
 	{
-		mixin parent_ctor;
 		bool hot;
 		bool pressed;
+		this(string name, BASE parent)
+		{
+			super(name, parent);
+			this.focusPolicy = ui.FOCUS.TAB|ui.FOCUS.CLICK;
+		}
 
-		override ui.FEEDBACK onMousePass(ui.MOUSE_DIRECTION dir)
+		override ui.FB onMousePass(ui.MOUSE_DIRECTION dir)
 		{
 			switch (dir)
 			{
@@ -54,24 +73,27 @@ template base(BASE /* : ui.TargetNode */)
 				this.hot = false;
 				break;
 			}
-			return ui.FEEDBACK.Redraw;
+			return ui.FB.StateChanged;
 		}
 
-		override ui.FEEDBACK onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
+		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
 		{
+			if (button != 0)
+				return ui.FB.NONE;
+
 			switch (action)
 			{
 			case ui.MOUSE_ACTION.PRESS:
 				assert (!this.pressed);
 				this.pressed = true;
-				return ui.FEEDBACK.CaptureMouse | ui.FEEDBACK.Redraw;
+				return ui.FB.CaptureMouse | ui.FB.StateChanged;
 			case ui.MOUSE_ACTION.RELEASE:
 				if (this.pressed)
 				{
 					this.pressed = false;
-					return ui.FEEDBACK.ReleaseMouse | ui.FEEDBACK.Redraw;
+					return ui.FB.ReleaseMouse | ui.FB.StateChanged;
 				}
-				return ui.FEEDBACK.NONE;
+				return ui.FB.NONE;
 			}
 		}
 	}

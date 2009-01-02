@@ -42,12 +42,8 @@ interface Window
 
 enum MOUSE
 {
-	LEFT_DOWN,
-	LEFT_UP,
-	MIDDLE_DOWN,
-	MIDDLE_UP,
-	RIGTH_DOWN,
-	RIGTH_UP,
+	PRESS,
+	RELEASE,
 	MOVE,
 }
 
@@ -68,34 +64,30 @@ class WindowGDI(IOMANAGER) : Window
 			break;
 		// mouse input
 		case win32.WM_LBUTTONDBLCLK:
-			assert (false);  // break;
-		case win32.WM_LBUTTONDOWN:  // left mouse button pressed.
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.LEFT_DOWN);
-			break;
-		case win32.WM_LBUTTONUP:  // left mouse button released.
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.LEFT_UP);
-			break;
+		case win32.WM_RBUTTONDBLCLK:
 		case win32.WM_MBUTTONDBLCLK:
 			assert (false);  // break;
-		case win32.WM_MBUTTONDOWN:  // middle mouse button pressed.
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MIDDLE_DOWN);
-			break;
-		case win32.WM_MBUTTONUP:  // middle mouse button released.
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MIDDLE_UP);
-			break;
-		case win32.WM_RBUTTONDBLCLK:
-			assert (false);  // break;
+		case win32.WM_LBUTTONDOWN:  // left mouse button pressed.
+		case win32.WM_LBUTTONUP:    // left mouse button released.
 		case win32.WM_RBUTTONDOWN:  // right mouse button pressed.
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.RIGTH_DOWN);
-			break;
-		case win32.WM_RBUTTONUP:  // right mouse button released.
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.RIGTH_UP);
+		case win32.WM_RBUTTONUP:    // right mouse button released.
+		case win32.WM_MBUTTONDOWN:  // middle mouse button pressed.
+		case win32.WM_MBUTTONUP:    // middle mouse button released.
+			int button = 
+					message == win32.WM_LBUTTONDOWN || message == win32.WM_LBUTTONUP ? 0:
+					message == win32.WM_RBUTTONDOWN || message == win32.WM_RBUTTONUP ? 1:
+					message == win32.WM_MBUTTONDOWN || message == win32.WM_MBUTTONUP ? 2:
+					-1;  // error
+			MOUSE type = message == win32.WM_LBUTTONUP ||
+			             message == win32.WM_RBUTTONUP ||
+			             message == win32.WM_MBUTTONUP ? MOUSE.RELEASE : MOUSE.PRESS;
+			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), type, button);
 			break;
 		// Windows 2000/Windows XP: An X mouse button
 		//case win32.WM_XBUTTONDBLCLK: // double-clicked.
 		//case win32.WM_XBUTTONDOWN:   // pressed.
 		//case win32.WM_XBUTTONUP:     // released.
-		break;
+		//break;
 		// Mouse cursor has moved (if not captured, within the client area)
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
 			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
