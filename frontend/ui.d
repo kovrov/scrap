@@ -131,6 +131,7 @@ class EventManager(T /* : TargetNode */)
 		{
 			assert (this.mouseHolder is target);
 			this.mouseHolder = null;
+			//TODO: get rid of recursion
 			target = findControl(this.root, pos);
 			if (this.mouseOldTarget !is target)
 				passMouse(target, pos);
@@ -141,40 +142,42 @@ class EventManager(T /* : TargetNode */)
 
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
-		auto target = (this.mouseHolder !is null) ? this.mouseHolder : findControl(this.root, pos);
+		auto target = findControl(this.root, pos);
 
 		if (type == sys.MOUSE.MOVE)
 		{
 			auto mouseNewTarget = target;
-			if (this.mouseHolder !is null && !this.mouseHolder.rect.contains(pos - this.mouseHolder.parent.position_abs()))
+			if (this.mouseHolder !is null && this.mouseHolder !is target)
 				mouseNewTarget = null;
-
 			if (this.mouseOldTarget !is mouseNewTarget)
 				passMouse(mouseNewTarget, pos);
 		}
 
-		if (target !is null && !target.disabled)
+		if (this.mouseHolder !is null)
+			target = this.mouseHolder;
+
+		if (target is null || target.disabled)
+			return;
+
+		switch (type)
 		{
-			switch (type)
+		case sys.MOUSE.PRESS:
+			assert (button > -1);
+			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
+			auto focusable = cast(Focusable)target;
+			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
 			{
-			case sys.MOUSE.PRESS:
-				assert (button > -1);
-				this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
-				auto focusable = cast(Focusable)target;
-				if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
-				{
-					T.focusedNode = focusable;
-					this.window.redraw();
-				}
-				break;
-			case sys.MOUSE.RELEASE:
-				assert (button > -1);
-				this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
-				break;
-			case sys.MOUSE.MOVE:
-				this.process(target.onMouseMove(pos), target, pos);
-				break;
+				T.focusedNode = focusable;
+				this.window.redraw();
 			}
+			break;
+		case sys.MOUSE.RELEASE:
+			assert (button > -1);
+			this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
+			break;
+		case sys.MOUSE.MOVE:
+			this.process(target.onMouseMove(pos), target, pos);
+			break;
 		}
 	}
 }
