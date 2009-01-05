@@ -4,13 +4,25 @@ static import generic;
 alias generic.Point!(short) Point;
 
 
-enum FOCUS  // focus policy mask
+enum FB
 {
-	NONE  = 0,  // default
-	TAB   = 1,
-	CLICK = 1<<1,
+	NONE         = 0,
+	StateChanged = 1,
+	CaptureMouse = 1<<1,
+	ReleaseMouse = 1<<2,
 }
 
+interface Activatable  // activate polycy interface
+{
+	ui.FB activate();
+	//ui.FB deactivate();
+}
+
+interface Focusable  // focus policy interface
+{
+	//ui.FB focusOnKey();
+	bool focusOnMouse(uint button);
+}
 
 /* this is important concept - injecting an interface into root of the class hierarchy */
 class TargetNode(alias PAINT_INTERFACE)
@@ -22,9 +34,8 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.opApplyReverse;
 
 	static typeof(this) activeNode;
-	static typeof(this) focusedNode;
+	static Focusable focusedNode;
 
-	FOCUS focusPolicy;  // tabstop?
 	bool overlapped;
 	bool hidden;
 	bool disabled;
@@ -80,19 +91,11 @@ enum MOUSE
 	DOWN,
 }
 
-enum FB
-{
-	NONE         = 0,
-	StateChanged = 1,
-	CaptureMouse = 1<<1,
-	ReleaseMouse = 1<<2,
-}
-
 class EventManager(T /* : TargetNode */)
 {
 	T root;
 	T tracked;
-	T mouseOwner;
+	T mouseHolder;
 	sys.Window window;
 
 	this(sys.Window window)
@@ -105,33 +108,34 @@ class EventManager(T /* : TargetNode */)
 	{
 		if (feedback & FB.CaptureMouse)
 		{
-			assert (this.mouseOwner is null);
-			this.mouseOwner = target;
+			assert (this.mouseHolder is null);
+			this.mouseHolder = target;
 		}
 		if (feedback & FB.ReleaseMouse)
 		{
-			assert (this.mouseOwner !is null);
-			this.mouseOwner = null;
+			assert (this.mouseHolder !is null);
+			this.mouseHolder = null;
 		}
 		if (feedback & FB.StateChanged)
 			this.window.redraw();  // render manager - redraw scene
 	}
-import std.stdio;
+
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
-		auto target = (this.mouseOwner !is null) ? this.mouseOwner : findControl(this.root, pos);
+		auto target = (this.mouseHolder !is null) ? this.mouseHolder : findControl(this.root, pos);
 
 		switch (type)
 		{
 		case sys.MOUSE.PRESS:
+			assert (button > -1);
 			if (target !is null && !target.disabled)
 			{
-				if (target.focusPolicy & FOCUS.CLICK && T.focusedNode !is target)
+				auto focusable = cast(Focusable)target;
+				if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
 				{
-					T.focusedNode = target;
+					T.focusedNode = focusable;
 					this.window.redraw();
 				}
-				//assert (button >= 0);
 				this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target);
 			}
 			break;
@@ -143,9 +147,9 @@ import std.stdio;
 			}
 			break;
 		case sys.MOUSE.MOVE:
-			if (this.mouseOwner !is null)
+			if (this.mouseHolder !is null)
 			{
-				if (!this.mouseOwner.rect.contains(pos - this.mouseOwner.parent.position_abs() ))
+				if (!this.mouseHolder.rect.contains(pos - this.mouseHolder.parent.position_abs() ))
 					target = null;
 			}
 
@@ -154,8 +158,8 @@ import std.stdio;
 				if (this.tracked !is null)
 				{
 					this.process(this.tracked.onMousePass(MOUSE_DIRECTION.LEAVE), this.tracked);
-					//if (this.mouseOwner !is null)  // in case this.tracked just captured mouse
-					//	target = this.mouseOwner;
+					//if (this.mouseHolder !is null)  // in case this.tracked just captured mouse
+					//	target = this.mouseHolder;
 				}
 				this.tracked = target;
 				if (target !is null && !target.disabled)
@@ -164,8 +168,8 @@ import std.stdio;
 				}
 			}
 
-			if (this.mouseOwner !is null)  // tmp
-				target = this.mouseOwner;
+			if (this.mouseHolder !is null)  // tmp
+				target = this.mouseHolder;
 
 			if (target !is null && !target.disabled)
 				this.process(target.onMouseMove(pos), target);

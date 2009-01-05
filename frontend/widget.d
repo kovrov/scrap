@@ -1,10 +1,5 @@
 static import ui;
 
-interface TopLevelWindow  // active window interface
-{
-	ui.FB activate();
-	//ui.FB deactivate();
-}
 
 template base(BASE /* : ui.TargetNode */)
 {
@@ -26,17 +21,18 @@ template base(BASE /* : ui.TargetNode */)
 	template parent_ctor() { this(string name, BASE parent) { super(name, parent); }}
 
 
-	class Window : Widget, TopLevelWindow
+	class Window : Widget, ui.Activatable
 	{
-		BASE focusedChild;
+		ui.Focusable focusedChild;
 		this(string name, BASE parent)
 		{
 			super(name, parent);
 		}
+
 		override ui.FB activate()
 		{
 			BASE.focusedNode = focusedChild;
-			return ui.FB.NONE;
+			return ui.FB.StateChanged;
 		}
 	}
 
@@ -50,15 +46,16 @@ template base(BASE /* : ui.TargetNode */)
 		mixin parent_ctor;
 	}
 
-	class Button : Widget
+	class Button : Widget, ui.Focusable
 	{
 		bool hot;
 		bool pressed;
 		this(string name, BASE parent)
 		{
 			super(name, parent);
-			this.focusPolicy = ui.FOCUS.TAB|ui.FOCUS.CLICK;
 		}
+
+		override bool focusOnMouse(uint button) { return (button == 0) ? true : false; }
 
 		override ui.FB onMousePass(ui.MOUSE_DIRECTION dir)
 		{
