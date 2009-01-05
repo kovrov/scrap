@@ -94,7 +94,7 @@ enum MOUSE
 class EventManager(T /* : TargetNode */)
 {
 	T root;
-	T tracked;
+	T mouseOldTarget;
 	T mouseHolder;
 	sys.Window window;
 
@@ -104,8 +104,24 @@ class EventManager(T /* : TargetNode */)
 	}
 
 	protected
-	void process(FB feedback, T target)
+	void passMouse(ref T target, const ref Point pos)
 	{
+		assert (this.mouseOldTarget !is target);
+
+		if (this.mouseOldTarget !is null)
+			this.process(this.mouseOldTarget.onMousePass(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
+			//TODO: check if this.mouseOldTarget just captured mouse
+
+		if (target !is null && !target.disabled)
+			this.process(target.onMousePass(MOUSE_DIRECTION.ENTER), target, pos);
+
+		this.mouseOldTarget = target;
+	}
+
+	protected
+	void process(FB feedback, T target, const ref Point pos)
+	{
+		assert (target !is null);
 		if (feedback & FB.CaptureMouse)
 		{
 			assert (this.mouseHolder is null);
@@ -113,8 +129,11 @@ class EventManager(T /* : TargetNode */)
 		}
 		if (feedback & FB.ReleaseMouse)
 		{
-			assert (this.mouseHolder !is null);
+			assert (this.mouseHolder is target);
 			this.mouseHolder = null;
+			target = findControl(this.root, pos);
+			if (this.mouseOldTarget !is target)
+				passMouse(target, pos);
 		}
 		if (feedback & FB.StateChanged)
 			this.window.redraw();  // render manager - redraw scene
@@ -124,56 +143,38 @@ class EventManager(T /* : TargetNode */)
 	{
 		auto target = (this.mouseHolder !is null) ? this.mouseHolder : findControl(this.root, pos);
 
-		switch (type)
+		if (type == sys.MOUSE.MOVE)
 		{
-		case sys.MOUSE.PRESS:
-			assert (button > -1);
-			if (target !is null && !target.disabled)
+			auto mouseNewTarget = target;
+			if (this.mouseHolder !is null && !this.mouseHolder.rect.contains(pos - this.mouseHolder.parent.position_abs()))
+				mouseNewTarget = null;
+
+			if (this.mouseOldTarget !is mouseNewTarget)
+				passMouse(mouseNewTarget, pos);
+		}
+
+		if (target !is null && !target.disabled)
+		{
+			switch (type)
 			{
+			case sys.MOUSE.PRESS:
+				assert (button > -1);
+				this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
 				auto focusable = cast(Focusable)target;
 				if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
 				{
 					T.focusedNode = focusable;
 					this.window.redraw();
 				}
-				this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target);
+				break;
+			case sys.MOUSE.RELEASE:
+				assert (button > -1);
+				this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
+				break;
+			case sys.MOUSE.MOVE:
+				this.process(target.onMouseMove(pos), target, pos);
+				break;
 			}
-			break;
-		case sys.MOUSE.RELEASE:
-			if (target !is null && !target.disabled)
-			{
-				//assert (button >= 0);
-				this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target);
-			}
-			break;
-		case sys.MOUSE.MOVE:
-			if (this.mouseHolder !is null)
-			{
-				if (!this.mouseHolder.rect.contains(pos - this.mouseHolder.parent.position_abs() ))
-					target = null;
-			}
-
-			if (this.tracked !is target)
-			{
-				if (this.tracked !is null)
-				{
-					this.process(this.tracked.onMousePass(MOUSE_DIRECTION.LEAVE), this.tracked);
-					//if (this.mouseHolder !is null)  // in case this.tracked just captured mouse
-					//	target = this.mouseHolder;
-				}
-				this.tracked = target;
-				if (target !is null && !target.disabled)
-				{
-					this.process(target.onMousePass(MOUSE_DIRECTION.ENTER), target);
-				}
-			}
-
-			if (this.mouseHolder !is null)  // tmp
-				target = this.mouseHolder;
-
-			if (target !is null && !target.disabled)
-				this.process(target.onMouseMove(pos), target);
-			break;
 		}
 	}
 }
