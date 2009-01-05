@@ -103,6 +103,41 @@ class EventManager(T /* : TargetNode */)
 		this.window = window;
 	}
 
+	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
+	{
+		auto nodeUnderCursor = findControl(this.root, pos);
+		auto target = (this.mouseHolder !is null) ? this.mouseHolder : nodeUnderCursor;
+		switch (type)
+		{
+		case sys.MOUSE.PRESS:
+			assert (button > -1);
+			if (target is null || target.disabled)
+				return;
+			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
+			auto focusable = cast(Focusable)target;
+			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
+			{
+				T.focusedNode = focusable;
+				this.window.redraw();  // FB.StateChanged
+			}
+			break;
+		case sys.MOUSE.RELEASE:
+			assert (button > -1);
+			if (target is null || target.disabled)
+				return;
+			this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
+			break;
+		case sys.MOUSE.MOVE:
+			auto newTarget = (this.mouseHolder is null || this.mouseHolder is nodeUnderCursor) ? nodeUnderCursor : null;
+			if (this.mouseOldTarget !is newTarget)
+				passMouse(newTarget, pos);
+			if (target is null || target.disabled)
+				return;
+			this.process(target.onMouseMove(pos), target, pos);
+			break;
+		}
+	}
+
 	protected
 	void passMouse(ref T target, const ref Point pos)
 	{
@@ -138,47 +173,6 @@ class EventManager(T /* : TargetNode */)
 		}
 		if (feedback & FB.StateChanged)
 			this.window.redraw();  // render manager - redraw scene
-	}
-
-	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
-	{
-		auto target = findControl(this.root, pos);
-
-		if (type == sys.MOUSE.MOVE)
-		{
-			auto mouseNewTarget = target;
-			if (this.mouseHolder !is null && this.mouseHolder !is target)
-				mouseNewTarget = null;
-			if (this.mouseOldTarget !is mouseNewTarget)
-				passMouse(mouseNewTarget, pos);
-		}
-
-		if (this.mouseHolder !is null)
-			target = this.mouseHolder;
-
-		if (target is null || target.disabled)
-			return;
-
-		switch (type)
-		{
-		case sys.MOUSE.PRESS:
-			assert (button > -1);
-			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
-			auto focusable = cast(Focusable)target;
-			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
-			{
-				T.focusedNode = focusable;
-				this.window.redraw();
-			}
-			break;
-		case sys.MOUSE.RELEASE:
-			assert (button > -1);
-			this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
-			break;
-		case sys.MOUSE.MOVE:
-			this.process(target.onMouseMove(pos), target, pos);
-			break;
-		}
 	}
 }
 
