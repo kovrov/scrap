@@ -108,6 +108,53 @@ T deepSearch(T, P)(T root, P predicate)
 	return target;
 }
 
+int opApply()(int delegate(ref typeof(this)) dg)
+{
+	int result = 0;
+	auto node = this;
+	//int level;
+	while (node !is null)
+	{
+		if (node.child !is null)  // the node is an internal (inner) node
+		{
+			assert (node.lastChild !is null);
+			//result = dg(node);
+			node = node.child;
+			//level++;
+		}
+		else if (node.next !is null)  // the node is a leaf
+		{
+			result = dg(node);
+			if (result)
+				break;
+			node = node.next;
+		}
+		else  // the node is a last leaf
+		{
+			assert (node is node.parent.lastChild);
+			result = dg(node);
+			if (result)
+				break;
+			auto parent = node.parent;
+			node = null;
+			while (parent !is null)
+			{
+				result = dg(parent);
+				if (result)
+					break;
+				//level--;
+				if (parent.next)
+				{
+					node = parent.next;
+					break;
+				}
+				parent = parent.parent;
+			}
+		}
+	}
+	return result;
+}
+
 int opApplyReverse()(int delegate(ref typeof(this)) dg)
 {
 	int result = 0;
@@ -119,18 +166,24 @@ int opApplyReverse()(int delegate(ref typeof(this)) dg)
 		{
 			assert (node.child !is null);
 			result = dg(node);
+			if (result)
+				break;
 			node = node.lastChild;
 			//level++;
 		}
 		else if (node.prev !is null)  // the node is a leaf
 		{
 			result = dg(node);
+			if (result)
+				break;
 			node = node.prev;
 		}
 		else  // the node is a last leaf in sequence
 		{
 			assert (node is node.parent.child);
 			result = dg(node);
+			if (result)
+				break;
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)

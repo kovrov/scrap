@@ -11,17 +11,21 @@ static import widget;
 struct Style
 {
 	win32.COLORREF buttonColor;
+	win32.COLORREF buttonHotColor;
 	win32.COLORREF buttonTextColor;
 	win32.HBRUSH appWorkspace;
 	win32.HBRUSH buttonFace;
+	win32.HBRUSH buttonFaceHot;
 	win32.HFONT buttonFont;
 	void load()
 	{
 		this.buttonColor = win32.GetSysColor(win32.COLOR_3DFACE);
+		this.buttonHotColor = win32.GetSysColor(win32.COLOR_3DHILIGHT);
 		this.buttonTextColor = win32.GetSysColor(win32.COLOR_BTNTEXT);
 
 		this.appWorkspace = win32.GetSysColorBrush(win32.COLOR_APPWORKSPACE);
-		this.buttonFace = win32.GetSysColorBrush(win32.COLOR_3DFACE);
+		this.buttonFace = win32.GetSysColorBrush(win32.COLOR_BTNFACE);
+		this.buttonFaceHot = win32.GetSysColorBrush(win32.COLOR_3DHILIGHT);
 
 		win32.NONCLIENTMETRICS nc_metrics;
 		win32.SystemParametersInfo(win32.SPI_GETNONCLIENTMETRICS, nc_metrics.sizeof, &nc_metrics, 0);
@@ -31,6 +35,7 @@ struct Style
 	{
 		win32.DeleteObject(this.appWorkspace);
 		win32.DeleteObject(this.buttonFace);
+		win32.DeleteObject(this.buttonFaceHot);
 		win32.DeleteObject(this.buttonFont);
 	}
 }
@@ -118,13 +123,13 @@ class Button : widgets.Button
 					this.pressed ? win32.EDGE_SUNKEN : win32.EDGE_RAISED,
 					win32.BF_RECT|win32.BF_ADJUST);  // BF_ADJUST will change the rect values
 
-		win32.FillRect(hdc, &rect, style.buttonFace);
+		win32.FillRect(hdc, &rect, this.hot? style.buttonFaceHot : style.buttonFace);
 
 		win32.InflateRect(&rect, -win32.GetSystemMetrics(win32.SM_CXBORDER), -win32.GetSystemMetrics(win32.SM_CYBORDER));
 		if (this.focusedNode is this)
 			win32.DrawFocusRect(hdc, &rect);
 
-		win32.SetBkColor(hdc, style.buttonColor);
+		win32.SetBkColor(hdc, this.hot? style.buttonHotColor : style.buttonColor);
 		win32.SetTextColor(hdc, style.buttonTextColor);
 		auto old_gdiobj = win32.SelectObject(hdc, style.buttonFont);
 		win32.DrawState(hdc, null,

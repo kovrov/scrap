@@ -53,6 +53,11 @@ template base(BASE /* : ui.TargetNode */)
 			super(name, parent);
 		}
 
+		ui.FB onKey(uint keycode)
+		{
+			return ui.FB.NONE;
+		}
+
 		override bool focusOnMouse(ui.MOUSE_ACTION action, uint button)
 		{
 			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
@@ -65,13 +70,13 @@ template base(BASE /* : ui.TargetNode */)
 			case ui.MOUSE_DIRECTION.ENTER:
 				assert (!this.hot);
 				this.hot = true;
-				break;
+				return ui.FB.StateChanged;
 			case ui.MOUSE_DIRECTION.LEAVE:
 				assert (this.hot);
 				this.hot = false;
-				break;
+				return ui.FB.StateChanged;
 			}
-			return ui.FB.StateChanged;
+			return ui.FB.NONE;
 		}
 
 		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)

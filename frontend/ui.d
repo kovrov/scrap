@@ -14,8 +14,8 @@ enum FB
 
 interface Activatable  // activate polycy interface
 {
-	ui.FB activate();
-	//ui.FB deactivate();
+	FB activate();
+	//FB deactivate();
 }
 
 enum MOUSE_DIRECTION { ENTER, LEAVE }
@@ -23,8 +23,9 @@ enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 
 interface Focusable  // focus policy interface
 {
-	//ui.FB focusOnKey();
-	bool focusOnMouse(MOUSE_ACTION action, uint button);
+	//FB focusOnKey();
+	abstract bool focusOnMouse(MOUSE_ACTION action, uint button);
+	abstract FB onKey(uint keycode);
 }
 
 
@@ -35,6 +36,7 @@ class TargetNode(alias PAINT_INTERFACE)
 
 	mixin tree.Node;
 	mixin tree.setParent;
+	mixin tree.opApply;
 	mixin tree.opApplyReverse;
 
 	static typeof(this) activeNode;
@@ -47,6 +49,8 @@ class TargetNode(alias PAINT_INTERFACE)
 	//group
 
 	string name;
+
+	bool nested = true;
 	union
 	{
 		generic.Rect!(short, ushort) rect;
@@ -68,11 +72,11 @@ class TargetNode(alias PAINT_INTERFACE)
 	Point position_abs()
 	{
 		auto abs_pos = this.rect.position;
-		auto parent = this.parent;
+		auto parent = this.nested ? this.parent : null;
 		while (parent)
 		{
 			abs_pos += parent.rect.position;
-			parent = parent.parent;
+			parent = parent.nested ? parent.parent : null;
 		}
 		return abs_pos;
 	}
@@ -184,58 +188,14 @@ class EventManager(T /* : TargetNode */)
 	}
 }
 
+
 T findControl(T)(T root, const ref Point point)
 {
-	T best_match;
-	Point parent_abs_pos;
-	auto node = root;
-	while (node !is null)
+	foreach (ref node; root)
 	{
-		if (node.child !is null)  // the node is an internal (inner) node
-		{
-			if (node.rect.contains(point - parent_abs_pos))
-			{
-				// save so far best matched target
-				best_match = node;
-			}
-			parent_abs_pos += node.rect.position;
-			node = node.child;
-		}
-		else
-		{
-			if (node.rect.contains(point - parent_abs_pos))
-			{
-				// first matched terminal node (leaf) is what we need
-				return node;
-			}
-
-			if (node.next !is null)  // the node is a leaf
-			{
-				node = node.next;
-				continue;
-			}
-			else  // the node is a last leaf
-			{
-				assert (node is node.parent.lastChild);
-				if (best_match is node.parent)
-				{
-					// found best match
-					return best_match;
-				}
-				auto parent = node.parent;
-				node = null;
-				while (parent !is null)
-				{
-					parent_abs_pos -= parent.rect.position;
-					if (parent.next)
-					{
-						node = parent.next;
-						break;
-					}
-					parent = parent.parent;
-				}
-			}
-		}
+		auto translated_point = (!node.nested || node.parent is null) ? point : point - node.parent.position_abs();
+		if (node.rect.contains(translated_point))
+			return node;
 	}
-	return best_match;
+	return null;
 }
