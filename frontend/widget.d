@@ -10,9 +10,7 @@ template base(BASE /* : ui.TargetNode */)
 			super(name, parent);
 		}
 
-		override ui.FB onMousePass(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
-		override ui.FB onMouseMove(const ref ui.Point pos/*, vect*/) { return ui.FB.NONE; }
-		override ui.FB onMouseDrag(const ref ui.Point pos/*, vect*/, uint[] buttons/*, modifiers*/) { return ui.FB.NONE; }
+		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
 		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/) { return ui.FB.NONE; }
 		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
 	}
@@ -55,9 +53,12 @@ template base(BASE /* : ui.TargetNode */)
 			super(name, parent);
 		}
 
-		override bool focusOnMouse(uint button) { return (button == 0) ? true : false; }
+		override bool focusOnMouse(ui.MOUSE_ACTION action, uint button)
+		{
+			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
+		}
 
-		override ui.FB onMousePass(ui.MOUSE_DIRECTION dir)
+		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir)
 		{
 			switch (dir)
 			{

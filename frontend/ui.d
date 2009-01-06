@@ -18,11 +18,15 @@ interface Activatable  // activate polycy interface
 	//ui.FB deactivate();
 }
 
+enum MOUSE_DIRECTION { ENTER, LEAVE }
+enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
+
 interface Focusable  // focus policy interface
 {
 	//ui.FB focusOnKey();
-	bool focusOnMouse(uint button);
+	bool focusOnMouse(MOUSE_ACTION action, uint button);
 }
+
 
 /* this is important concept - injecting an interface into root of the class hierarchy */
 class TargetNode(alias PAINT_INTERFACE)
@@ -73,15 +77,10 @@ class TargetNode(alias PAINT_INTERFACE)
 		return abs_pos;
 	}
 
-	abstract FB onMousePass(MOUSE_DIRECTION dir);
-	abstract FB onMouseMove(const ref Point pos/*, vect*/);
-	abstract FB onMouseDrag(const ref Point pos/*, vect*/, uint[] buttons/*, modifiers*/);
+	abstract FB onMouseOver(MOUSE_DIRECTION dir);
 	abstract FB onMouseButton(const ref Point pos, MOUSE_ACTION action, uint button/*, modifiers*/);
 	abstract FB onMouseScroll(int x, int y);
 }
-
-enum MOUSE_DIRECTION { ENTER, LEAVE }
-enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 
 enum MOUSE
 {
@@ -114,8 +113,9 @@ class EventManager(T /* : TargetNode */)
 			if (target is null || target.disabled)
 				return;
 			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
+			// set focus...
 			auto focusable = cast(Focusable)target;
-			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(button))
+			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.PRESS, button))
 			{
 				T.focusedNode = focusable;
 				this.window.redraw();  // FB.StateChanged
@@ -126,6 +126,13 @@ class EventManager(T /* : TargetNode */)
 			if (target is null || target.disabled)
 				return;
 			this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
+			// arguable focus stuff...
+			auto focusable = cast(Focusable)target;
+			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.RELEASE, button))
+			{
+				T.focusedNode = focusable;
+				this.window.redraw();  // FB.StateChanged
+			}
 			break;
 		case sys.MOUSE.MOVE:
 			auto newTarget = (this.mouseHolder is null || this.mouseHolder is nodeUnderCursor) ? nodeUnderCursor : null;
@@ -133,7 +140,8 @@ class EventManager(T /* : TargetNode */)
 				passMouse(newTarget, pos);
 			if (target is null || target.disabled)
 				return;
-			this.process(target.onMouseMove(pos), target, pos);
+			//TODO: subscription (tracking) of mouse movement
+			//this.process(target.onMouseMove(pos), target, pos);
 			break;
 		}
 	}
@@ -144,11 +152,11 @@ class EventManager(T /* : TargetNode */)
 		assert (this.mouseOldTarget !is target);
 
 		if (this.mouseOldTarget !is null)
-			this.process(this.mouseOldTarget.onMousePass(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
+			this.process(this.mouseOldTarget.onMouseOver(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
 			//TODO: check if this.mouseOldTarget just captured mouse
 
 		if (target !is null && !target.disabled)
-			this.process(target.onMousePass(MOUSE_DIRECTION.ENTER), target, pos);
+			this.process(target.onMouseOver(MOUSE_DIRECTION.ENTER), target, pos);
 
 		this.mouseOldTarget = target;
 	}
