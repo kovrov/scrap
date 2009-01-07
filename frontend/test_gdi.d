@@ -11,7 +11,7 @@ gdi.Widget genTestData()
 	root.rect = Rect(sys.Point(50,50),sys.Size(640,480));
 	//root.hidden = true;
 
-	  auto dlg = new gdi.Dialog("dlg", root);
+	  auto dlg = new gdi.Window("dlg", root);
 	  dlg.rect = Rect(sys.Point(200,200),sys.Size(400,200));
 	  dlg.nested = false;
 	  //dlg.hidden = true;

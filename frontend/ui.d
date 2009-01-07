@@ -43,6 +43,7 @@ class TargetNode(alias PAINT_INTERFACE)
 
 	mixin tree.Node;
 	mixin tree.setParent;
+	mixin tree.makeFirstChild;
 	mixin tree.opApply!("!node.hidden");  // for mouse cursor hit test (with condition mixin)
 	mixin tree.opApplyReverse!("!node.hidden");  // for drawing (with condition mixin)
 

@@ -181,3 +181,30 @@ int opApplyReverse(string SKIP_CONDITION_CODE)(int delegate(ref typeof(this)) dg
 	}
 	return result;
 }
+
+void makeFirstChild()()
+{
+	auto other = this.parent.child;
+	if (other is this)
+		return;
+	assert (this.parent is other.parent);
+	assert (other.prev is null);
+	this.parent.child = this;
+	if (this is this.parent.lastChild)
+		this.parent.lastChild = other;
+	// swap nodes
+	auto this_prev = this.prev;
+	auto this_next = this.next;
+	auto other_prev = other.prev;
+	auto other_next = other.next;
+	this.prev = other_prev;
+	this.next = (other_next is this) ? other : other_next;
+	other.prev = (this_prev is other) ? this : this_prev;
+	other.next = this_next;
+	// fix rest
+	this.next.prev = this;
+	other.prev.next = other;
+	if (other.next !is null)
+		other.next.prev = other;
+	assert (this.prev is null);
+}

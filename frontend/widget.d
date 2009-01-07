@@ -23,22 +23,26 @@ template base(BASE /* : ui.TargetNode */)
 	class Window : Widget, ui.UpwardEventListener
 	{
 		ui.Focusable focusedChild;
-		this(string name, BASE parent)
-		{
-			super(name, parent);
-		}
+		mixin parent_ctor;
 
-import std.stdio;
 		//override
 		ui.FB activate()
 		{
-			writefln("%s : goes at the top of the Z order", this.name);
+			// goes at the top of the Z order
+			this.makeFirstChild();
+			return ui.FB.StateChanged;
 		}
 
 		override void handleUpwardEvent(ref ui.MouseButtonEvent ev)
 		{
 			if (ev.action == ui.MOUSE_ACTION.PRESS)
 				this.activate();
+		}
+
+		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
+		{
+			this.activate();
+			return ui.FB.StateChanged;
 		}
 	}
 
@@ -56,10 +60,7 @@ import std.stdio;
 	{
 		bool hot;
 		bool pressed;
-		this(string name, BASE parent)
-		{
-			super(name, parent);
-		}
+		mixin parent_ctor;
 
 		ui.FB onKey(uint keycode)
 		{
