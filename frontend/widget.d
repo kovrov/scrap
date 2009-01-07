@@ -39,9 +39,10 @@ template base(BASE /* : ui.TargetNode */)
 			BASE.focusedNode = focusedChild;
 			return ui.FB.StateChanged;
 		}
-
+import std.stdio;
 		override void handleUpwardEvent(ref ui.MouseButtonEvent ev)
 		{
+			writeln("handleUpwardEvent");
 		}
 	}
 

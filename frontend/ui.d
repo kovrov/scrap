@@ -113,19 +113,20 @@ class EventManager(T /* : TargetNode */)
 import std.stdio;
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
+		UpwardEventListener[32] event_path_stack;
+		UpwardEventListener[] get_event_path(T target_node)
+		{
+			int i = 0;
+			for (auto node=target_node.parent; node !is null; node=node.parent)
+			{
+				auto listener = cast(UpwardEventListener)node;
+				if (listener !is null)
+					event_path_stack[i++] = listener;
+			}
+			return event_path_stack[0..i];
+		}
 		auto nodeUnderCursor = findControl(this.root, pos);
 		auto target = (this.mouseHolder !is null) ? this.mouseHolder : nodeUnderCursor;
-
-		T[] event_path;
-		if (target !is null)
-		{
-			T[32] event_path_stack;
-			int i = 0;
-			for (auto parent=target.parent; parent !is null; parent=parent.parent)
-				event_path_stack[i++] = parent;
-			event_path = event_path_stack[0..i];
-		}
-		writeln(event_path);
 
 		switch (type)
 		{
@@ -136,13 +137,11 @@ import std.stdio;
 			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing of event
 			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
 			//TODO: Upward Propagation a.k.a. Bubbling of event
-			/*
-			auto event = MouseButtonEvent(pos, MOUSE_ACTION.PRESS, button, target);
-			foreach (ref node; event_path)
+			auto event = MouseButtonEvent(pos, MOUSE_ACTION.PRESS, button);
+			foreach (ref listener; get_event_path(target))
 			{
-				node.handleEvent(event);
+				listener.handleUpwardEvent(event);
 			}
-			*/
 			// set focus...
 			auto focusable = cast(Focusable)target;
 			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.PRESS, button))
