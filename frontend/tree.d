@@ -74,67 +74,40 @@ private void append(typeof(this) new_child)
 }
 */
 
-
-// finds lowest matched leaf using depth-first traversal
-T deepSearch(T, P)(T root, P predicate)
-{
-	T target;
-	auto node = root;
-	while (node !is null)
-	{
-		if (node.child !is null)  // the node is an internal (inner) node
-		{
-			node = node.child;
-		}
-		else if (node.next !is null)  // the node is a leaf
-		{
-			node = node.next;
-		}
-		else  // the node is a last leaf
-		{
-			auto parent = node.parent;
-			node = null;
-			while (parent !is null)
-			{
-				if (parent.next)
-				{
-					node = parent.next;
-					break;
-				}
-				parent = parent.parent;
-			}
-		}
-	}
-	return target;
-}
-
-int opApply()(int delegate(ref typeof(this)) dg)
+/* for mouse cursor hit test */
+int opApply(string SKIP_CONDITION_CODE)(int delegate(ref typeof(this)) dg)
 {
 	int result = 0;
 	auto node = this;
 	//int level;
 	while (node !is null)
 	{
-		if (node.child !is null)  // the node is an internal (inner) node
+		if (node.child !is null && mixin(SKIP_CONDITION_CODE))  // the node is an internal (inner) node
 		{
 			assert (node.lastChild !is null);
-			//result = dg(node);
 			node = node.child;
 			//level++;
 		}
 		else if (node.next !is null)  // the node is a leaf
 		{
-			result = dg(node);
-			if (result)
-				break;
+			if (mixin(SKIP_CONDITION_CODE))
+			{
+				result = dg(node);
+				if (result)
+					break;
+			}
 			node = node.next;
 		}
 		else  // the node is a last leaf
 		{
-			assert (node is node.parent.lastChild);
-			result = dg(node);
-			if (result)
-				break;
+			if (node.parent !is null )
+				assert (node is node.parent.lastChild);
+			if (mixin(SKIP_CONDITION_CODE))
+			{
+				result = dg(node);
+				if (result)
+					break;
+			}
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)
@@ -155,14 +128,15 @@ int opApply()(int delegate(ref typeof(this)) dg)
 	return result;
 }
 
-int opApplyReverse()(int delegate(ref typeof(this)) dg)
+/* for drawing */
+int opApplyReverse(string SKIP_CONDITION_CODE)(int delegate(ref typeof(this)) dg)
 {
 	int result = 0;
 	auto node = this;
 	//int level;
 	while (node !is null)
 	{
-		if (node.lastChild !is null)  // the node is an internal (inner) node
+		if (node.lastChild !is null && (mixin(SKIP_CONDITION_CODE)))  // the node is an internal (inner) node
 		{
 			assert (node.child !is null);
 			result = dg(node);
@@ -173,17 +147,24 @@ int opApplyReverse()(int delegate(ref typeof(this)) dg)
 		}
 		else if (node.prev !is null)  // the node is a leaf
 		{
-			result = dg(node);
-			if (result)
-				break;
+			if (mixin(SKIP_CONDITION_CODE))
+			{
+				result = dg(node);
+				if (result)
+					break;
+			}
 			node = node.prev;
 		}
 		else  // the node is a last leaf in sequence
 		{
-			assert (node is node.parent.child);
-			result = dg(node);
-			if (result)
-				break;
+			if (node.parent !is null)
+				assert (node is node.parent.child);
+			if (mixin(SKIP_CONDITION_CODE))
+			{
+				result = dg(node);
+				if (result)
+					break;
+			}
 			auto parent = node.parent;
 			node = null;
 			while (parent !is null)

@@ -43,17 +43,14 @@ class TargetNode(alias PAINT_INTERFACE)
 
 	mixin tree.Node;
 	mixin tree.setParent;
-	mixin tree.opApply;
-	mixin tree.opApplyReverse;
+	mixin tree.opApply!("!node.hidden");  // for mouse cursor hit test (with condition mixin)
+	mixin tree.opApplyReverse!("!node.hidden");  // for drawing (with condition mixin)
 
 	static typeof(this) activeNode;
 	static Focusable focusedNode;
 
-	bool overlapped;
 	bool hidden;
 	bool disabled;
-	//parentnotify
-	//group
 
 	string name;
 
