@@ -1,10 +1,5 @@
 static import ui;
 
-interface Activatable  // activate polycy interface
-{
-	void activate();
-	//FB deactivate();
-}
 
 
 template base(BASE /* : ui.TargetNode */)
@@ -33,16 +28,17 @@ template base(BASE /* : ui.TargetNode */)
 			super(name, parent);
 		}
 
+import std.stdio;
 		//override
 		ui.FB activate()
 		{
-			BASE.focusedNode = focusedChild;
-			return ui.FB.StateChanged;
+			writefln("%s : goes at the top of the Z order", this.name);
 		}
-import std.stdio;
+
 		override void handleUpwardEvent(ref ui.MouseButtonEvent ev)
 		{
-			writeln("handleUpwardEvent");
+			if (ev.action == ui.MOUSE_ACTION.PRESS)
+				this.activate();
 		}
 	}
 
