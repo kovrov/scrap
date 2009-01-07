@@ -4,6 +4,8 @@ static import generic;
 alias generic.Point!(short) Point;
 
 
+enum MOUSE_DIRECTION { ENTER, LEAVE }
+enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 enum FB
 {
 	NONE         = 0,
@@ -12,14 +14,19 @@ enum FB
 	ReleaseMouse = 1<<2,
 }
 
-interface Activatable  // activate polycy interface
+struct MouseButtonEvent
 {
-	FB activate();
-	//FB deactivate();
+	Point pos;
+	MOUSE_ACTION action;
+	uint button;
+	//T target;
 }
 
-enum MOUSE_DIRECTION { ENTER, LEAVE }
-enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
+interface UpwardEventListener
+{
+	void handleUpwardEvent(ref MouseButtonEvent);
+	//FB deactivate();
+}
 
 interface Focusable  // focus policy interface
 {
@@ -106,17 +113,39 @@ class EventManager(T /* : TargetNode */)
 		this.window = window;
 	}
 
+import std.stdio;
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
 		auto nodeUnderCursor = findControl(this.root, pos);
 		auto target = (this.mouseHolder !is null) ? this.mouseHolder : nodeUnderCursor;
+
+		T[] event_path;
+		if (target !is null)
+		{
+			T[32] event_path_stack;
+			int i = 0;
+			for (auto parent=target.parent; parent !is null; parent=parent.parent)
+				event_path_stack[i++] = parent;
+			event_path = event_path_stack[0..i];
+		}
+		writeln(event_path);
+
 		switch (type)
 		{
 		case sys.MOUSE.PRESS:
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
+			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing of event
 			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
+			//TODO: Upward Propagation a.k.a. Bubbling of event
+			/*
+			auto event = MouseButtonEvent(pos, MOUSE_ACTION.PRESS, button, target);
+			foreach (ref node; event_path)
+			{
+				node.handleEvent(event);
+			}
+			*/
 			// set focus...
 			auto focusable = cast(Focusable)target;
 			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.PRESS, button))
@@ -193,7 +222,9 @@ T findControl(T)(T root, const ref Point point)
 {
 	foreach (ref node; root)
 	{
-		auto translated_point = (!node.nested || node.parent is null) ? point : point - node.parent.position_abs();
+		auto translated_point = (!node.nested || node.parent is null) ?
+				point :
+				point - node.parent.position_abs();
 		if (node.rect.contains(translated_point))
 			return node;
 	}

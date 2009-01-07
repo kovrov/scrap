@@ -1,5 +1,11 @@
 static import ui;
 
+interface Activatable  // activate polycy interface
+{
+	void activate();
+	//FB deactivate();
+}
+
 
 template base(BASE /* : ui.TargetNode */)
 {
@@ -19,7 +25,7 @@ template base(BASE /* : ui.TargetNode */)
 	template parent_ctor() { this(string name, BASE parent) { super(name, parent); }}
 
 
-	class Window : Widget, ui.Activatable
+	class Window : Widget, ui.UpwardEventListener
 	{
 		ui.Focusable focusedChild;
 		this(string name, BASE parent)
@@ -27,10 +33,15 @@ template base(BASE /* : ui.TargetNode */)
 			super(name, parent);
 		}
 
-		override ui.FB activate()
+		//override
+		ui.FB activate()
 		{
 			BASE.focusedNode = focusedChild;
 			return ui.FB.StateChanged;
+		}
+
+		override void handleUpwardEvent(ref ui.MouseButtonEvent ev)
+		{
 		}
 	}
 
