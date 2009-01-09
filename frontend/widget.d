@@ -4,23 +4,11 @@ static import ui;
 
 template base(BASE /* : ui.TargetNode */)
 {
-	class Widget : BASE
-	{
-		this(string name, BASE parent=null)
-		{
-			super(name, parent);
-		}
-
-		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
-		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/) { return ui.FB.NONE; }
-		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
-	}
-
-
+	alias BASE Widget;
 	template parent_ctor() { this(string name, BASE parent) { super(name, parent); }}
 
 
-	class Window : Widget, ui.UpwardEventListener
+	class Window : Widget, ui.UpwardEventListener, ui.MouseHandler
 	{
 		ui.Focusable focusedChild;
 		mixin parent_ctor;
@@ -39,11 +27,14 @@ template base(BASE /* : ui.TargetNode */)
 				this.activate();
 		}
 
-		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
+		// MouseHandler
+		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
+		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/)
 		{
 			this.activate();
 			return ui.FB.StateChanged;
 		}
+		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
 	}
 
 	class Group : Widget
@@ -56,7 +47,7 @@ template base(BASE /* : ui.TargetNode */)
 		mixin parent_ctor;
 	}
 
-	class Button : Widget, ui.Focusable
+	class Button : Widget, ui.Focusable, ui.MouseHandler
 	{
 		bool hot;
 		bool pressed;
@@ -67,11 +58,13 @@ template base(BASE /* : ui.TargetNode */)
 			return ui.FB.NONE;
 		}
 
+		// Focusable
 		override bool focusOnMouse(ui.MOUSE_ACTION action, uint button)
 		{
 			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
 		}
 
+		// MouseHandler
 		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir)
 		{
 			switch (dir)
@@ -87,7 +80,6 @@ template base(BASE /* : ui.TargetNode */)
 			}
 			return ui.FB.NONE;
 		}
-
 		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
 		{
 			if (button != 0)
@@ -108,6 +100,7 @@ template base(BASE /* : ui.TargetNode */)
 				return ui.FB.NONE;
 			}
 		}
+		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
 	}
 
 	class Label : Widget

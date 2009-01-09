@@ -35,6 +35,12 @@ interface Focusable  // focus policy interface
 	abstract FB onKey(uint keycode);
 }
 
+interface MouseHandler
+{
+	abstract FB onMouseOver(MOUSE_DIRECTION dir);
+	abstract FB onMouseButton(const ref Point pos, MOUSE_ACTION action, uint button/*, modifiers*/);
+	abstract FB onMouseScroll(int x, int y);
+}
 
 /* this is important concept - injecting an interface into root of the class hierarchy */
 class TargetNode(alias PAINT_INTERFACE)
@@ -85,10 +91,6 @@ class TargetNode(alias PAINT_INTERFACE)
 		}
 		return abs_pos;
 	}
-
-	abstract FB onMouseOver(MOUSE_DIRECTION dir);
-	abstract FB onMouseButton(const ref Point pos, MOUSE_ACTION action, uint button/*, modifiers*/);
-	abstract FB onMouseScroll(int x, int y);
 }
 
 enum MOUSE
@@ -136,7 +138,9 @@ import std.stdio;
 			if (target is null || target.disabled)
 				return;
 			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing of event
-			this.process(target.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
+			auto handler = cast(MouseHandler)target;
+			if (handler !is null)
+				this.process(handler.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
 			//TODO: Upward Propagation a.k.a. Bubbling of event
 			auto event = MouseButtonEvent(pos, MOUSE_ACTION.PRESS, button);
 			foreach (ref listener; get_event_path(target))
@@ -155,7 +159,9 @@ import std.stdio;
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
-			this.process(target.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
+			auto handler = cast(MouseHandler)target;
+			if (handler !is null)
+				this.process(handler.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
 			// arguable focus stuff...
 			auto focusable = cast(Focusable)target;
 			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.RELEASE, button))
@@ -182,11 +188,19 @@ import std.stdio;
 		assert (this.mouseOldTarget !is target);
 
 		if (this.mouseOldTarget !is null)
-			this.process(this.mouseOldTarget.onMouseOver(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
+		{
+			auto handler = cast(MouseHandler)this.mouseOldTarget;
+			if (handler !is null)
+				this.process(handler.onMouseOver(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
 			//TODO: check if this.mouseOldTarget just captured mouse
+		}
 
 		if (target !is null && !target.disabled)
-			this.process(target.onMouseOver(MOUSE_DIRECTION.ENTER), target, pos);
+		{
+			auto handler = cast(MouseHandler)target;
+			if (handler !is null)
+				this.process(handler.onMouseOver(MOUSE_DIRECTION.ENTER), target, pos);
+		}
 
 		this.mouseOldTarget = target;
 	}
