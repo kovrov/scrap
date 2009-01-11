@@ -8,9 +8,9 @@ template base(BASE /* : ui.TargetNode */)
 	template parent_ctor() { this(string name, BASE parent) { super(name, parent); }}
 
 
-	class Window : Widget, ui.UpwardEventListener, ui.MouseHandler
+	class Window : Widget, ui.UpwardEventListener, ui.MouseInput
 	{
-		ui.Focusable focusedChild;
+		ui.KeyboardInput focusedChild;
 		mixin parent_ctor;
 
 		//override
@@ -21,13 +21,15 @@ template base(BASE /* : ui.TargetNode */)
 			return ui.FB.StateChanged;
 		}
 
-		override void handleUpwardEvent(ref ui.MouseButtonEvent ev)
+		override ui.FB handleUpwardEvent(ref ui.MouseButtonEvent ev)
 		{
-			if (ev.action == ui.MOUSE_ACTION.PRESS)
-				this.activate();
+			if (ev.action != ui.MOUSE_ACTION.PRESS)
+				return ui.FB.NONE;
+			this.activate();
+			return ui.FB.StateChanged;
 		}
 
-		// MouseHandler
+		// MouseInput
 		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
 		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/)
 		{
@@ -45,26 +47,29 @@ template base(BASE /* : ui.TargetNode */)
 	class Radio : Widget
 	{
 		mixin parent_ctor;
+		// signals
+		//mixin Signal!(bool) toggled;
 	}
 
-	class Button : Widget, ui.Focusable, ui.MouseHandler
+	class Button : Widget, ui.KeyboardInput, ui.MouseInput
 	{
+		// state
 		bool hot;
 		bool pressed;
+
 		mixin parent_ctor;
 
+		// KeyboardInput
+		override bool focusOnClick(ui.MOUSE_ACTION action, uint button)
+		{
+			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
+		}
 		ui.FB onKey(uint keycode)
 		{
 			return ui.FB.NONE;
 		}
 
-		// Focusable
-		override bool focusOnMouse(ui.MOUSE_ACTION action, uint button)
-		{
-			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
-		}
-
-		// MouseHandler
+		// MouseInput
 		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir)
 		{
 			switch (dir)
@@ -94,6 +99,8 @@ template base(BASE /* : ui.TargetNode */)
 			case ui.MOUSE_ACTION.RELEASE:
 				if (this.pressed)
 				{
+					// call all the connected slots
+					//clicked.emit();
 					this.pressed = false;
 					return ui.FB.ReleaseMouse | ui.FB.StateChanged;
 				}
@@ -101,6 +108,13 @@ template base(BASE /* : ui.TargetNode */)
 			}
 		}
 		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
+
+		// signals
+		//mixin Signal!() clicked;
+		/*	usage:
+			this.clicked.connect(&observer.watch);
+			this.clicked.disconnect(&observer.watch);
+		*/
 	}
 
 	class Label : Widget

@@ -4,8 +4,6 @@ static import generic;
 alias generic.Point!(short) Point;
 
 
-enum MOUSE_DIRECTION { ENTER, LEAVE }
-enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 enum FB
 {
 	NONE         = 0,
@@ -13,6 +11,8 @@ enum FB
 	CaptureMouse = 1<<1,
 	ReleaseMouse = 1<<2,
 }
+enum MOUSE_DIRECTION { ENTER, LEAVE }
+enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 
 struct MouseButtonEvent
 {
@@ -22,25 +22,38 @@ struct MouseButtonEvent
 	//T target;
 }
 
+struct MouseOverEvent
+{
+	Point pos;
+	MOUSE_DIRECTION direction;
+	//T target;
+}
+
+
+
+// event interfaces
+
 interface UpwardEventListener
 {
-	void handleUpwardEvent(ref MouseButtonEvent);
+	ui.FB handleUpwardEvent(ref MouseButtonEvent);
 	//FB deactivate();
 }
 
-interface Focusable  // focus policy interface
+interface KeyboardInput  // focus policy interface
 {
 	//FB focusOnKey();
-	abstract bool focusOnMouse(MOUSE_ACTION action, uint button);
+	abstract bool focusOnClick(MOUSE_ACTION action, uint button);
 	abstract FB onKey(uint keycode);
 }
 
-interface MouseHandler
+interface MouseInput
 {
 	abstract FB onMouseOver(MOUSE_DIRECTION dir);
 	abstract FB onMouseButton(const ref Point pos, MOUSE_ACTION action, uint button/*, modifiers*/);
 	abstract FB onMouseScroll(int x, int y);
 }
+
+
 
 /* this is important concept - injecting an interface into root of the class hierarchy */
 class TargetNode(alias PAINT_INTERFACE)
@@ -50,11 +63,11 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.Node;
 	mixin tree.setParent;
 	mixin tree.makeFirstChild;
-	mixin tree.opApply!("!node.hidden");  // for mouse cursor hit test (with condition mixin)
-	mixin tree.opApplyReverse!("!node.hidden");  // for drawing (with condition mixin)
+	mixin tree.opApply!(`!node.hidden`);  // for mouse cursor hit test (with condition mixin)
+	mixin tree.opApplyReverse!(`!node.hidden`);  // for drawing (with condition mixin)
 
 	static typeof(this) activeNode;
-	static Focusable focusedNode;
+	static KeyboardInput focusedNode;
 
 	bool hidden;
 	bool disabled;
@@ -93,14 +106,6 @@ class TargetNode(alias PAINT_INTERFACE)
 	}
 }
 
-enum MOUSE
-{
-	MOVE  = 1,
-	LEAVE,
-	UP,
-	DOWN,
-}
-
 class EventManager(T /* : TargetNode */)
 {
 	T root;
@@ -113,7 +118,6 @@ class EventManager(T /* : TargetNode */)
 		this.window = window;
 	}
 
-import std.stdio;
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
 		UpwardEventListener[32] event_path_stack;
@@ -137,19 +141,18 @@ import std.stdio;
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
-			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing of event
-			auto handler = cast(MouseHandler)target;
+			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
+			// target phase
+			auto handler = cast(MouseInput)target;
 			if (handler !is null)
 				this.process(handler.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
-			//TODO: Upward Propagation a.k.a. Bubbling of event
+			// Upward Propagation a.k.a. Bubbling phase
 			auto event = MouseButtonEvent(pos, MOUSE_ACTION.PRESS, button);
 			foreach (ref listener; get_event_path(target))
-			{
-				listener.handleUpwardEvent(event);
-			}
+				this.process(listener.handleUpwardEvent(event), target, pos);
 			// set focus...
-			auto focusable = cast(Focusable)target;
-			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.PRESS, button))
+			auto focusable = cast(KeyboardInput)target;
+			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnClick(MOUSE_ACTION.PRESS, button))
 			{
 				T.focusedNode = focusable;
 				this.window.redraw();  // FB.StateChanged
@@ -159,12 +162,12 @@ import std.stdio;
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
-			auto handler = cast(MouseHandler)target;
+			auto handler = cast(MouseInput)target;
 			if (handler !is null)
 				this.process(handler.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
 			// arguable focus stuff...
-			auto focusable = cast(Focusable)target;
-			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnMouse(MOUSE_ACTION.RELEASE, button))
+			auto focusable = cast(KeyboardInput)target;
+			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnClick(MOUSE_ACTION.RELEASE, button))
 			{
 				T.focusedNode = focusable;
 				this.window.redraw();  // FB.StateChanged
@@ -189,7 +192,7 @@ import std.stdio;
 
 		if (this.mouseOldTarget !is null)
 		{
-			auto handler = cast(MouseHandler)this.mouseOldTarget;
+			auto handler = cast(MouseInput)this.mouseOldTarget;
 			if (handler !is null)
 				this.process(handler.onMouseOver(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
 			//TODO: check if this.mouseOldTarget just captured mouse
@@ -197,7 +200,7 @@ import std.stdio;
 
 		if (target !is null && !target.disabled)
 		{
-			auto handler = cast(MouseHandler)target;
+			auto handler = cast(MouseInput)target;
 			if (handler !is null)
 				this.process(handler.onMouseOver(MOUSE_DIRECTION.ENTER), target, pos);
 		}
