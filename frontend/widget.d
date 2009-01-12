@@ -4,11 +4,11 @@ static import ui;
 
 template base(BASE /* : ui.TargetNode */)
 {
-	class Widget : BASE { mixin parent_ctor; } // alias BASE Widget;
+	alias BASE Widget;
 	template parent_ctor()
 	{
-		static ui.EventHandlers eventMap;
-		this(string name, BASE parent) { super(name, parent); handlers = &eventMap; }
+		protected static ui.EventHandlers _eventMap;
+		this(string name, BASE parent) { super(name, parent); this.handlers = &_eventMap; }
 	}
 
 
@@ -18,8 +18,8 @@ template base(BASE /* : ui.TargetNode */)
 		mixin parent_ctor;
 		static this()
 		{
-			eventMap.mouseButton = &_onMouseButton;
-			eventMap.mouseButtonPropagateUpward = &_onMouseButton;
+			_eventMap.mouseButton = &_onMouseButton;
+			_eventMap.mouseButtonPropagateUpward = &_onMouseButton;
 		}
 
 		//override
@@ -61,9 +61,9 @@ template base(BASE /* : ui.TargetNode */)
 		mixin parent_ctor;
 		static this()
 		{
-			eventMap.mouseOver   = &_onMouseOver;
-			eventMap.mouseButton = &_onMouseButton;
-			eventMap.focusOnClick = &_focusOnClick;
+			_eventMap.mouseOver   = &_onMouseOver;
+			_eventMap.mouseButton = &_onMouseButton;
+			_eventMap.focusOnClick = &_focusOnClick;
 		}
 
 		// KeyboardInput

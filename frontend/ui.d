@@ -47,7 +47,6 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.opApply!(`!node.hidden`);  // for mouse cursor hit test (with condition mixin)
 	mixin tree.opApplyReverse!(`!node.hidden`);  // for drawing (with condition mixin)
 
-	EventHandlers* handlers;
 	static typeof(this) activeNode;
 	static typeof(this) focusedNode;
 
@@ -68,8 +67,12 @@ class TargetNode(alias PAINT_INTERFACE)
 		static assert (rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
 
-	this(string name, typeof(this) parent=null)
+	EventHandlers* handlers;
+	invariant() { assert (handlers !is null); }
+	protected static EventHandlers _eventMap;
+	this(string name, typeof(this) parent)
 	{
+		this.handlers = &_eventMap;
 		if (parent)
 			this.setParent(parent);
 		this.name = name;
