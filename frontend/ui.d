@@ -14,45 +14,26 @@ enum FB
 enum MOUSE_DIRECTION { ENTER, LEAVE }
 enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
 
-struct MouseButtonEvent
+
+/* all possible events should be described here */
+struct EventHandlers
 {
-	Point pos;
-	MOUSE_ACTION action;
-	uint button;
-	//T target;
+	// keyboard input
+	FB function(uint key)
+			keyPress;
+	FB function(uint key)
+			keyRelease;
+	bool function(MOUSE_ACTION action, uint button)
+			focusOnClick;
+	// mouse input
+	FB function(const ref Point pos, MOUSE_ACTION action, uint button)
+			mouseButton,
+			mouseButtonPropagateUpward;
+	FB function(int x, int y)
+			mouseScroll;
+	FB function(MOUSE_DIRECTION dir)
+			mouseOver;
 }
-
-struct MouseOverEvent
-{
-	Point pos;
-	MOUSE_DIRECTION direction;
-	//T target;
-}
-
-
-
-// event interfaces
-
-interface UpwardEventListener
-{
-	ui.FB handleUpwardEvent(ref MouseButtonEvent);
-	//FB deactivate();
-}
-
-interface KeyboardInput  // focus policy interface
-{
-	//FB focusOnKey();
-	abstract bool focusOnClick(MOUSE_ACTION action, uint button);
-	abstract FB onKey(uint keycode);
-}
-
-interface MouseInput
-{
-	abstract FB onMouseOver(MOUSE_DIRECTION dir);
-	abstract FB onMouseButton(const ref Point pos, MOUSE_ACTION action, uint button/*, modifiers*/);
-	abstract FB onMouseScroll(int x, int y);
-}
-
 
 
 /* this is important concept - injecting an interface into root of the class hierarchy */
@@ -66,8 +47,9 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.opApply!(`!node.hidden`);  // for mouse cursor hit test (with condition mixin)
 	mixin tree.opApplyReverse!(`!node.hidden`);  // for drawing (with condition mixin)
 
+	EventHandlers* handlers;
 	static typeof(this) activeNode;
-	static KeyboardInput focusedNode;
+	static typeof(this) focusedNode;
 
 	bool hidden;
 	bool disabled;
@@ -120,15 +102,13 @@ class EventManager(T /* : TargetNode */)
 
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
-		UpwardEventListener[32] event_path_stack;
-		UpwardEventListener[] get_event_path(T target_node)
+		T[32] event_path_stack;
+		T[] get_event_path(T target_node)
 		{
 			int i = 0;
 			for (auto node=target_node.parent; node !is null; node=node.parent)
 			{
-				auto listener = cast(UpwardEventListener)node;
-				if (listener !is null)
-					event_path_stack[i++] = listener;
+				event_path_stack[i++] = node;
 			}
 			return event_path_stack[0..i];
 		}
@@ -141,38 +121,72 @@ class EventManager(T /* : TargetNode */)
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
+
 			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
+
 			// target phase
-			auto handler = cast(MouseInput)target;
-			if (handler !is null)
-				this.process(handler.onMouseButton(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
-			// Upward Propagation a.k.a. Bubbling phase
-			auto event = MouseButtonEvent(pos, MOUSE_ACTION.PRESS, button);
-			foreach (ref listener; get_event_path(target))
-				this.process(listener.handleUpwardEvent(event), target, pos);
-			// set focus...
-			auto focusable = cast(KeyboardInput)target;
-			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnClick(MOUSE_ACTION.PRESS, button))
+			if (target.handlers.mouseButton !is null)
 			{
-				T.focusedNode = focusable;
-				this.window.redraw();  // FB.StateChanged
+				FB delegate(const ref Point pos, MOUSE_ACTION action, uint button) handler;
+				handler.funcptr = target.handlers.mouseButton;
+				handler.ptr = cast(void*)target;
+				this.process(handler(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
+			}
+
+			// Upward Propagation a.k.a. Bubbling phase
+			foreach (ref node; get_event_path(target))
+			{
+				if (node.handlers.mouseButtonPropagateUpward !is null)
+				{
+					FB delegate(const ref Point pos, MOUSE_ACTION action, uint button) handler;
+					handler.funcptr = node.handlers.mouseButtonPropagateUpward;
+					handler.ptr = cast(void*)node;
+					this.process(handler(pos, MOUSE_ACTION.PRESS, button), node, pos);
+				}
+			}
+
+			// set focus...
+			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
+			{
+				bool delegate(MOUSE_ACTION action, uint button) handler;
+				handler.funcptr = target.handlers.focusOnClick;
+				handler.ptr = cast(void*)target;
+				if (handler(MOUSE_ACTION.PRESS, button))
+				{
+					T.focusedNode = target;
+					this.window.redraw();  // FB.StateChanged
+				}
 			}
 			break;
+
 		case sys.MOUSE.RELEASE:
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
-			auto handler = cast(MouseInput)target;
-			if (handler !is null)
-				this.process(handler.onMouseButton(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
-			// arguable focus stuff...
-			auto focusable = cast(KeyboardInput)target;
-			if (focusable !is null && T.focusedNode !is focusable && focusable.focusOnClick(MOUSE_ACTION.RELEASE, button))
+
+			// process mouse button release if thhere is a handler
+			if (target.handlers.mouseButton !is null)
 			{
-				T.focusedNode = focusable;
-				this.window.redraw();  // FB.StateChanged
+				FB delegate(const ref Point pos, MOUSE_ACTION action, uint button) handler;
+				handler.funcptr = target.handlers.mouseButton;
+				handler.ptr = cast(void*)target;
+				this.process(handler(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
+			}
+
+			// arguable focus stuff...
+			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
+			{
+				bool delegate(MOUSE_ACTION action, uint button) handler;
+				handler.funcptr = target.handlers.focusOnClick;
+				handler.ptr = cast(void*)target;
+				if (handler(MOUSE_ACTION.RELEASE, button))
+				{
+					T.focusedNode = target;
+					this.window.redraw();  // FB.StateChanged
+				}
 			}
 			break;
+
 		case sys.MOUSE.MOVE:
 			auto newTarget = (this.mouseHolder is null || this.mouseHolder is nodeUnderCursor) ? nodeUnderCursor : null;
 			if (this.mouseOldTarget !is newTarget)
@@ -192,17 +206,25 @@ class EventManager(T /* : TargetNode */)
 
 		if (this.mouseOldTarget !is null)
 		{
-			auto handler = cast(MouseInput)this.mouseOldTarget;
-			if (handler !is null)
-				this.process(handler.onMouseOver(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
+			if (mouseOldTarget.handlers.mouseOver !is null)
+			{
+				FB delegate(MOUSE_DIRECTION dir) handler;
+				handler.funcptr = mouseOldTarget.handlers.mouseOver;
+				handler.ptr = cast(void*)mouseOldTarget;
+				this.process(handler(MOUSE_DIRECTION.LEAVE), this.mouseOldTarget, pos);
+			}
 			//TODO: check if this.mouseOldTarget just captured mouse
 		}
 
 		if (target !is null && !target.disabled)
 		{
-			auto handler = cast(MouseInput)target;
-			if (handler !is null)
-				this.process(handler.onMouseOver(MOUSE_DIRECTION.ENTER), target, pos);
+			if (target.handlers.mouseOver !is null)
+			{
+				FB delegate(MOUSE_DIRECTION dir) handler;
+				handler.funcptr = target.handlers.mouseOver;
+				handler.ptr = cast(void*)target;
+				this.process(handler(MOUSE_DIRECTION.ENTER), target, pos);
+			}
 		}
 
 		this.mouseOldTarget = target;

@@ -4,14 +4,23 @@ static import ui;
 
 template base(BASE /* : ui.TargetNode */)
 {
-	alias BASE Widget;
-	template parent_ctor() { this(string name, BASE parent) { super(name, parent); }}
-
-
-	class Window : Widget, ui.UpwardEventListener, ui.MouseInput
+	class Widget : BASE { mixin parent_ctor; } // alias BASE Widget;
+	template parent_ctor()
 	{
-		ui.KeyboardInput focusedChild;
+		static ui.EventHandlers eventMap;
+		this(string name, BASE parent) { super(name, parent); handlers = &eventMap; }
+	}
+
+
+	class Window : Widget
+	{
+		BASE focusedChild;
 		mixin parent_ctor;
+		static this()
+		{
+			eventMap.mouseButton = &_onMouseButton;
+			eventMap.mouseButtonPropagateUpward = &_onMouseButton;
+		}
 
 		//override
 		ui.FB activate()
@@ -21,22 +30,14 @@ template base(BASE /* : ui.TargetNode */)
 			return ui.FB.StateChanged;
 		}
 
-		override ui.FB handleUpwardEvent(ref ui.MouseButtonEvent ev)
+		// MouseInput
+		protected ui.FB _onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/)
 		{
-			if (ev.action != ui.MOUSE_ACTION.PRESS)
+			if (action != ui.MOUSE_ACTION.PRESS)
 				return ui.FB.NONE;
 			this.activate();
 			return ui.FB.StateChanged;
 		}
-
-		// MouseInput
-		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir) { return ui.FB.NONE; }
-		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/)
-		{
-			this.activate();
-			return ui.FB.StateChanged;
-		}
-		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
 	}
 
 	class Group : Widget
@@ -51,16 +52,22 @@ template base(BASE /* : ui.TargetNode */)
 		//mixin Signal!(bool) toggled;
 	}
 
-	class Button : Widget, ui.KeyboardInput, ui.MouseInput
+	class Button : Widget
 	{
 		// state
 		bool hot;
 		bool pressed;
 
 		mixin parent_ctor;
+		static this()
+		{
+			eventMap.mouseOver   = &_onMouseOver;
+			eventMap.mouseButton = &_onMouseButton;
+			eventMap.focusOnClick = &_focusOnClick;
+		}
 
 		// KeyboardInput
-		override bool focusOnClick(ui.MOUSE_ACTION action, uint button)
+		protected bool _focusOnClick(ui.MOUSE_ACTION action, uint button)
 		{
 			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
 		}
@@ -70,7 +77,7 @@ template base(BASE /* : ui.TargetNode */)
 		}
 
 		// MouseInput
-		override ui.FB onMouseOver(ui.MOUSE_DIRECTION dir)
+		protected ui.FB _onMouseOver(ui.MOUSE_DIRECTION dir)
 		{
 			switch (dir)
 			{
@@ -85,7 +92,7 @@ template base(BASE /* : ui.TargetNode */)
 			}
 			return ui.FB.NONE;
 		}
-		override ui.FB onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
+		protected ui.FB _onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button)
 		{
 			if (button != 0)
 				return ui.FB.NONE;
@@ -107,7 +114,6 @@ template base(BASE /* : ui.TargetNode */)
 				return ui.FB.NONE;
 			}
 		}
-		override ui.FB onMouseScroll(int x, int y) { return ui.FB.NONE; }
 
 		// signals
 		//mixin Signal!() clicked;
