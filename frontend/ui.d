@@ -13,26 +13,34 @@ enum FB
 }
 enum MOUSE_DIRECTION { ENTER, LEAVE }
 enum MOUSE_ACTION { PRESS, RELEASE, DOUBLECLICK }
+enum KEY_ACTION { PRESS, RELEASE }
 
 
 /* all possible events should be described here */
 struct EventHandlers
 {
 	// keyboard input
-	FB function(uint key)
-			keyPress;
-	FB function(uint key)
-			keyRelease;
+	FB function(uint key, KEY_ACTION action)
+			keyboard,
+			keyboardPropagateUpward,
+			keyboardPropagateDownward;
 	bool function(MOUSE_ACTION action, uint button)
-			focusOnClick;
+			focusOnClick,
+			focusOnClickPropagateUpward,
+			focusOnClickPropagateDownward;
 	// mouse input
 	FB function(const ref Point pos, MOUSE_ACTION action, uint button)
 			mouseButton,
-			mouseButtonPropagateUpward;
+			mouseButtonPropagateUpward,
+			mouseButtonPropagateDownward;
 	FB function(int x, int y)
-			mouseScroll;
+			mouseScroll,
+			mouseScrollPropagateUpward,
+			mouseScrollPropagateDownward;
 	FB function(MOUSE_DIRECTION dir)
-			mouseOver;
+			mouseOver,
+			mouseOverPropagateUpward,
+			mouseOverPropagateDownward;
 }
 
 

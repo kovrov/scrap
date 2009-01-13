@@ -61,9 +61,10 @@ template base(BASE /* : ui.TargetNode */)
 		mixin parent_ctor;
 		static this()
 		{
-			_eventMap.mouseOver   = &_onMouseOver;
-			_eventMap.mouseButton = &_onMouseButton;
 			_eventMap.focusOnClick = &_focusOnClick;
+			_eventMap.keyboard     = &_onKeyboard;
+			_eventMap.mouseOver    = &_onMouseOver;
+			_eventMap.mouseButton  = &_onMouseButton;
 		}
 
 		// KeyboardInput
@@ -71,8 +72,18 @@ template base(BASE /* : ui.TargetNode */)
 		{
 			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
 		}
-		ui.FB onKey(uint keycode)
+		ui.FB _onKeyboard(uint keycode, ui.KEY_ACTION action)
 		{
+			//if (keycode == ENTER || keycode == SPACE)
+				//return ui.FB.NONE;
+			switch (action)
+			{
+			case ui.KEY_ACTION.PRESS:
+				break;
+			case ui.KEY_ACTION.RELEASE:
+				//clicked.emit();  // call all the connected slots
+				break;
+			}
 			return ui.FB.NONE;
 		}
 
