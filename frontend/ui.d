@@ -97,6 +97,12 @@ class TargetNode(alias PAINT_INTERFACE)
 		}
 		return abs_pos;
 	}
+
+	void resize(ushort w, ushort h)
+	{
+		this._rect.size.width = w;
+		this._rect.size.height = h;
+	}
 }
 
 class EventManager(T /* : TargetNode */)
@@ -118,9 +124,7 @@ class EventManager(T /* : TargetNode */)
 		{
 			int i = 0;
 			for (auto node=target_node.parent; node !is null; node=node.parent)
-			{
 				event_path_stack[i++] = node;
-			}
 			return event_path_stack[0..i];
 		}
 		auto nodeUnderCursor = findControl(this.root, pos);

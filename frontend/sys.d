@@ -94,6 +94,19 @@ class WindowGDI(IOMANAGER) : Window
 			break;
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
 			assert (false);  // break;
+		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
+			switch (wParam)
+			{
+			case win32.SIZE_RESTORED:
+				_windows[hWnd].io.root.resize(win32.LOWORD(lParam), win32.HIWORD(lParam));
+				break;
+			case win32.SIZE_MAXIMIZED:
+			case win32.SIZE_MINIMIZED:
+				break;
+			//case win32.SIZE_MAXSHOW:
+			//case win32.SIZE_MAXHIDE:
+			}
+			break;
 		case win32.WM_DESTROY:
 			_windows.remove(hWnd);
 			if (_windows.length > 0)
