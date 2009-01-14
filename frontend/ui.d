@@ -66,13 +66,13 @@ class TargetNode(alias PAINT_INTERFACE)
 	bool nested = true;
 	union
 	{
-		generic.Rect!(short, ushort) rect;
+		protected generic.Rect!(short, ushort) _rect;
 		struct
 		{
 			short x, y;
 			ushort width, height;
 		}
-		static assert (rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
+		static assert (_rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
 
 	EventHandlers* handlers;
@@ -88,11 +88,11 @@ class TargetNode(alias PAINT_INTERFACE)
 
 	Point position_abs()
 	{
-		auto abs_pos = this.rect.position;
+		auto abs_pos = this._rect.position;
 		auto parent = this.nested ? this.parent : null;
 		while (parent)
 		{
-			abs_pos += parent.rect.position;
+			abs_pos += parent._rect.position;
 			parent = parent.nested ? parent.parent : null;
 		}
 		return abs_pos;
@@ -272,7 +272,7 @@ T findControl(T)(T root, const ref Point point)
 		auto translated_point = (!node.nested || node.parent is null) ?
 				point :
 				point - node.parent.position_abs();
-		if (node.rect.contains(translated_point))
+		if (node._rect.contains(translated_point))
 			return node;
 	}
 	return null;

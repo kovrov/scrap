@@ -22,7 +22,8 @@ struct Rect(PT, ST)
 		struct{ ST width, height; }
 	}
 
-	this(const ref typeof(this.position) pt, const ref typeof(this.size) sz) { position=pt; size=sz; }
+	//this(const ref typeof(this.position) pt, const ref typeof(this.size) sz) { position=pt; size=sz; }
+	//this(PT x, PT y, ST width, ST height) { this.x = x; this.y = y; this.width = width; this.height = height; }
 
 	bool contains(const ref typeof(this.position) point) const
 	{
