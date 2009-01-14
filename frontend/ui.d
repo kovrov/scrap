@@ -122,10 +122,10 @@ class EventManager(T /* : TargetNode */)
 		T[32] event_path_stack;
 		T[] get_event_path(T target_node)
 		{
-			int i = 0;
+			auto i = event_path_stack.length;
 			for (auto node=target_node.parent; node !is null; node=node.parent)
-				event_path_stack[i++] = node;
-			return event_path_stack[0..i];
+				event_path_stack[--i] = node;
+			return event_path_stack[i..event_path_stack.length];
 		}
 		auto nodeUnderCursor = findControl(this.root, pos);
 		auto target = (this.mouseHolder !is null) ? this.mouseHolder : nodeUnderCursor;
@@ -136,10 +136,19 @@ class EventManager(T /* : TargetNode */)
 			assert (button > -1);
 			if (target is null || target.disabled)
 				return;
-
-			//TODO: Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
-
-			// target phase
+			auto event_path = get_event_path(target);
+			// Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
+			foreach (ref node; event_path)
+			{
+				if (node.handlers.mouseButtonPropagateDownward !is null)
+				{
+					FB delegate(const ref Point pos, MOUSE_ACTION action, uint button) handler;
+					handler.funcptr = node.handlers.mouseButtonPropagateDownward;
+					handler.ptr = cast(void*)node;
+					this.process(handler(pos, MOUSE_ACTION.PRESS, button), node, pos);
+				}
+			}
+			// Delivering phase
 			if (target.handlers.mouseButton !is null)
 			{
 				FB delegate(const ref Point pos, MOUSE_ACTION action, uint button) handler;
@@ -147,9 +156,8 @@ class EventManager(T /* : TargetNode */)
 				handler.ptr = cast(void*)target;
 				this.process(handler(pos, MOUSE_ACTION.PRESS, button/*, modifiers*/), target, pos);
 			}
-
 			// Upward Propagation a.k.a. Bubbling phase
-			foreach (ref node; get_event_path(target))
+			foreach_reverse (ref node; event_path)
 			{
 				if (node.handlers.mouseButtonPropagateUpward !is null)
 				{
@@ -159,7 +167,6 @@ class EventManager(T /* : TargetNode */)
 					this.process(handler(pos, MOUSE_ACTION.PRESS, button), node, pos);
 				}
 			}
-
 			// set focus...
 			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
 			{
