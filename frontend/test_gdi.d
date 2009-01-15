@@ -10,12 +10,12 @@ gdi.Widget genTestData()
 	  with (dlg) { x=200; y=200; width=400; height=200; nested=false; }
 	    with (new gdi.Button("b2", dlg)) { x=10; y=10; width=48; height=22; }
 	    with (new gdi.Button("b3", dlg)) { x=10; y=40; width=50; height=22; }
-	    with (new gdi.Label("l2", dlg)) { x=10; y=70; width=50; height=20; }
+	    with (new gdi.Label("label one", dlg)) { x=10; y=70; width=50; height=20; }
 
 	  auto wnd = new gdi.Window("wnd", root);
 	  with (wnd) { x=100; y=100; width=400; height=200; nested=false; }
 	    with (new gdi.Button("b1", wnd)) { x=10; y=170; width=30; height=22; }
-	    with (new gdi.Label("l1", wnd)) { x=50; y=170; width=30; height=20; }
+	    with (new gdi.Label("label two", wnd)) { x=50; y=170; width=50; height=20; }
 	    auto grp = new gdi.Group("grp", wnd);
 	    with (grp) { x=10; y=10; width=290; height=150; }
 	      with (new gdi.Radio("r1", grp)) { x=10; y=10; width=30; height=10; }

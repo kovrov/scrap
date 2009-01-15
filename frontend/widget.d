@@ -1,6 +1,11 @@
+/* 
+  TODO:
+   * tweak button behaviour (keyboard)
+   * implement radio button
+   * ...
+*/
+
 static import ui;
-
-
 
 template base(BASE /* : ui.TargetNode */)
 {

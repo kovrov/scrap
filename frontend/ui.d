@@ -1,3 +1,10 @@
+/* 
+  TODO:
+   * implement activatable interface
+   * overhul event interfaces
+   * ...
+*/
+
 static import sys;
 static import tree;
 static import generic;

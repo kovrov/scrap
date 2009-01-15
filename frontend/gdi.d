@@ -1,5 +1,11 @@
 /* UI drawing routines using Microsoft Windows Graphics Device Interface
-   http://msdn.microsoft.com/library/ms534906 */
+   http://msdn.microsoft.com/library/ms534906
+
+  TODO:
+   * tweak button representation
+   * implement radio button
+   * ...
+*/
 
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
@@ -133,19 +139,10 @@ class Button : widgets.Button
 		win32.SetTextColor(hdc, style.buttonTextColor);
 		auto old_gdiobj = win32.SelectObject(hdc, style.buttonFont);
 		win32.DrawState(hdc, null,
-					&TextDrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
+					&ButtonTextDrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
 					rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
 					0);  // win32.DSS_DISABLED
 		win32.SelectObject(hdc, old_gdiobj);
-	}
-	static extern (Windows)
-	win32.BOOL TextDrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
-	{
-		auto rect = win32.RECT(0, 0, cx, cy);
-		//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
-		auto flags = win32.DT_CENTER|win32.DT_VCENTER|win32.DT_SINGLELINE;
-		win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
-		return win32.TRUE;
 	}
 }
 
@@ -158,25 +155,37 @@ class Label : widgets.Label
 		auto pos = this.position_abs();
 		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
 
-		win32.FillRect(hdc, &rect, style.appWorkspace);
+		win32.SetBkColor(hdc, style.buttonColor);
+		win32.SetTextColor(hdc, style.buttonTextColor);
+		auto old_gdiobj = win32.SelectObject(hdc, style.buttonFont);
+		win32.DrawState(hdc, null,
+					&LabelTextDrawStateProc, cast(win32.LPARAM)(this.name.ptr), cast(win32.WPARAM)(this.name.length),
+					rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+					0);  // win32.DSS_DISABLED
+		win32.SelectObject(hdc, old_gdiobj);
 	}
 }
 
 
-class Dialog : widgets.Dialog
+static extern (Windows)
+win32.BOOL ButtonTextDrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
 {
-	mixin forward_ctor;
-	override void paint(win32.HDC hdc)
-	{
-		auto pos = this.position_abs();
-		auto rect = win32.RECT(pos.x, pos.y, pos.x + this.width, pos.y + this.height);
-
-		win32.FillRect(hdc, &rect, style.buttonFace);
-
-		win32.DrawEdge(hdc, &rect, win32.EDGE_RAISED, win32.BF_RECT);
-	}
+	auto rect = win32.RECT(0, 0, cx, cy);
+	//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
+	auto flags = win32.DT_CENTER|win32.DT_VCENTER|win32.DT_SINGLELINE;
+	win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
+	return win32.TRUE;
 }
 
+static extern (Windows)
+win32.BOOL LabelTextDrawStateProc(win32.HDC hdc, win32.LPARAM lData, win32.WPARAM wData, int cx, int cy)
+{
+	auto rect = win32.RECT(0, 0, cx, cy);
+	//auto flags = win32.DT_WORDBREAK | win32.DT_EDITCONTROL;
+	auto flags = win32.DT_VCENTER|win32.DT_SINGLELINE;
+	win32.DrawTextEx(hdc, cast(char*)lData, wData, &rect, flags, null);
+	return win32.TRUE;
+}
 /*
 	void redraw(win32.HWND hwnd)
 	{

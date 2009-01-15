@@ -1,3 +1,10 @@
+/* 
+  TODO:
+   * add opengl window
+   * refactor windows heirarchy
+   * mouse/keyboard state?
+*/
+
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
 
