@@ -1,4 +1,4 @@
-/* 
+/*
   TODO:
    * add opengl window
    * refactor windows heirarchy
@@ -60,7 +60,7 @@ class WindowGDI(IOMANAGER) : Window
 	private win32.HWND handle;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
-
+import std.stdio;
 	private static extern (Windows)
 	win32.LRESULT WndProc(win32.HWND hWnd, win32.UINT message, win32.WPARAM wParam, win32.LPARAM lParam)
 	{
@@ -69,6 +69,50 @@ class WindowGDI(IOMANAGER) : Window
 		case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
 			_windows[hWnd].io.on_paint(hWnd);
 			break;
+
+		// Raw Input http://msdn.microsoft.com/library/ms645536
+		case win32.WM_INPUT:  // http://msdn.microsoft.com/library/ms645590
+			win32.UINT dwSize;
+			win32.GetRawInputData(cast(win32.HRAWINPUT)lParam,
+			                      win32.RID_INPUT,
+			                      null, //
+			                      &dwSize,
+			                      win32.RAWINPUTHEADER.sizeof);
+			byte[64] buffer;
+			assert (buffer.length >= dwSize, "toString(dwSize)");
+			if (win32.GetRawInputData(cast(win32.HRAWINPUT)lParam,
+			                          win32.RID_INPUT,
+			                          cast(void*)buffer,
+			                          &dwSize,
+			                          win32.RAWINPUTHEADER.sizeof) != dwSize)
+				writeln("GetRawInputData doesn't return correct size!");
+			auto raw = cast(win32.RAWINPUT*)buffer.ptr;
+
+			if (raw.header.dwType == win32.RIM_TYPEKEYBOARD)
+			{
+				//writefln("Kbd: make=%04x Flags:%04x Reserved:%04x ExtraInformation:%08x, msg=%04x VK=%04x",
+				//	raw.data.keyboard.MakeCode,
+				//	raw.data.keyboard.Flags,
+				//	raw.data.keyboard.Reserved,
+				//	raw.data.keyboard.ExtraInformation,
+				//	raw.data.keyboard.Message,
+				//	raw.data.keyboard.VKey);
+				writeln(keys[raw.data.keyboard.VKey]);
+			}
+			else if (raw.header.dwType == win32.RIM_TYPEMOUSE)
+			{
+				writefln("Mouse: usFlags=%04x ulButtons=%04x usButtonFlags=%04x usButtonData=%04x ulRawButtons=%04x lLastX=%04x lLastY=%04x ulExtraInformation=%04x",
+					raw.data.mouse.usFlags,
+					raw.data.mouse.ulButtons,
+					raw.data.mouse.usButtonFlags,
+					raw.data.mouse.usButtonData,
+					raw.data.mouse.ulRawButtons,
+					raw.data.mouse.lLastX,
+					raw.data.mouse.lLastY,
+					raw.data.mouse.ulExtraInformation);
+			}
+			return 0; //break;
+
 		// mouse input
 		case win32.WM_LBUTTONDBLCLK:
 		case win32.WM_RBUTTONDBLCLK:
@@ -80,7 +124,7 @@ class WindowGDI(IOMANAGER) : Window
 		case win32.WM_RBUTTONUP:    // right mouse button released.
 		case win32.WM_MBUTTONDOWN:  // middle mouse button pressed.
 		case win32.WM_MBUTTONUP:    // middle mouse button released.
-			int button = 
+			int button =
 					message == win32.WM_LBUTTONDOWN || message == win32.WM_LBUTTONUP ? 0:
 					message == win32.WM_RBUTTONDOWN || message == win32.WM_RBUTTONUP ? 1:
 					message == win32.WM_MBUTTONDOWN || message == win32.WM_MBUTTONUP ? 2:
@@ -101,6 +145,10 @@ class WindowGDI(IOMANAGER) : Window
 			break;
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
 			assert (false);  // break;
+		case win32.WM_KEYDOWN:
+			writeln("WM_KEYDOWN ", keys[wParam]);
+		case win32.WM_KEYUP:
+			break;
 		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
 			switch (wParam)
 			{
@@ -137,6 +185,26 @@ class WindowGDI(IOMANAGER) : Window
 		wcex.lpszClassName	= _classnamez;
 		if (!win32.RegisterClassEx(&wcex))
 			throw new Exception("RegisterClass failed");
+
+
+		// raw input
+		enum HID_USAGE_PAGE { GENERIC = 0x01 }
+		enum HID_USAGE { GENERIC_MOUSE = 0x02, GENERIC_KEYBOARD = 0x06 }
+
+		win32.RAWINPUTDEVICE Rid[1];
+
+		Rid[0].usUsagePage = HID_USAGE_PAGE.GENERIC;
+		Rid[0].usUsage = HID_USAGE.GENERIC_KEYBOARD;
+		Rid[0].dwFlags = win32.RIDEV_NOLEGACY;   // adds HID keyboard and also ignores legacy keyboard messages
+		Rid[0].hwndTarget = null;
+
+		//Rid[0].usUsagePage = HID_USAGE_PAGE.GENERIC;
+		//Rid[0].usUsage = HID_USAGE.GENERIC_MOUSE;
+		//Rid[0].dwFlags = win32.RIDEV_NOLEGACY;   // adds HID mouse and also ignores legacy mouse messages
+		//Rid[0].hwndTarget = null;
+
+		if (win32.RegisterRawInputDevices(Rid.ptr, Rid.length, win32.RAWINPUTDEVICE.sizeof) == win32.FALSE)
+			writeln("registration failed");  // Call GetLastError for the cause of the error
 	}
 
 	/* Factory method */
@@ -226,7 +294,7 @@ invariant (string[256]) keys = [
 	/* 0x0A */	null,  // reserved
 	/* 0x0B */	null,  // reserved
 	/* 0x0C */	"Clear",
-	/* 0x0D */	"Enter",  // Return
+	/* 0x0D */	"Enter",  // both, keyboard and numpad
 	/* 0x0E */	null,  // undefined
 	/* 0x0F */	null,  // undefined
 	/* 0x10 */	"Shift",
@@ -306,7 +374,7 @@ invariant (string[256]) keys = [
 	/* 0x5A */	"Z",
 	/* 0x5B */	"Left Windows",  // super?
 	/* 0x5C */	"Right Windows",  // super?
-	/* 0x5D */	"Applications",
+	/* 0x5D */	"context menu", // Applications?
 	/* 0x5E */	null,
 	/* 0x5F */	"Sleep",  // Computer Sleep
 	/* 0x60 */	"Numpad 0",
@@ -359,7 +427,7 @@ invariant (string[256]) keys = [
 	/* 0x8F */	null,  // unassigned
 	/* 0x90 */	"Num Lock",
 	/* 0x91 */	"Scroll Lock",
-	/* 0x92 */	null,  // OEM
+	/* 0x92 */	null,  // OEM = (NEC), Dictionary (Fujitsu/OASYS)
 	/* 0x93 */	null,  // OEM
 	/* 0x94 */	null,  // OEM
 	/* 0x95 */	null,  // OEM
@@ -446,19 +514,19 @@ invariant (string[256]) keys = [
 	/* 0xE6 */	null,  // OEM specific
 	/* 0xE7 */	"PACKET",  // unicode keystrokes
 	/* 0xE8 */	null,  // unassigned
-	/* 0xE9 */	null,  // OEM specific
-	/* 0xEA */	null,  // OEM specific
-	/* 0xEB */	null,  // OEM specific
-	/* 0xEC */	null,  // OEM specific
-	/* 0xED */	null,  // OEM specific
-	/* 0xEE */	null,  // OEM specific
-	/* 0xEF */	null,  // OEM specific
-	/* 0xF0 */	null,  // OEM specific
-	/* 0xF1 */	null,  // OEM specific
-	/* 0xF2 */	null,  // OEM specific
-	/* 0xF3 */	null,  // OEM specific
-	/* 0xF4 */	null,  // OEM specific
-	/* 0xF5 */	null,  // OEM specific
+	/* 0xE9 */	null,  // OEM specific (Nokia?) VK_OEM_RESET
+	/* 0xEA */	null,  // OEM specific (Nokia?) VK_OEM_JUMP
+	/* 0xEB */	null,  // OEM specific (Nokia?) VK_OEM_PA1
+	/* 0xEC */	null,  // OEM specific (Nokia?) VK_OEM_PA2
+	/* 0xED */	null,  // OEM specific (Nokia?) VK_OEM_PA3
+	/* 0xEE */	null,  // OEM specific (Nokia?) VK_OEM_WSCTRL
+	/* 0xEF */	null,  // OEM specific (Nokia?) VK_OEM_CUSEL
+	/* 0xF0 */	null,  // OEM specific (Nokia?) VK_OEM_ATTN
+	/* 0xF1 */	null,  // OEM specific (Nokia?) VK_OEM_FINNISHs
+	/* 0xF2 */	null,  // OEM specific (Nokia?) VK_OEM_COPY
+	/* 0xF3 */	null,  // OEM specific (Nokia?) VK_OEM_AUTOs
+	/* 0xF4 */	null,  // OEM specific (Nokia?) VK_OEM_ENLW
+	/* 0xF5 */	null,  // OEM specific (Nokia?) VK_OEM_BACKTAB
 	/* 0xF6 */	"Attn",
 	/* 0xF7 */	"CrSel",
 	/* 0xF8 */	"ExSel",
