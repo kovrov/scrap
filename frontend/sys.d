@@ -52,6 +52,12 @@ enum MOUSE
 	MOVE,
 }
 
+enum KEY
+{
+	PRESS,
+	RELEASE,
+}
+
 bool[256] keyboardState; // virtual key codes
 
 
@@ -87,9 +93,11 @@ class WindowGDI(IOMANAGER) : Window
 					{
 					case win32.WM_KEYDOWN, win32.WM_SYSKEYDOWN:
 						keyboardState[raw.data.keyboard.VKey] = true;
+						_windows[hWnd].io.dispatch_keyboard_input(wParam, KEY.PRESS);
 						break;
 					case win32.WM_KEYUP, win32.WM_SYSKEYUP:
 						keyboardState[raw.data.keyboard.VKey] = false;
+						_windows[hWnd].io.dispatch_keyboard_input(wParam, KEY.RELEASE);
 						break;
 					}
 				}
@@ -110,16 +118,11 @@ class WindowGDI(IOMANAGER) : Window
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 
 		// mouse input
-		case win32.WM_LBUTTONDBLCLK:
-		case win32.WM_RBUTTONDBLCLK:
-		case win32.WM_MBUTTONDBLCLK:
+		case win32.WM_LBUTTONDBLCLK, win32.WM_RBUTTONDBLCLK, win32.WM_MBUTTONDBLCLK:
 			assert (false);  // break;
-		case win32.WM_LBUTTONDOWN:  // left mouse button pressed.
-		case win32.WM_LBUTTONUP:    // left mouse button released.
-		case win32.WM_RBUTTONDOWN:  // right mouse button pressed.
-		case win32.WM_RBUTTONUP:    // right mouse button released.
-		case win32.WM_MBUTTONDOWN:  // middle mouse button pressed.
-		case win32.WM_MBUTTONUP:    // middle mouse button released.
+		case win32.WM_LBUTTONDOWN, win32.WM_LBUTTONUP:    // left mouse button
+		case win32.WM_RBUTTONDOWN, win32.WM_RBUTTONUP:    // right mouse button
+		case win32.WM_MBUTTONDOWN, win32.WM_MBUTTONUP:    // middle mouse button
 			int button =
 					message == win32.WM_LBUTTONDOWN || message == win32.WM_LBUTTONUP ? 0:
 					message == win32.WM_RBUTTONDOWN || message == win32.WM_RBUTTONUP ? 1:
@@ -131,10 +134,8 @@ class WindowGDI(IOMANAGER) : Window
 			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), type, button);
 			break;
 		// Windows 2000/Windows XP: An X mouse button
-		//case win32.WM_XBUTTONDBLCLK: // double-clicked.
-		//case win32.WM_XBUTTONDOWN:   // pressed.
-		//case win32.WM_XBUTTONUP:     // released.
-		//break;
+		//case win32.WM_XBUTTONDBLCLK, win32.WM_XBUTTONDOWN, win32.WM_XBUTTONUP:
+		//	break;
 		// Mouse cursor has moved (if not captured, within the client area)
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
 			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
@@ -142,12 +143,12 @@ class WindowGDI(IOMANAGER) : Window
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
 			assert (false);  // break;
 
-		case win32.WM_KEYDOWN, win32.WM_SYSKEYDOWN:
-			keyboardState[wParam] = true;
-			break;
-		case win32.WM_KEYUP, win32.WM_SYSKEYUP:
-			keyboardState[wParam] = false;
-			break;
+		case win32.WM_KEYDOWN, win32.WM_KEYUP, win32.WM_SYSKEYDOWN, win32.WM_SYSKEYUP:
+			auto action = (message == win32.WM_KEYDOWN || message == win32.WM_SYSKEYDOWN) ? KEY.PRESS : KEY.RELEASE;
+			keyboardState[wParam] = (action == KEY.PRESS);
+			if (_windows[hWnd].io.dispatch_keyboard_input(wParam, action))
+				break;
+			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 
 		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
 			switch (wParam)
@@ -155,11 +156,9 @@ class WindowGDI(IOMANAGER) : Window
 			case win32.SIZE_RESTORED:
 				_windows[hWnd].io.root.resize(win32.LOWORD(lParam), win32.HIWORD(lParam));
 				break;
-			case win32.SIZE_MAXIMIZED:
-			case win32.SIZE_MINIMIZED:
+			case win32.SIZE_MAXIMIZED, win32.SIZE_MINIMIZED:
 				break;
-			//case win32.SIZE_MAXSHOW:
-			//case win32.SIZE_MAXHIDE:
+			//case win32.SIZE_MAXSHOW, win32.SIZE_MAXHIDE:
 			}
 			break;
 		case win32.WM_DESTROY:
@@ -185,8 +184,7 @@ class WindowGDI(IOMANAGER) : Window
 		wcex.lpszClassName	= _classnamez;
 		if (!win32.RegisterClassEx(&wcex))
 			throw new Exception("RegisterClass failed");
-
-
+		/+
 		// raw input
 		enum HID_USAGE_PAGE { GENERIC = 0x01 }
 		enum HID_USAGE { GENERIC_MOUSE = 0x02, GENERIC_KEYBOARD = 0x06 }
@@ -207,6 +205,7 @@ class WindowGDI(IOMANAGER) : Window
 
 		if (win32.RegisterRawInputDevices(Rid.ptr, Rid.length, win32.RAWINPUTDEVICE.sizeof) == win32.FALSE)
 			writeln("registration failed");  // Call GetLastError for the cause of the error
+		+/
 	}
 
 	/* Factory method */
@@ -506,7 +505,7 @@ invariant (string[256]) keys = [
 	/* 0xDC */	"OEM_BACKSLASH",     // \|
 	/* 0xDD */	"OEM_RIGHTBRACKET",  // ]}
 	/* 0xDE */	"OEM_APOSTROPHE",    // "'
-	/* 0xDF */	"OEM_8",  // ง !
+	/* 0xDF */	"OEM_8",  // ยง !
 	/* 0xE0 */	null,  // reserved
 	/* 0xE1 */	null,  // OEM specific
 	/* 0xE2 */	"OEM_102",  // ><

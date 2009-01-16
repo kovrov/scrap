@@ -230,6 +230,13 @@ class EventManager(T /* : TargetNode */)
 		}
 	}
 
+import std.stdio;
+	bool dispatch_keyboard_input(uint key, sys.KEY type)
+	{
+		writefln("dispatch_keyboard_input:%s:%s", sys.keys[key], type == sys.KEY.PRESS ? "PRESS" : "RELEASE");
+		return false;
+	}
+
 	protected
 	void passMouse(ref T target, const ref Point pos)
 	{
