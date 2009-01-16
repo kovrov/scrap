@@ -3,6 +3,8 @@
    * implement activatable interface
    * overhul event interfaces
    * ...
+   * Activatable concept (interface)
+   * Integrate logical focus with keyboard focus
 */
 
 static import sys;

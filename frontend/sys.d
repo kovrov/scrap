@@ -41,8 +41,6 @@ interface Window
 		fullscreen = 1<<2,
 		vsync      = 1<<3
 	}
-	/* Factory method */
-
 	abstract void visible(bool);
 	abstract void redraw();
 }
@@ -54,13 +52,17 @@ enum MOUSE
 	MOVE,
 }
 
+bool[256] keyboardState; // virtual key codes
+
+
+import std.stdio;
 class WindowGDI(IOMANAGER) : Window
 {
 	IOMANAGER io;
 	private win32.HWND handle;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
-import std.stdio;
+
 	private static extern (Windows)
 	win32.LRESULT WndProc(win32.HWND hWnd, win32.UINT message, win32.WPARAM wParam, win32.LPARAM lParam)
 	{
@@ -70,34 +72,27 @@ import std.stdio;
 			_windows[hWnd].io.on_paint(hWnd);
 			break;
 
-		// Raw Input http://msdn.microsoft.com/library/ms645536
 		case win32.WM_INPUT:  // http://msdn.microsoft.com/library/ms645590
-			win32.UINT dwSize;
-			win32.GetRawInputData(cast(win32.HRAWINPUT)lParam,
-			                      win32.RID_INPUT,
-			                      null, //
-			                      &dwSize,
-			                      win32.RAWINPUTHEADER.sizeof);
 			byte[64] buffer;
-			assert (buffer.length >= dwSize, "toString(dwSize)");
-			if (win32.GetRawInputData(cast(win32.HRAWINPUT)lParam,
-			                          win32.RID_INPUT,
-			                          cast(void*)buffer,
-			                          &dwSize,
-			                          win32.RAWINPUTHEADER.sizeof) != dwSize)
-				writeln("GetRawInputData doesn't return correct size!");
+			uint buffer_size = buffer.length;
+			assert (win32.GetRawInputData(cast(win32.HRAWINPUT)lParam, win32.RID_INPUT,
+			                              buffer.ptr, &buffer_size,
+			                              win32.RAWINPUTHEADER.sizeof) != -1);
 			auto raw = cast(win32.RAWINPUT*)buffer.ptr;
-
 			if (raw.header.dwType == win32.RIM_TYPEKEYBOARD)
 			{
-				//writefln("Kbd: make=%04x Flags:%04x Reserved:%04x ExtraInformation:%08x, msg=%04x VK=%04x",
-				//	raw.data.keyboard.MakeCode,
-				//	raw.data.keyboard.Flags,
-				//	raw.data.keyboard.Reserved,
-				//	raw.data.keyboard.ExtraInformation,
-				//	raw.data.keyboard.Message,
-				//	raw.data.keyboard.VKey);
-				writeln(keys[raw.data.keyboard.VKey]);
+				if (raw.data.keyboard.VKey > 0x00 && raw.data.keyboard.VKey < 0xFF)
+				{
+					switch (raw.data.keyboard.Message)
+					{
+					case win32.WM_KEYDOWN, win32.WM_SYSKEYDOWN:
+						keyboardState[raw.data.keyboard.VKey] = true;
+						break;
+					case win32.WM_KEYUP, win32.WM_SYSKEYUP:
+						keyboardState[raw.data.keyboard.VKey] = false;
+						break;
+					}
+				}
 			}
 			else if (raw.header.dwType == win32.RIM_TYPEMOUSE)
 			{
@@ -111,7 +106,8 @@ import std.stdio;
 					raw.data.mouse.lLastY,
 					raw.data.mouse.ulExtraInformation);
 			}
-			return 0; //break;
+			// must call so the system can perform the cleanup
+			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 
 		// mouse input
 		case win32.WM_LBUTTONDBLCLK:
@@ -145,10 +141,14 @@ import std.stdio;
 			break;
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
 			assert (false);  // break;
-		case win32.WM_KEYDOWN:
-			writeln("WM_KEYDOWN ", keys[wParam]);
-		case win32.WM_KEYUP:
+
+		case win32.WM_KEYDOWN, win32.WM_SYSKEYDOWN:
+			keyboardState[wParam] = true;
 			break;
+		case win32.WM_KEYUP, win32.WM_SYSKEYUP:
+			keyboardState[wParam] = false;
+			break;
+
 		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
 			switch (wParam)
 			{
@@ -195,7 +195,9 @@ import std.stdio;
 
 		Rid[0].usUsagePage = HID_USAGE_PAGE.GENERIC;
 		Rid[0].usUsage = HID_USAGE.GENERIC_KEYBOARD;
-		Rid[0].dwFlags = win32.RIDEV_NOLEGACY;   // adds HID keyboard and also ignores legacy keyboard messages
+		Rid[0].dwFlags = win32.RIDEV_NOHOTKEYS | // no logo/super key
+						win32.RIDEV_NOLEGACY; // no WM_KEYDOWN/WM_KEYUP, WM_SYSKEYDOWN/WM_SYSKEYUP ...
+							
 		Rid[0].hwndTarget = null;
 
 		//Rid[0].usUsagePage = HID_USAGE_PAGE.GENERIC;
@@ -447,33 +449,33 @@ invariant (string[256]) keys = [
 	/* 0xA3 */	"Right Control",
 	/* 0xA4 */	"Left Menu",
 	/* 0xA5 */	"Right Menu",
-	/* 0xA6 */	"VK_BROWSER_BACK",
-	/* 0xA7 */	"VK_BROWSER_FORWARD",
-	/* 0xA8 */	"VK_BROWSER_REFRESH",
-	/* 0xA9 */	"VK_BROWSER_STOP",
-	/* 0xAA */	"VK_BROWSER_SEARCH",
-	/* 0xAB */	"VK_BROWSER_FAVORITES",
-	/* 0xAC */	"VK_BROWSER_HOME",
-	/* 0xAD */	"VK_VOLUME_MUTE",
-	/* 0xAE */	"VK_VOLUME_DOWN",
-	/* 0xAF */	"VK_VOLUME_UP",
-	/* 0xB0 */	"VK_MEDIA_NEXT_TRACK",
-	/* 0xB1 */	"VK_MEDIA_PREV_TRACK",
-	/* 0xB2 */	"VK_MEDIA_STOP",
-	/* 0xB3 */	"VK_MEDIA_PLAY_PAUSE",
-	/* 0xB4 */	"VK_LAUNCH_MAIL",
-	/* 0xB5 */	"VK_LAUNCH_MEDIA_SELECT",
-	/* 0xB6 */	"VK_LAUNCH_APP1",
-	/* 0xB7 */	"VK_LAUNCH_APP2",
+	/* 0xA6 */	"BROWSER_BACK",
+	/* 0xA7 */	"BROWSER_FORWARD",
+	/* 0xA8 */	"BROWSER_REFRESH",
+	/* 0xA9 */	"BROWSER_STOP",
+	/* 0xAA */	"BROWSER_SEARCH",
+	/* 0xAB */	"BROWSER_FAVORITES",
+	/* 0xAC */	"BROWSER_HOME",
+	/* 0xAD */	"VOLUME_MUTE",
+	/* 0xAE */	"VOLUME_DOWN",
+	/* 0xAF */	"VOLUME_UP",
+	/* 0xB0 */	"MEDIA_NEXT_TRACK",
+	/* 0xB1 */	"MEDIA_PREV_TRACK",
+	/* 0xB2 */	"MEDIA_STOP",
+	/* 0xB3 */	"MEDIA_PLAY_PAUSE",
+	/* 0xB4 */	"LAUNCH_MAIL",
+	/* 0xB5 */	"LAUNCH_MEDIA_SELECT",
+	/* 0xB6 */	"LAUNCH_APP1",
+	/* 0xB7 */	"LAUNCH_APP2",
 	/* 0xB8 */	null,  // reserved
 	/* 0xB9 */	null,  // reserved
-	/* 0xBA */	"OEM_1",        // ;:
-	/* 0xBB */	"OEM_PLUS",     // =+
-	/* 0xBC */	"OEM_COMMA",    // ,
-	/* 0xBD */	"OEM_MINUS",    // -_
-	/* 0xBE */	"OEM_PERIOD",   // .
-	/* 0xBF */	"OEM_2",        // /?
-	/* 0xC0 */	"OEM_3",        // `~
+	/* 0xBA */	"OEM_COLON",   // ;:
+	/* 0xBB */	"OEM_PLUS",    // =+
+	/* 0xBC */	"OEM_COMMA",   // ,
+	/* 0xBD */	"OEM_MINUS",   // -_
+	/* 0xBE */	"OEM_PERIOD",  // .
+	/* 0xBF */	"OEM_SLASH",   // /?
+	/* 0xC0 */	"OEM_TILDE",   // `~
 	/* 0xC1 */	null,  // reserved
 	/* 0xC2 */	null,  // reserved
 	/* 0xC3 */	null,  // reserved
@@ -500,14 +502,14 @@ invariant (string[256]) keys = [
 	/* 0xD8 */	null,  // unassigned
 	/* 0xD9*/	null,  // unassigned
 	/* 0xDA */	null,  // unassigned
-	/* 0xDB */	"OEM_4", // [{
-	/* 0xDC */	"OEM_5", // \|
-	/* 0xDD */	"OEM_6", // ]}
-	/* 0xDE */	"OEM_7", //"'
-	/* 0xDF */	"OEM_8",
+	/* 0xDB */	"OEM_LEFTBRACKET",   // [{
+	/* 0xDC */	"OEM_BACKSLASH",     // \|
+	/* 0xDD */	"OEM_RIGHTBRACKET",  // ]}
+	/* 0xDE */	"OEM_APOSTROPHE",    // "'
+	/* 0xDF */	"OEM_8",  // § !
 	/* 0xE0 */	null,  // reserved
 	/* 0xE1 */	null,  // OEM specific
-	/* 0xE2 */	"OEM_102",  // <\
+	/* 0xE2 */	"OEM_102",  // ><
 	/* 0xE3 */	null,  // OEM specific
 	/* 0xE4 */	null,  // OEM specific
 	/* 0xE5 */	"Process",  // IME
