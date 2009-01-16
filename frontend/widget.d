@@ -1,11 +1,13 @@
 /* 
   TODO:
+   * implement activatable interface
    * tweak button behaviour (keyboard)
    * implement radio button
    * ...
 */
 
 static import ui;
+import std.signals;
 
 template base(BASE /* : ui.TargetNode */)
 {
@@ -54,7 +56,7 @@ template base(BASE /* : ui.TargetNode */)
 	{
 		mixin parent_ctor;
 		// signals
-		//mixin Signal!(bool) toggled;
+		mixin Signal!(bool) toggled;
 	}
 
 	class Button : Widget
@@ -79,14 +81,14 @@ template base(BASE /* : ui.TargetNode */)
 		}
 		ui.FB _onKeyboard(uint keycode, ui.KEY_ACTION action)
 		{
-			//if (keycode == ENTER || keycode == SPACE)
-				//return ui.FB.NONE;
+			//if (keycode != SPACE)
+			//	return ui.FB.NONE;
 			switch (action)
 			{
 			case ui.KEY_ACTION.PRESS:
 				break;
 			case ui.KEY_ACTION.RELEASE:
-				//clicked.emit();  // call all the connected slots
+				clicked.emit();  // call all the connected slots
 				break;
 			}
 			return ui.FB.NONE;
@@ -123,7 +125,7 @@ template base(BASE /* : ui.TargetNode */)
 				if (this.pressed)
 				{
 					// call all the connected slots
-					//clicked.emit();
+					clicked.emit();
 					this.pressed = false;
 					return ui.FB.ReleaseMouse | ui.FB.StateChanged;
 				}
@@ -132,7 +134,7 @@ template base(BASE /* : ui.TargetNode */)
 		}
 
 		// signals
-		//mixin Signal!() clicked;
+		mixin Signal!() clicked;
 		/*	usage:
 			this.clicked.connect(&observer.watch);
 			this.clicked.disconnect(&observer.watch);

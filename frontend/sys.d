@@ -15,6 +15,11 @@ alias generic.Point!(short) Point;
 alias generic.Size!(ushort) Size;
 
 
+void quit()
+{
+	win32.PostQuitMessage(0);
+}
+
 int messageLoop()
 {
 	win32.MSG msg;

@@ -1,6 +1,5 @@
 /* 
   TODO:
-   * implement activatable interface
    * overhul event interfaces
    * ...
    * Activatable concept (interface)
@@ -64,7 +63,6 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.opApply!(`!node.hidden`);  // for mouse cursor hit test (with condition mixin)
 	mixin tree.opApplyReverse!(`!node.hidden`);  // for drawing (with condition mixin)
 
-	static typeof(this) activeNode;
 	static typeof(this) focusedNode;
 
 	bool hidden;
@@ -230,11 +228,17 @@ class EventManager(T /* : TargetNode */)
 		}
 	}
 
-import std.stdio;
 	bool dispatch_keyboard_input(uint key, sys.KEY type)
 	{
-		writefln("dispatch_keyboard_input:%s:%s", sys.keys[key], type == sys.KEY.PRESS ? "PRESS" : "RELEASE");
-		return false;
+		if (T.focusedNode is null || T.focusedNode.handlers.keyboard is null)
+			return false;
+
+		FB delegate(uint key, KEY_ACTION action) handler;
+		handler.funcptr = T.focusedNode.handlers.keyboard;
+		handler.ptr = cast(void*)T.focusedNode;
+		auto res = handler(key, type == sys.KEY.PRESS ? KEY_ACTION.PRESS : KEY_ACTION.RELEASE);
+
+		return res == FB.NONE ? false : true;
 	}
 
 	protected

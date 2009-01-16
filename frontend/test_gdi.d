@@ -22,11 +22,16 @@ gdi.Widget genTestData()
 	      with (new gdi.Radio("r2", grp)) { x=10; y=30; width=30; height=10; }
 
 	  // test
-	  with (new gdi.Button("b4", root)) { x=620; y=460; width=48; height=22; nested=false; }
-	  with (new gdi.Button("b5", root)) { x=610; y=470; width=48; height=22; nested=false; }
+	  auto qb = new gdi.Button("quit", root); with (qb) { x=610; y=470; width=48; height=22; }
+	  qb.clicked.connect(SProxy({sys.quit();}));
+
+	  with (new gdi.Button("b5", root)) { x=620; y=460; width=48; height=22; nested=false; }
 
 	return root;
 }
+
+T SProxy(T)(T t) { with (new SignalProxy!(T)) { cb = t; return &opCall; } }
+class SignalProxy(T) { T cb; void opCall() { return cb(); } }
 
 void main()
 {
