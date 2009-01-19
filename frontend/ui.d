@@ -60,8 +60,8 @@ class TargetNode(alias PAINT_INTERFACE)
 	mixin tree.Node;
 	mixin tree.setParent;
 	mixin tree.makeFirstChild;
-	mixin tree.opApply!(`!node.hidden`);  // for mouse cursor hit test (with condition mixin)
-	mixin tree.opApplyReverse!(`!node.hidden`);  // for drawing (with condition mixin)
+	mixin tree.opApply!(`!node.hidden`);  // for mouse cursor hit test (with a condition mixin)
+	mixin tree.opApplyReverse!(`!node.hidden`);  // for drawing (with a condition mixin)
 
 	static typeof(this) focusedNode;
 
@@ -117,26 +117,50 @@ class EventManager(T /* : TargetNode */)
 	T root;
 	T mouseOldTarget;
 	T mouseHolder;
-	sys.Window window;
+	sys.Window window;  // used to force native window to redraw itself (temp design hack)
 
 	this(sys.Window window)
 	{
 		this.window = window;
 	}
 
-
+	// native window notifications
 	// http://msdn.microsoft.com/ms674887
-	// WINDOW_ENABLE_state_change(bool active)  // http://msdn.microsoft.com/ms632621
-	// WINDOW_SHOW_state_change(bool active)  // http://msdn.microsoft.com/ms632645
-	// WINDOW_ACTIVATE_state_change(bool active)  // http://msdn.microsoft.com/ms646274
-	// WINDOW_SIZE_state_change(ushort w, ushort h)  // http://msdn.microsoft.com/ms632646
-	// WINDOW_SIZE_query()  // http://msdn.microsoft.com/ms632634
-	// WINDOW_MINMAXINFO_query()  // http://msdn.microsoft.com/ms632626
-	// WINDOW_CLOSE_confirmation()  // http://msdn.microsoft.com/ms632617
-	// WINDOW_THEMECHANGED_notification()  // http://msdn.microsoft.com/ms632650
 
+	// http://msdn.microsoft.com/ms632645
+	void notify_SHOW_state_change(bool show, bool maximized) {}
 
-	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
+	/* native window being activated or deactivated
+	   http://msdn.microsoft.com/ms646274 */
+	void notify_ACTIVATE_state_change(bool active, bool minimized)
+	{
+		// if this.root activatable ...
+	}
+
+	/* native window being resized (possibly maximized)
+	   http://msdn.microsoft.com/ms632646 */
+	void notify_SIZE_state_change(ushort w, ushort h, bool maximized)
+	{
+		this.root.resize(w, h);
+	}
+
+	/* to control the content of the window's client area
+	   http://msdn.microsoft.com/ms632634 */
+	void query_SIZE_info() {}
+
+	/* size or position of native window is about to change 
+	   http://msdn.microsoft.com/ms632626 */
+	void query_MINMAX_info() {}
+
+	/* native window asked to be destroyed
+	   http://msdn.microsoft.com/ms632617 */
+	bool confirm_CLOSE_action() { return true; }
+
+	/* http://msdn.microsoft.com/ms632650 */
+	void notify_THEMECHANGED_event() {}
+
+	/* native window received mouse input */
+	void dispatch_MOUSE_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
 		T[32] event_path_stack;
 		T[] get_event_path(T target_node)
@@ -240,7 +264,7 @@ class EventManager(T /* : TargetNode */)
 		}
 	}
 
-	bool dispatch_keyboard_input(uint key, sys.KEY type)
+	bool dispatch_KEYBOARD_input(uint key, sys.KEY type)
 	{
 		if (T.focusedNode is null || T.focusedNode.handlers.keyboard is null)
 			return false;

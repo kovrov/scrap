@@ -4,6 +4,7 @@
    * refactor windows heirarchy
    * mouse/keyboard state?
 */
+import std.stdio;
 
 pragma(lib, "win32.lib");
 static import win32 = win32.windows;
@@ -66,7 +67,6 @@ enum KEY
 bool[256] keyboardState; // virtual key codes
 
 
-import std.stdio;
 class WindowGDI(IOMANAGER) : Window
 {
 	IOMANAGER io;
@@ -98,11 +98,11 @@ class WindowGDI(IOMANAGER) : Window
 					{
 					case win32.WM_KEYDOWN, win32.WM_SYSKEYDOWN:
 						keyboardState[raw.data.keyboard.VKey] = true;
-						_windows[hWnd].io.dispatch_keyboard_input(wParam, KEY.PRESS);
+						_windows[hWnd].io.dispatch_KEYBOARD_input(wParam, KEY.PRESS);
 						break;
 					case win32.WM_KEYUP, win32.WM_SYSKEYUP:
 						keyboardState[raw.data.keyboard.VKey] = false;
-						_windows[hWnd].io.dispatch_keyboard_input(wParam, KEY.RELEASE);
+						_windows[hWnd].io.dispatch_KEYBOARD_input(wParam, KEY.RELEASE);
 						break;
 					}
 				}
@@ -136,14 +136,14 @@ class WindowGDI(IOMANAGER) : Window
 			MOUSE type = message == win32.WM_LBUTTONUP ||
 			             message == win32.WM_RBUTTONUP ||
 			             message == win32.WM_MBUTTONUP ? MOUSE.RELEASE : MOUSE.PRESS;
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), type, button);
+			_windows[hWnd].io.dispatch_MOUSE_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), type, button);
 			break;
 		// Windows 2000/Windows XP: An X mouse button
 		//case win32.WM_XBUTTONDBLCLK, win32.WM_XBUTTONDOWN, win32.WM_XBUTTONUP:
 		//	break;
 		// Mouse cursor has moved (if not captured, within the client area)
 		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
-			_windows[hWnd].io.dispatch_mouse_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
+			_windows[hWnd].io.dispatch_MOUSE_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
 			break;
 		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
 			assert (false);  // break;
@@ -151,21 +151,66 @@ class WindowGDI(IOMANAGER) : Window
 		case win32.WM_KEYDOWN, win32.WM_KEYUP, win32.WM_SYSKEYDOWN, win32.WM_SYSKEYUP:
 			auto action = (message == win32.WM_KEYDOWN || message == win32.WM_SYSKEYDOWN) ? KEY.PRESS : KEY.RELEASE;
 			keyboardState[wParam] = (action == KEY.PRESS);
-			if (_windows[hWnd].io.dispatch_keyboard_input(wParam, action))
+			if (_windows[hWnd].io.dispatch_KEYBOARD_input(wParam, action))
 				break;
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 
+		case win32.WM_NCCALCSIZE:  // http://msdn.microsoft.com/ms632634
+			if (wParam == win32.TRUE)
+			{
+				writeln("WM_NCCALCSIZE");
+				// http://blogs.msdn.com/oldnewthing/archive/2003/09/15/54925.aspx
+				auto nccp = cast(win32.NCCALCSIZE_PARAMS*)lParam;
+				const win32.RECT in_newWindowRect = nccp.rgrc[0];
+				const win32.RECT in_oldWindowRect = nccp.rgrc[1];
+				const win32.RECT in_oldClientRect = nccp.rgrc[2];
+				const win32.RECT* out_newClientRect = &nccp.rgrc[0];
+				const win32.RECT* out_validDstRect = &nccp.rgrc[1];
+				const win32.RECT* out_validSrcRect = &nccp.rgrc[2];
+				writefln("  newWindowRect:RECT(x:%d,y:%d,w:%d,h:%d)",  // proposed
+							in_newWindowRect.left, in_newWindowRect.top,
+							in_newWindowRect.right - in_newWindowRect.left,
+							in_newWindowRect.bottom - in_newWindowRect.top);
+				writefln("  oldWindowRect:RECT(x:%d,y:%d,w:%d,h:%d)",
+							in_oldWindowRect.left, in_oldWindowRect.top,
+							in_oldWindowRect.right - in_oldWindowRect.left,
+							in_oldWindowRect.bottom - in_oldWindowRect.top);
+				writefln("  oldClientRect:RECT(x:%d,y:%d,w:%d,h:%d)",
+							in_oldClientRect.left, in_oldClientRect.top,
+							in_oldClientRect.right - in_oldClientRect.left,
+							in_oldClientRect.bottom - in_oldClientRect.top);
+				return win32.DefWindowProc(hWnd, message, wParam, lParam); // should return flags
+			}
+			else  // first time
+			{
+				//writeln("WM_NCCALCSIZE");
+				//auto r = cast(win32.RECT*)lParam;
+				//writefln("  RECT(%d,%d,%d,%d)", r.left, r.top, r.right, r.bottom);
+				return win32.DefWindowProc(hWnd, message, wParam, lParam); // should return 0
+			}
+
 		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
+			writeln("WM_SIZE");
+			writefln("  %s:%d,%d",
+						wParam == win32.SIZE_MAXHIDE ? "SIZE_MAXHIDE" :
+						wParam == win32.SIZE_MAXIMIZED ? "SIZE_MAXIMIZED" :
+						wParam == win32.SIZE_MAXSHOW ?   "SIZE_MAXSHOW" :
+						wParam == win32.SIZE_MINIMIZED ? "SIZE_MINIMIZED" :
+						wParam == win32.SIZE_RESTORED ?  "SIZE_RESTORED" :
+						null,
+					win32.LOWORD(lParam), win32.HIWORD(lParam));
+
 			switch (wParam)
 			{
-			case win32.SIZE_RESTORED:
-				_windows[hWnd].io.root.resize(win32.LOWORD(lParam), win32.HIWORD(lParam));
+			case win32.SIZE_RESTORED, win32.SIZE_MAXIMIZED:
+				_windows[hWnd].io.notify_SIZE_state_change(win32.LOWORD(lParam), win32.HIWORD(lParam), wParam == win32.SIZE_MAXIMIZED);
 				break;
-			case win32.SIZE_MAXIMIZED, win32.SIZE_MINIMIZED:
+			case win32.SIZE_MINIMIZED:
 				break;
 			//case win32.SIZE_MAXSHOW, win32.SIZE_MAXHIDE:
 			}
 			break;
+
 		case win32.WM_DESTROY:
 			auto self = _windows[hWnd];
 			_windows.remove(hWnd);
@@ -175,6 +220,12 @@ class WindowGDI(IOMANAGER) : Window
 				win32.PostQuitMessage(0);
 			delete self;
 			break;
+		case win32.WM_CLOSE:
+			if (_windows[hWnd].io.confirm_CLOSE_action())
+				return win32.DefWindowProc(hWnd, message, wParam, lParam);
+			break;
+		// generic asserts
+		case win32.WM_ENABLE: assert (false, "top-level windows should not be disabled/enabled");
 		default:
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 		}
