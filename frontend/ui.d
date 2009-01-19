@@ -124,6 +124,18 @@ class EventManager(T /* : TargetNode */)
 		this.window = window;
 	}
 
+
+	// http://msdn.microsoft.com/ms674887
+	// WINDOW_ENABLE_state_change(bool active)  // http://msdn.microsoft.com/ms632621
+	// WINDOW_SHOW_state_change(bool active)  // http://msdn.microsoft.com/ms632645
+	// WINDOW_ACTIVATE_state_change(bool active)  // http://msdn.microsoft.com/ms646274
+	// WINDOW_SIZE_state_change(ushort w, ushort h)  // http://msdn.microsoft.com/ms632646
+	// WINDOW_SIZE_query()  // http://msdn.microsoft.com/ms632634
+	// WINDOW_MINMAXINFO_query()  // http://msdn.microsoft.com/ms632626
+	// WINDOW_CLOSE_confirmation()  // http://msdn.microsoft.com/ms632617
+	// WINDOW_THEMECHANGED_notification()  // http://msdn.microsoft.com/ms632650
+
+
 	void dispatch_mouse_input(const ref Point pos, sys.MOUSE type, int button = -1)
 	{
 		T[32] event_path_stack;

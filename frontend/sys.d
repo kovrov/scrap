@@ -167,11 +167,13 @@ class WindowGDI(IOMANAGER) : Window
 			}
 			break;
 		case win32.WM_DESTROY:
+			auto self = _windows[hWnd];
 			_windows.remove(hWnd);
 			if (_windows.length > 0)
 				_windows.rehash;
 			else
 				win32.PostQuitMessage(0);
+			delete self;
 			break;
 		default:
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);

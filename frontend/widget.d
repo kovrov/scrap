@@ -9,6 +9,8 @@
 static import ui;
 import std.signals;
 
+interface Activatable { void activate(); void focus(); }
+
 template base(BASE /* : ui.TargetNode */)
 {
 	alias BASE Widget;
@@ -19,7 +21,7 @@ template base(BASE /* : ui.TargetNode */)
 	}
 
 
-	class Window : Widget
+	class Window : Widget, Activatable
 	{
 		BASE focusedChild;
 		mixin parent_ctor;
@@ -29,13 +31,13 @@ template base(BASE /* : ui.TargetNode */)
 			_eventMap.mouseButtonPropagateUpward = &_onMouseButton;
 		}
 
-		//override
-		ui.FB activate()
+		// Activatable
+		override void activate()
 		{
 			// goes at the top of the Z order
 			this.makeFirstChild();
-			return ui.FB.StateChanged;
 		}
+		override void focus() {}
 
 		// MouseInput
 		protected ui.FB _onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/)
