@@ -155,48 +155,43 @@ class WindowGDI(IOMANAGER) : Window
 				break;
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 
-		case win32.WM_NCCALCSIZE:  // http://msdn.microsoft.com/ms632634
-			if (wParam == win32.TRUE)
+		case win32.WM_GETMINMAXINFO:
+			auto mmi = cast(win32.MINMAXINFO*)lParam;
+			Size size;
+			auto w = hWnd in _windows;
+			if (w !is null && w.io.query_MINMAX_info(&size))
 			{
-				writeln("WM_NCCALCSIZE");
+				mmi.ptMinTrackSize.x = size.width + win32.GetSystemMetrics(win32.SM_CXFRAME)*2;
+				mmi.ptMinTrackSize.y = size.height + win32.GetSystemMetrics(win32.SM_CYFRAME)*2 + win32.GetSystemMetrics(win32.SM_CYCAPTION);
+			}
+			break;
+
+		case win32.WM_NCCALCSIZE:  // http://msdn.microsoft.com/ms632634
+			auto ret = win32.DefWindowProc(hWnd, message, wParam, lParam);
+			if (wParam != win32.TRUE)  // first time
+			{
+				auto r = cast(win32.RECT*)lParam;
+			}
+			else
+			{
 				// http://blogs.msdn.com/oldnewthing/archive/2003/09/15/54925.aspx
 				auto nccp = cast(win32.NCCALCSIZE_PARAMS*)lParam;
 				const win32.RECT in_newWindowRect = nccp.rgrc[0];
 				const win32.RECT in_oldWindowRect = nccp.rgrc[1];
 				const win32.RECT in_oldClientRect = nccp.rgrc[2];
 				const win32.RECT* out_newClientRect = &nccp.rgrc[0];
-				const win32.RECT* out_validDstRect = &nccp.rgrc[1];
-				const win32.RECT* out_validSrcRect = &nccp.rgrc[2];
-				writefln("  newWindowRect:RECT(x:%d,y:%d,w:%d,h:%d)",  // proposed
-							in_newWindowRect.left, in_newWindowRect.top,
-							in_newWindowRect.right - in_newWindowRect.left,
-							in_newWindowRect.bottom - in_newWindowRect.top);
-				writefln("  oldWindowRect:RECT(x:%d,y:%d,w:%d,h:%d)",
-							in_oldWindowRect.left, in_oldWindowRect.top,
-							in_oldWindowRect.right - in_oldWindowRect.left,
-							in_oldWindowRect.bottom - in_oldWindowRect.top);
-				writefln("  oldClientRect:RECT(x:%d,y:%d,w:%d,h:%d)",
-							in_oldClientRect.left, in_oldClientRect.top,
-							in_oldClientRect.right - in_oldClientRect.left,
-							in_oldClientRect.bottom - in_oldClientRect.top);
-				return win32.DefWindowProc(hWnd, message, wParam, lParam); // should return flags
+				//const win32.RECT* out_validDstRect = &nccp.rgrc[1];
+				//const win32.RECT* out_validSrcRect = &nccp.rgrc[2];
 			}
-			else  // first time
-			{
-				//writeln("WM_NCCALCSIZE");
-				//auto r = cast(win32.RECT*)lParam;
-				//writefln("  RECT(%d,%d,%d,%d)", r.left, r.top, r.right, r.bottom);
-				return win32.DefWindowProc(hWnd, message, wParam, lParam); // should return 0
-			}
+			return ret;
 
 		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
-			writeln("WM_SIZE");
-			writefln("  %s:%d,%d",
-						wParam == win32.SIZE_MAXHIDE ? "SIZE_MAXHIDE" :
-						wParam == win32.SIZE_MAXIMIZED ? "SIZE_MAXIMIZED" :
-						wParam == win32.SIZE_MAXSHOW ?   "SIZE_MAXSHOW" :
-						wParam == win32.SIZE_MINIMIZED ? "SIZE_MINIMIZED" :
-						wParam == win32.SIZE_RESTORED ?  "SIZE_RESTORED" :
+			writefln("WM_SIZE:%s:%d,%d",
+						wParam == win32.SIZE_MAXHIDE ? "MAXHIDE" :
+						wParam == win32.SIZE_MAXIMIZED ? "MAXIMIZED" :
+						wParam == win32.SIZE_MAXSHOW ?   "MAXSHOW" :
+						wParam == win32.SIZE_MINIMIZED ? "MINIMIZED" :
+						wParam == win32.SIZE_RESTORED ?  "RESTORED" :
 						null,
 					win32.LOWORD(lParam), win32.HIWORD(lParam));
 
@@ -242,6 +237,7 @@ class WindowGDI(IOMANAGER) : Window
 		wcex.lpszClassName	= _classnamez;
 		if (!win32.RegisterClassEx(&wcex))
 			throw new Exception("RegisterClass failed");
+
 		/+
 		// raw input
 		enum HID_USAGE_PAGE { GENERIC = 0x01 }

@@ -144,13 +144,9 @@ class EventManager(T /* : TargetNode */)
 		this.root.resize(w, h);
 	}
 
-	/* to control the content of the window's client area
-	   http://msdn.microsoft.com/ms632634 */
-	void query_SIZE_info() {}
-
 	/* size or position of native window is about to change 
 	   http://msdn.microsoft.com/ms632626 */
-	void query_MINMAX_info() {}
+	bool query_MINMAX_info(sys.Size* size) { size.width = 640; size.height = 480; return true; }
 
 	/* native window asked to be destroyed
 	   http://msdn.microsoft.com/ms632617 */
