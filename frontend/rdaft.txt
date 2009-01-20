@@ -64,3 +64,19 @@ UI.target_node
 
 [test]
 	sys.gdi_win!<ui.io_mgr!<ui.target_node!<gdi.paint_code>>>
+
+--------------------------------------------------------------------------------
+
+[activatable]
+
+What the point of being "activatable"?
+
+1. draw itself with specila style
+2. upon activation set focus to one of child nodes (parsistently)
+3. have "activatable" parent-child relationship
+   a. to be able to check parent active (to know if node is actice) ?
+   b. 
+
+* if a node activated, it set focus to a known child node
+* if a node activated, activates parent?
+
