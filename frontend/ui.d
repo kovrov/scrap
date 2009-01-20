@@ -146,7 +146,7 @@ class EventManager(T /* : TargetNode */)
 
 	/* size or position of native window is about to change 
 	   http://msdn.microsoft.com/ms632626 */
-	bool query_MINMAX_info(sys.Size* size) { size.width = 640; size.height = 480; return true; }
+	bool query_MINMAX_info(inout sys.Size size) { size.width = 640; size.height = 480; return true; }
 
 	/* native window asked to be destroyed
 	   http://msdn.microsoft.com/ms632617 */
@@ -256,6 +256,11 @@ class EventManager(T /* : TargetNode */)
 				return;
 			//TODO: subscription (tracking) of mouse movement
 			//this.process(target.onMouseMove(pos), target, pos);
+			break;
+
+		case sys.MOUSE.LEAVE:
+			T newTarget;
+			passMouse(newTarget, pos);
 			break;
 		}
 	}

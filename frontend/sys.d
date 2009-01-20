@@ -56,6 +56,7 @@ enum MOUSE
 	PRESS,
 	RELEASE,
 	MOVE,
+	LEAVE,
 }
 
 enum KEY
@@ -70,7 +71,8 @@ bool[256] keyboardState; // virtual key codes
 class WindowGDI(IOMANAGER) : Window
 {
 	IOMANAGER io;
-	private win32.HWND handle;
+	private win32.HWND _handle;
+	private bool _mouse_tracked;
 	private static typeof(this)[win32.HWND] _windows;
 	private static invariant(char*) _classnamez = "test_window";
 
@@ -79,11 +81,11 @@ class WindowGDI(IOMANAGER) : Window
 	{
 		switch (message)
 		{
-		case win32.WM_PAINT:  // http://msdn.microsoft.com/library/ms534901
+		case win32.WM_PAINT:  // http://msdn.microsoft.com/ms534901
 			_windows[hWnd].io.on_paint(hWnd);
 			break;
 
-		case win32.WM_INPUT:  // http://msdn.microsoft.com/library/ms645590
+		case win32.WM_INPUT:  // http://msdn.microsoft.com/ms645590
 			byte[64] buffer;
 			uint buffer_size = buffer.length;
 			assert (win32.GetRawInputData(cast(win32.HRAWINPUT)lParam, win32.RID_INPUT,
@@ -141,12 +143,34 @@ class WindowGDI(IOMANAGER) : Window
 		// Windows 2000/Windows XP: An X mouse button
 		//case win32.WM_XBUTTONDBLCLK, win32.WM_XBUTTONDOWN, win32.WM_XBUTTONUP:
 		//	break;
+
 		// Mouse cursor has moved (if not captured, within the client area)
-		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/library/ms645616
-			_windows[hWnd].io.dispatch_MOUSE_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
+		case win32.WM_MOUSEMOVE:  // http://msdn.microsoft.com/ms645616
+			with (_windows[hWnd])
+			{
+				if (!_mouse_tracked)
+				{
+					win32.TRACKMOUSEEVENT tme;
+					tme.dwFlags = win32.TME_LEAVE;
+					tme.hwndTrack = hWnd;
+					win32.TrackMouseEvent(&tme);
+					_mouse_tracked = true;
+				}
+				io.dispatch_MOUSE_input(Point(win32.LOWORD(lParam), win32.HIWORD(lParam)), MOUSE.MOVE);
+			}
 			break;
-		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/library/ms645615
-			assert (false);  // break;
+
+		case win32.WM_MOUSELEAVE:  // http://msdn.microsoft.com/ms645615
+			with (_windows[hWnd])
+			{
+				assert (_mouse_tracked == true);
+				_mouse_tracked = false;
+				win32.POINT pos;
+				win32.GetCursorPos(&pos);
+				win32.ScreenToClient(hWnd, &pos);
+				io.dispatch_MOUSE_input(Point(pos.x, pos.y), MOUSE.LEAVE);
+			}
+			break;
 
 		case win32.WM_KEYDOWN, win32.WM_KEYUP, win32.WM_SYSKEYDOWN, win32.WM_SYSKEYUP:
 			auto action = (message == win32.WM_KEYDOWN || message == win32.WM_SYSKEYDOWN) ? KEY.PRESS : KEY.RELEASE;
@@ -159,7 +183,7 @@ class WindowGDI(IOMANAGER) : Window
 			auto mmi = cast(win32.MINMAXINFO*)lParam;
 			Size size;
 			auto w = hWnd in _windows;
-			if (w !is null && w.io.query_MINMAX_info(&size))
+			if (w !is null && w.io.query_MINMAX_info(size))
 			{
 				mmi.ptMinTrackSize.x = size.width + win32.GetSystemMetrics(win32.SM_CXFRAME)*2;
 				mmi.ptMinTrackSize.y = size.height + win32.GetSystemMetrics(win32.SM_CYFRAME)*2 + win32.GetSystemMetrics(win32.SM_CYCAPTION);
@@ -185,9 +209,9 @@ class WindowGDI(IOMANAGER) : Window
 			}
 			return ret;
 
-		case win32.WM_SIZE:  // http://msdn.microsoft.com/library/ms632646
+		case win32.WM_SIZE:  // http://msdn.microsoft.com/ms632646
 			writefln("WM_SIZE:%s:%d,%d",
-						wParam == win32.SIZE_MAXHIDE ? "MAXHIDE" :
+						wParam == win32.SIZE_MAXHIDE ?   "MAXHIDE" :
 						wParam == win32.SIZE_MAXIMIZED ? "MAXIMIZED" :
 						wParam == win32.SIZE_MAXSHOW ?   "MAXSHOW" :
 						wParam == win32.SIZE_MINIMIZED ? "MINIMIZED" :
@@ -215,12 +239,15 @@ class WindowGDI(IOMANAGER) : Window
 				win32.PostQuitMessage(0);
 			delete self;
 			break;
+
 		case win32.WM_CLOSE:
 			if (_windows[hWnd].io.confirm_CLOSE_action())
 				return win32.DefWindowProc(hWnd, message, wParam, lParam);
 			break;
+
 		// generic asserts
 		case win32.WM_ENABLE: assert (false, "top-level windows should not be disabled/enabled");
+
 		default:
 			return win32.DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -238,7 +265,7 @@ class WindowGDI(IOMANAGER) : Window
 		if (!win32.RegisterClassEx(&wcex))
 			throw new Exception("RegisterClass failed");
 
-		/+
+	 /+
 		// raw input
 		enum HID_USAGE_PAGE { GENERIC = 0x01 }
 		enum HID_USAGE { GENERIC_MOUSE = 0x02, GENERIC_KEYBOARD = 0x06 }
@@ -259,7 +286,7 @@ class WindowGDI(IOMANAGER) : Window
 
 		if (win32.RegisterRawInputDevices(Rid.ptr, Rid.length, win32.RAWINPUTDEVICE.sizeof) == win32.FALSE)
 			writeln("registration failed");  // Call GetLastError for the cause of the error
-		+/
+	 +/
 	}
 
 	/* Factory method */
@@ -295,9 +322,7 @@ class WindowGDI(IOMANAGER) : Window
 		}
 
 		if (size_rect.right > 0 && size_rect.bottom > 0)
-		{
 			win32.AdjustWindowRectEx(&size_rect, style, win32.FALSE, style_ex);
-		}
 
 		win32.HWND hwnd = win32.CreateWindowEx(style_ex,
 					_classnamez, toStringz(title), style,
@@ -309,7 +334,7 @@ class WindowGDI(IOMANAGER) : Window
 
 		auto window = new typeof(this);
 		window.io = new IOMANAGER(window);
-		window.handle = hwnd;
+		window._handle = hwnd;
 		_windows[hwnd] = window;
 		_windows.rehash;
 		if (!hidden)
@@ -323,18 +348,18 @@ class WindowGDI(IOMANAGER) : Window
 
 	override void visible(bool show)
 	{
-		win32.ShowWindow(handle, show?win32.SW_SHOWNORMAL:win32.SW_HIDE);
-		win32.UpdateWindow(handle);
+		win32.ShowWindow(_handle, show?win32.SW_SHOWNORMAL:win32.SW_HIDE);
+		win32.UpdateWindow(_handle);
 	}
 
 	override void redraw()
 	{
-		win32.InvalidateRect(this.handle, null, false);
+		win32.InvalidateRect(this._handle, null, false);
 	}
 }
 
 // win32 virtual key codes
-// http://msdn.microsoft.com/library/ms645540
+// http://msdn.microsoft.com/ms645540
 invariant (string[256]) keys = [
 	          	null,
 	/* 0x01 */	"Left mouse",
