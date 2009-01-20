@@ -127,8 +127,9 @@ class EventManager(T /* : TargetNode */)
 	// native window notifications
 	// http://msdn.microsoft.com/ms674887
 
-	// http://msdn.microsoft.com/ms632645
-	void notify_SHOW_state_change(bool show, bool maximized) {}
+	/* native window being hidden (minimized) or shown (restored, maximized)
+	   http://msdn.microsoft.com/ms632645 */
+	void notify_SHOW_state_change(bool show, bool maximized) { this.root.hidden = !show; }
 
 	/* native window being activated or deactivated
 	   http://msdn.microsoft.com/ms646274 */

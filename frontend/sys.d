@@ -181,33 +181,38 @@ class WindowGDI(IOMANAGER) : Window
 
 		case win32.WM_GETMINMAXINFO:
 			auto mmi = cast(win32.MINMAXINFO*)lParam;
-			Size size;
+			auto size = Size(mmi.ptMinTrackSize.x, mmi.ptMinTrackSize.y);
 			auto w = hWnd in _windows;
 			if (w !is null && w.io.query_MINMAX_info(size))
 			{
-				mmi.ptMinTrackSize.x = size.width + win32.GetSystemMetrics(win32.SM_CXFRAME)*2;
-				mmi.ptMinTrackSize.y = size.height + win32.GetSystemMetrics(win32.SM_CYFRAME)*2 + win32.GetSystemMetrics(win32.SM_CYCAPTION);
+				win32.RECT rc = win32.RECT(0,0, size.width, size.height);
+				win32.AdjustWindowRectEx(&rc, win32.GetWindowLong(hWnd,
+							win32.GWL_STYLE), win32.FALSE,
+							win32.GetWindowLong(hWnd, win32.GWL_EXSTYLE));
+				mmi.ptMinTrackSize.x = rc.right - rc.left;
+				mmi.ptMinTrackSize.y = rc.bottom - rc.top;
 			}
 			break;
 
-		case win32.WM_NCCALCSIZE:  // http://msdn.microsoft.com/ms632634
-			auto ret = win32.DefWindowProc(hWnd, message, wParam, lParam);
-			if (wParam != win32.TRUE)  // first time
-			{
-				auto r = cast(win32.RECT*)lParam;
-			}
-			else
-			{
-				// http://blogs.msdn.com/oldnewthing/archive/2003/09/15/54925.aspx
-				auto nccp = cast(win32.NCCALCSIZE_PARAMS*)lParam;
-				const win32.RECT in_newWindowRect = nccp.rgrc[0];
-				const win32.RECT in_oldWindowRect = nccp.rgrc[1];
-				const win32.RECT in_oldClientRect = nccp.rgrc[2];
-				const win32.RECT* out_newClientRect = &nccp.rgrc[0];
-				//const win32.RECT* out_validDstRect = &nccp.rgrc[1];
-				//const win32.RECT* out_validSrcRect = &nccp.rgrc[2];
-			}
-			return ret;
+		//case win32.WM_NCCALCSIZE:  // http://msdn.microsoft.com/ms632634
+			//// http://blogs.msdn.com/oldnewthing/archive/2003/09/15/54925.aspx
+			//if (wParam != win32.TRUE)  // first time
+			//{
+			//	auto r = cast(win32.RECT*)lParam;
+			//	return win32.DefWindowProc(hWnd, message, wParam, lParam);
+			//}
+			//else
+			//{
+			//	auto nccp = cast(win32.NCCALCSIZE_PARAMS*)lParam;
+			//	const win32.RECT in_newWindowRect = nccp.rgrc[0];
+			//	const win32.RECT in_oldWindowRect = nccp.rgrc[1];
+			//	const win32.RECT in_oldClientRect = nccp.rgrc[2];
+			//	auto ret = win32.DefWindowProc(hWnd, message, wParam, lParam);
+			//	const win32.RECT* out_newClientRect = &nccp.rgrc[0];
+			//	//const win32.RECT* out_validDstRect = &nccp.rgrc[1];
+			//	//const win32.RECT* out_validSrcRect = &nccp.rgrc[2];
+			//	return ret;
+			//}
 
 		case win32.WM_SIZE:  // http://msdn.microsoft.com/ms632646
 			writefln("WM_SIZE:%s:%d,%d",
