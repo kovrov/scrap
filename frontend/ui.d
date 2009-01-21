@@ -136,7 +136,7 @@ class EventManager(T /* : TargetNode */)
 	   http://msdn.microsoft.com/ms646274 */
 	void notify_FOCUS_state_change(bool focused)
 	{
-		setFocus(focused ? this.root : null);
+		this.setFocus(focused ? this.root : null);
 	}
 
 	/* native window being resized (possibly maximized)
@@ -178,6 +178,19 @@ class EventManager(T /* : TargetNode */)
 			if (target is null || target.disabled)
 				return;
 			auto event_path = get_event_path(target);
+
+			// Set focus first...
+			// TODO: implement propagation, refactor
+			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
+			{
+				bool delegate(MOUSE_ACTION action, uint button) handler;
+				handler.funcptr = target.handlers.focusOnClick;
+				handler.ptr = cast(void*)target;
+				if (handler(MOUSE_ACTION.PRESS, button))
+					this.setFocus(target);
+			}
+
+			// Proceed with mouse press ...
 			// Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
 			foreach (ref node; event_path)
 			{
@@ -206,18 +219,6 @@ class EventManager(T /* : TargetNode */)
 					handler.funcptr = node.handlers.mouseButtonPropagateUpward;
 					handler.ptr = cast(void*)node;
 					this.process(handler(pos, MOUSE_ACTION.PRESS, button), node, pos);
-				}
-			}
-			// set focus...
-			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
-			{
-				bool delegate(MOUSE_ACTION action, uint button) handler;
-				handler.funcptr = target.handlers.focusOnClick;
-				handler.ptr = cast(void*)target;
-				if (handler(MOUSE_ACTION.PRESS, button))
-				{
-					T.focusedNode = target;
-					this.window.redraw();  // FB.StateChanged
 				}
 			}
 			break;
