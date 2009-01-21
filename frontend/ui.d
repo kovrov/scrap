@@ -2,7 +2,6 @@
   TODO:
    * overhul event interfaces
    * ...
-   * Activatable concept (interface)
    * Integrate logical focus with keyboard focus
 */
 
@@ -131,11 +130,13 @@ class EventManager(T /* : TargetNode */)
 	   http://msdn.microsoft.com/ms632645 */
 	void notify_SHOW_state_change(bool show, bool maximized) { this.root.hidden = !show; }
 
-	/* native window being activated or deactivated
+	/* native window gained/loses keyboard focus
+	   (most likeky native window being activated or deactivated)
+	   http://msdn.microsoft.com/ms646312
 	   http://msdn.microsoft.com/ms646274 */
-	void notify_ACTIVATE_state_change(bool active, bool minimized)
+	void notify_FOCUS_state_change(bool focused)
 	{
-		// if this.root activatable ...
+		setFocus(focused ? this.root : null);
 	}
 
 	/* native window being resized (possibly maximized)
@@ -260,10 +261,17 @@ class EventManager(T /* : TargetNode */)
 			break;
 
 		case sys.MOUSE.LEAVE:
-			T newTarget;
-			passMouse(newTarget, pos);
+			passMouse(null, pos);
 			break;
 		}
+	}
+
+	void setFocus(T target)
+	{
+		if (T.focusedNode is target)
+			return;
+		T.focusedNode = target;
+		this.window.redraw();  // FB.StateChanged
 	}
 
 	bool dispatch_KEYBOARD_input(uint key, sys.KEY type)
@@ -280,7 +288,7 @@ class EventManager(T /* : TargetNode */)
 	}
 
 	protected
-	void passMouse(ref T target, const ref Point pos)
+	void passMouse(T target, const ref Point pos)
 	{
 		assert (this.mouseOldTarget !is target);
 

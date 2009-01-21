@@ -74,21 +74,22 @@ What the point of being "activatable"?
 * to show where is the focus (decorate "active" node with special style)
 * to manipulate focus upon activation (restore focus state, possibly to none)
 * to manipulate focus upon de-activation (remove focus state from child node, if any)
+* register activatable node with somw kind of "window manager" (windows taskbar)
 
 facts:
-* Active node is a parent of a focused node
+* Active node is a parent of a focused node.
 * If there is an Active node, global focus must be inside or no focus at all.
-* Active and Focused states are closely related
-* Active state must never conflict with Focused state
-* Focused state prevails
-* Active and Focused concepts have completely different purposes
+* Active and Focused states are closely related.
+* Active state must never conflict with Focused state.
+* Focused state prevails.
+* Active and Focused concepts have completely different purposes.
   - "Activness" is logical concept of UI (for convenience and usability)
   - "Focusness" is fundation of input machinery
 * Change of Z-order is a "side effect" of Activation, not purpose.
 
 conclusions:
-* Focus event may result in Activation either of self or parent node.
 * Activation could happen as result of focus event or programically.
+* Focus event may result in Activation either of self or parent node.
 * Activatable node must be Focusable node as well.
 * Activatable have zero or one "Active Focusable" child node.
 * if activated programically ...
@@ -96,8 +97,30 @@ conclusions:
 * if activated by focus event of non-focusable child node ...
 
 implementation:
-* Activatable interface inherits from Focusable interface
-* Upon logical activation node have to register it self with an Activateble parent as "Active Focusable"
-* Active state of any Activatable node colud be checked by ...
+* "Activate" should be a slot, not a state event handler.
+* Activatable interface inherits from Focusable interface (do we need interface at all?)
+* Upon receiving focus, a "Activatable" node have to
+  1. transfer focus from current focused node to a child node (if any), or self.
+  3. emit "Activated" signal (optional)
+* To get Active state of an Activatable node ...
+  check if a node is on the path from focused node to root.
 * node activated by receiving focus event
 * node activated by intercepting child focus event
+
+notes:
+* Transfer of focus should be atomic operation.
+
+--------------------------------------------------------------------------------
+
+[focus]
+
+* global state
+* event manager should have an interface to set focus programically
+* node focus handler should sistinguish betwin focus reasons (click, programically)
+* click event (by an event manager from system)
+  1. event manager generates focus event (and propagate it) for click target
+  2. propogate/deliver click event to click target
+* programically (by an event manager from an interface)
+  1. propogate/deliver focus event propagate it) for click target
+
+

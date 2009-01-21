@@ -250,6 +250,43 @@ class WindowGDI(IOMANAGER) : Window
 				return win32.DefWindowProc(hWnd, message, wParam, lParam);
 			break;
 
+		/*
+		event flow:
+		WM_MOUSEACTIVATE (if by mouse)
+		WM_NCACTIVATE
+		WM_ACTIVATE
+		WM_[SET/KILL]FOCUS
+		--- minimize
+		[WM_KILLFOCUS]
+		wm_size:minimized
+		WM_NCACTIVATE:FALSE
+		<WM_ACTIVATE:WA_INACTIVE>
+		--- restore
+		WM_NCACTIVATE:FALSE
+		<WM_ACTIVATE:WA_ACTIVE>
+		wm_size:restored
+		[WM_SETFOCUS]
+		<WM_ACTIVATE:WA_ACTIVE>
+		*/
+		//case win32.: writeln(""); break;
+
+		case win32.WM_NCACTIVATE: writeln("WM_NCACTIVATE:", wParam==win32.TRUE);
+			return win32.DefWindowProc(hWnd, message, wParam, lParam);
+		
+		case win32.WM_ACTIVATE: writeln("WM_ACTIVATE:", win32.LOWORD(wParam)==win32.WA_ACTIVE?"WA_ACTIVE":win32.LOWORD(wParam)==win32.WA_CLICKACTIVE?"WA_CLICKACTIVE":win32.LOWORD(wParam)==win32.WA_INACTIVE?"WA_INACTIVE":null);
+			return win32.DefWindowProc(hWnd, message, wParam, lParam);
+		
+		case win32.WM_MOUSEACTIVATE: writeln("WM_MOUSEACTIVATE");
+			return win32.DefWindowProc(hWnd, message, wParam, lParam);
+		
+		case win32.WM_SETFOCUS: writeln("WM_SETFOCUS");
+			_windows[hWnd].io.notify_FOCUS_state_change(true);
+			break;//return win32.DefWindowProc(hWnd, message, wParam, lParam);
+		
+		case win32.WM_KILLFOCUS: writeln("WM_KILLFOCUS");
+			_windows[hWnd].io.notify_FOCUS_state_change(false);
+			break;//return win32.DefWindowProc(hWnd, message, wParam, lParam);
+
 		// generic asserts
 		case win32.WM_ENABLE: assert (false, "top-level windows should not be disabled/enabled");
 

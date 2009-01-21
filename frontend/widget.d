@@ -3,6 +3,7 @@
    * implement activatable interface
    * tweak button behaviour (keyboard)
    * implement radio button
+   * Activatable concept (interface)
    * ...
 */
 
