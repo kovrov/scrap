@@ -71,12 +71,33 @@ UI.target_node
 
 What the point of being "activatable"?
 
-1. draw itself with specila style
-2. upon activation set focus to one of child nodes (parsistently)
-3. have "activatable" parent-child relationship
-   a. to be able to check parent active (to know if node is actice) ?
-   b. 
+* to show where is the focus (decorate "active" node with special style)
+* to manipulate focus upon activation (restore focus state, possibly to none)
+* to manipulate focus upon de-activation (remove focus state from child node, if any)
 
-* if a node activated, it set focus to a known child node
-* if a node activated, activates parent?
+facts:
+* Active node is a parent of a focused node
+* If there is an Active node, global focus must be inside or no focus at all.
+* Active and Focused states are closely related
+* Active state must never conflict with Focused state
+* Focused state prevails
+* Active and Focused concepts have completely different purposes
+  - "Activness" is logical concept of UI (for convenience and usability)
+  - "Focusness" is fundation of input machinery
+* Change of Z-order is a "side effect" of Activation, not purpose.
 
+conclusions:
+* Focus event may result in Activation either of self or parent node.
+* Activation could happen as result of focus event or programically.
+* Activatable node must be Focusable node as well.
+* Activatable have zero or one "Active Focusable" child node.
+* if activated programically ...
+* if activated by focus event of focusable child node ...
+* if activated by focus event of non-focusable child node ...
+
+implementation:
+* Activatable interface inherits from Focusable interface
+* Upon logical activation node have to register it self with an Activateble parent as "Active Focusable"
+* Active state of any Activatable node colud be checked by ...
+* node activated by receiving focus event
+* node activated by intercepting child focus event
