@@ -102,6 +102,7 @@ implementation:
 * Upon receiving focus, a "Activatable" node have to
   1. transfer focus from current focused node to a child node (if any), or self.
   3. emit "Activated" signal (optional)
+* It is responsibility of "Activatable" to save focus state
 * To get Active state of an Activatable node ...
   check if a node is on the path from focused node to root.
 * node activated by receiving focus event
@@ -122,5 +123,5 @@ notes:
   2. propogate/deliver click event to click target
 * programically (by an event manager from an interface)
   1. propogate/deliver focus event propagate it) for click target
-
+* Transfer of focus shoud accur after propagation of event (if not canceled).
 

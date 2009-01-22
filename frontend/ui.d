@@ -31,10 +31,14 @@ struct EventHandlers
 			keyboard,
 			keyboardPropagateUpward,
 			keyboardPropagateDownward;
-	bool function(MOUSE_ACTION action, uint button)
-			focusOnClick,
-			focusOnClickPropagateUpward,
-			focusOnClickPropagateDownward;
+	//bool function(MOUSE_ACTION action, uint button)
+	//		focusOnClick,
+	//		focusOnClickPropagateUpward,
+	//		focusOnClickPropagateDownward;
+	FB function(inout FocusEvent) //TODO:implement
+			focusPropagateDownward,
+			focus,
+			focusPropagateUpward;
 	// mouse input
 	FB function(const ref Point pos, MOUSE_ACTION action, uint button)
 			mouseButton,
@@ -179,16 +183,41 @@ class EventManager(T /* : TargetNode */)
 				return;
 			auto event_path = get_event_path(target);
 
-			// Set focus first...
-			// TODO: implement propagation, refactor
-			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
+			//// Set focus first...
+			FocusEvent ev;
+			ev.target = target;
+			// Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
+			foreach (ref node; event_path)
 			{
-				bool delegate(MOUSE_ACTION action, uint button) handler;
-				handler.funcptr = target.handlers.focusOnClick;
-				handler.ptr = cast(void*)target;
-				if (handler(MOUSE_ACTION.PRESS, button))
-					this.setFocus(target);
+				if (node.handlers.focusPropagateDownward !is null)
+				{
+					FB delegate(inout FocusEvent) handler;
+					handler.funcptr = node.handlers.focusPropagateDownward;
+					handler.ptr = cast(void*)node;
+					this.process(handler(ev), node, pos);
+				}
 			}
+			// Delivering phase
+			if (target.handlers.focus !is null)
+			{
+				FB delegate(inout FocusEvent) handler;
+				handler.funcptr = target.handlers.focus;
+				handler.ptr = cast(void*)target;
+				this.process(handler(ev), target, pos);
+			}
+			// Upward Propagation a.k.a. Bubbling phase
+			foreach_reverse (ref node; event_path)
+			{
+				if (node.handlers.focusPropagateUpward !is null)
+				{
+					FB delegate(inout FocusEvent) handler;
+					handler.funcptr = node.handlers.focusPropagateUpward;
+					handler.ptr = cast(void*)node;
+					this.process(handler(ev), node, pos);
+				}
+			}
+			//TODO: implement
+			this.setFocus(ev.target);
 
 			// Proceed with mouse press ...
 			// Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
@@ -235,19 +264,6 @@ class EventManager(T /* : TargetNode */)
 				handler.funcptr = target.handlers.mouseButton;
 				handler.ptr = cast(void*)target;
 				this.process(handler(pos, MOUSE_ACTION.RELEASE, button/*, modifiers*/), target, pos);
-			}
-
-			// arguable focus stuff...
-			if (target.handlers.focusOnClick !is null && T.focusedNode !is target)
-			{
-				bool delegate(MOUSE_ACTION action, uint button) handler;
-				handler.funcptr = target.handlers.focusOnClick;
-				handler.ptr = cast(void*)target;
-				if (handler(MOUSE_ACTION.RELEASE, button))
-				{
-					T.focusedNode = target;
-					this.window.redraw();  // FB.StateChanged
-				}
 			}
 			break;
 

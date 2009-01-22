@@ -10,7 +10,6 @@
 static import ui;
 import std.signals;
 
-interface Activatable { void activate(); void focus(); }
 
 template base(BASE /* : ui.TargetNode */)
 {
@@ -22,31 +21,36 @@ template base(BASE /* : ui.TargetNode */)
 	}
 
 
-	class Window : Widget, Activatable
+	class Window : Widget
 	{
 		BASE focusedChild;
 		mixin parent_ctor;
 		static this()
 		{
-			_eventMap.mouseButton = &_onMouseButton;
-			_eventMap.mouseButtonPropagateUpward = &_onMouseButton;
+			_eventMap.focus = &_onFocus;
+			_eventMap.focusPropagateUpward = &_onFocusPropagateUpward;  // or downward?
+		}
+
+		protected ui.FB _onFocus(inout ui.FocusEvent ev)
+		{
+			this.activate();
+			return ui.FB.StateChanged;
+		}
+		protected ui.FB _onFocusPropagateUpward(inout ui.FocusEvent ev)
+		{
+			// save focus
+			this.focusedChild = focusedNode; //FIXME: hack
+			this.activate();
+			return ui.FB.StateChanged;
 		}
 
 		// Activatable
-		override void activate()
+		void activate()
 		{
-			// goes at the top of the Z order
-			this.makeFirstChild();
-		}
-		override void focus() {}
-
-		// MouseInput
-		protected ui.FB _onMouseButton(const ref ui.Point pos, ui.MOUSE_ACTION action, uint button/*, modifiers*/)
-		{
-			if (action != ui.MOUSE_ACTION.PRESS)
-				return ui.FB.NONE;
-			this.activate();
-			return ui.FB.StateChanged;
+			// restore focus
+			focusedNode = this.focusedChild; //FIXME: hack
+			this.makeFirstChild();  // Z-order
+			//activated.emit();
 		}
 	}
 
@@ -71,16 +75,17 @@ template base(BASE /* : ui.TargetNode */)
 		mixin parent_ctor;
 		static this()
 		{
-			_eventMap.focusOnClick = &_focusOnClick;
-			_eventMap.keyboard     = &_onKeyboard;
-			_eventMap.mouseOver    = &_onMouseOver;
-			_eventMap.mouseButton  = &_onMouseButton;
+			_eventMap.focus       = &_onFocus;
+			_eventMap.keyboard    = &_onKeyboard;
+			_eventMap.mouseOver   = &_onMouseOver;
+			_eventMap.mouseButton = &_onMouseButton;
 		}
 
 		// KeyboardInput
-		protected bool _focusOnClick(ui.MOUSE_ACTION action, uint button)
+		protected ui.FB _onFocus(inout ui.FocusEvent ev) //ui.MOUSE_ACTION action, uint button
 		{
-			return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
+			//return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
+			return ui.FB.NONE;
 		}
 		ui.FB _onKeyboard(uint keycode, ui.KEY_ACTION action)
 		{
