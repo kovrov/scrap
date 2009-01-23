@@ -24,7 +24,13 @@ enum KEY_ACTION { PRESS, RELEASE }
 
 
 /* all possible events should be described here */
-struct EventHandlers
+struct FocusEvent(T)
+{
+	T target;
+	bool accepted;
+}
+
+struct EventHandlers(T)
 {
 	// keyboard input
 	FB function(uint key, KEY_ACTION action)
@@ -35,7 +41,7 @@ struct EventHandlers
 	//		focusOnClick,
 	//		focusOnClickPropagateUpward,
 	//		focusOnClickPropagateDownward;
-	FB function(inout FocusEvent) //TODO:implement
+	FB function(inout FocusEvent!(T)) //TODO:implement
 			focusPropagateDownward,
 			focus,
 			focusPropagateUpward;
@@ -85,9 +91,9 @@ class TargetNode(alias PAINT_INTERFACE)
 		static assert (_rect.sizeof == short.sizeof*2 + ushort.sizeof*2);
 	}
 
-	EventHandlers* handlers;
+	EventHandlers!(typeof(this))* handlers;
 	invariant() { assert (handlers !is null); }
-	protected static EventHandlers _eventMap;
+	protected static EventHandlers!(typeof(this)) _eventMap;
 	this(string name, typeof(this) parent)
 	{
 		this.handlers = &_eventMap;
@@ -184,14 +190,14 @@ class EventManager(T /* : TargetNode */)
 			auto event_path = get_event_path(target);
 
 			//// Set focus first...
-			FocusEvent ev;
+			FocusEvent!(T) ev;
 			ev.target = target;
 			// Downward Propagation a.k.a. Sinking/Tunneling/Preview/Capturing phase
 			foreach (ref node; event_path)
 			{
 				if (node.handlers.focusPropagateDownward !is null)
 				{
-					FB delegate(inout FocusEvent) handler;
+					FB delegate(inout FocusEvent!(T)) handler;
 					handler.funcptr = node.handlers.focusPropagateDownward;
 					handler.ptr = cast(void*)node;
 					this.process(handler(ev), node, pos);
@@ -200,7 +206,7 @@ class EventManager(T /* : TargetNode */)
 			// Delivering phase
 			if (target.handlers.focus !is null)
 			{
-				FB delegate(inout FocusEvent) handler;
+				FB delegate(inout FocusEvent!(T)) handler;
 				handler.funcptr = target.handlers.focus;
 				handler.ptr = cast(void*)target;
 				this.process(handler(ev), target, pos);
@@ -210,7 +216,7 @@ class EventManager(T /* : TargetNode */)
 			{
 				if (node.handlers.focusPropagateUpward !is null)
 				{
-					FB delegate(inout FocusEvent) handler;
+					FB delegate(inout FocusEvent!(T)) handler;
 					handler.funcptr = node.handlers.focusPropagateUpward;
 					handler.ptr = cast(void*)node;
 					this.process(handler(ev), node, pos);

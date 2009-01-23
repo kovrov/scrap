@@ -16,7 +16,7 @@ template base(BASE /* : ui.TargetNode */)
 	alias BASE Widget;
 	template parent_ctor()
 	{
-		protected static ui.EventHandlers _eventMap;
+		protected static ui.EventHandlers!(BASE) _eventMap;
 		this(string name, BASE parent) { super(name, parent); this.handlers = &_eventMap; }
 	}
 
@@ -31,15 +31,19 @@ template base(BASE /* : ui.TargetNode */)
 			_eventMap.focusPropagateUpward = &_onFocusPropagateUpward;  // or downward?
 		}
 
-		protected ui.FB _onFocus(inout ui.FocusEvent ev)
+		protected ui.FB _onFocus(inout ui.FocusEvent!(BASE) ev)
 		{
 			this.activate();
+			ev.target = this.focusedChild;
 			return ui.FB.StateChanged;
 		}
-		protected ui.FB _onFocusPropagateUpward(inout ui.FocusEvent ev)
+		protected ui.FB _onFocusPropagateUpward(inout ui.FocusEvent!(BASE) ev)
 		{
-			// save focus
-			this.focusedChild = focusedNode; //FIXME: hack
+			// set new focus (save)
+			if (ev.accepted)
+				this.focusedChild = ev.target;
+			else
+				ev.target = this.focusedChild;
 			this.activate();
 			return ui.FB.StateChanged;
 		}
@@ -82,9 +86,10 @@ template base(BASE /* : ui.TargetNode */)
 		}
 
 		// KeyboardInput
-		protected ui.FB _onFocus(inout ui.FocusEvent ev) //ui.MOUSE_ACTION action, uint button
+		protected ui.FB _onFocus(inout ui.FocusEvent!(BASE) ev) //ui.MOUSE_ACTION action, uint button
 		{
-			//return (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
+			//ev.accepted = (action == ui.MOUSE_ACTION.PRESS && button == 0) ? true : false;
+			ev.accepted = true;
 			return ui.FB.NONE;
 		}
 		ui.FB _onKeyboard(uint keycode, ui.KEY_ACTION action)
