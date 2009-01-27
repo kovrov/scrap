@@ -2,7 +2,8 @@
   TODO:
    * overhul event interfaces
    * ...
-   * Integrate logical focus with keyboard focus
+   * keyboard state / API (set focus, etc.)
+   * mouse state / API (capture, etc.)
 */
 
 static import sys;

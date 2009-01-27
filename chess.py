@@ -1,3 +1,7 @@
+"""
+``1L << index`` -- to get 64-bit bitboard with the only bit set to "index" square
+"""
+
 import moves
 import draw
 
@@ -33,6 +37,38 @@ class Board:
 		self.turn = 1
 		self.__recalc_board()
 
+	def add_mask(self, bitmask):
+		self.white_pawns |= bitmask
+		self.black_pawns |= bitmask
+		self.white_knights |= bitmask
+		self.black_knights |= bitmask
+		self.white_bishops |= bitmask
+		self.black_bishops |= bitmask
+		self.white_rooks |= bitmask
+		self.black_rooks |= bitmask
+		self.white_queens |= bitmask
+		self.black_queens |= bitmask
+		self.white_king |= bitmask
+		self.black_king |= bitmask
+		self.en_passant |= bitmask
+		self.__recalc_board()
+
+	def sub_mask(self, bitmask):
+		self.white_pawns &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.black_pawns &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.white_knights &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.black_knights &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.white_bishops &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.black_bishops &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.white_rooks &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.black_rooks &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.white_queens &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.black_queens &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.white_king &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.black_king &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.en_passant &= 0xFFFFFFFFFFFFFFFF ^ bitmask
+		self.__recalc_board()
+
 	def __recalc_board(self):
 		self.white = self.white_pawns | self.white_knights | \
 		             self.white_bishops | self.white_rooks | \
@@ -52,13 +88,14 @@ class Board:
 		dst_index = coords.index(dst)
 		moves_bitboard = self.get_moves(src)
 		if not moves_bitboard or not (moves_bitboard & 1L << dst_index):
+			draw.bitboard(moves_bitboard, src_index)
 			raise Exception("invalid move")
 		if self.__in_check(1L << src_index, 1L << dst_index):
 			if self.in_check:
 				raise Exception("invalid move: king in check")
 			raise Exception("invalid move: discovered check")
-		uset_bit(src_bitboard, 1L << src_index)
-		set_bit(dst_bitboard, 1L << dst_index)
+		self.sub_mask(1L << src_index)  # FIXME
+		self.add_mask(1L << dst_index)  # FIXME
 		self.turn += 1
 		self.__recalc_board()
 
@@ -111,6 +148,7 @@ class Board:
 			possible_moves = self.__queen_moves(index, enemy_and_empty)
 		elif rank == "king":
 			possible_moves = self.__king_moves(index, enemy_and_empty)
+		#draw.bitboard(possible_moves, index)
 		return possible_moves
 
 #-------------------------------------8<-----------------------------cut-it-out-
