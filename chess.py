@@ -107,7 +107,8 @@ class Board:
 			raise Exception("invalid move")
 		self.turn += 1
 		self.__recalc_board()
-		draw.bitboard(self.occupied, src_index)
+		#draw.bitboard(self.occupied, src_index)
+		draw.draw_board(self)
 
 	def get_piece(self, square):
 		index = coords.index(square)
