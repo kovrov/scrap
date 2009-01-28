@@ -108,7 +108,6 @@ class Board:
 		self.turn += 1
 		self.__recalc_board()
 		#draw.bitboard(self.occupied, src_index)
-		draw.draw_board(self)
 
 	def get_piece(self, square):
 		index = coords.index(square)
@@ -279,13 +278,34 @@ class Board:
 
 def test():
 	board = Board() # new game, white turn
+
+	draw.bitboard(board.get_moves("e2"))
 	board.move("e2", "e4") # white pawn
+	draw.draw_board(board)
+
+	draw.bitboard(board.get_moves("e7"))
 	board.move("e7", "e5") # black pawn
+	draw.draw_board(board)
+
+	draw.bitboard(board.get_moves("d1"))
 	board.move("d1", "h5") # white queen
+	draw.draw_board(board)
+
+	draw.bitboard(board.get_moves("b8"))
 	board.move("b8", "c6") # black knight
+	draw.draw_board(board)
+
+	draw.bitboard(board.get_moves("f1"))
 	board.move("f1", "c4") # white bishop
+	draw.draw_board(board)
+
+	draw.bitboard(board.get_moves("g8"))
 	board.move("g8", "f6") # black knight
+	draw.draw_board(board)
+
+	draw.bitboard(board.get_moves("h5"))
 	board.move("h5", "f7") # white queen
+	draw.draw_board(board)
 	# Scholar's Mate...
 
 if __name__ == '__main__':
