@@ -24,7 +24,21 @@ private:
     Bitboard white, black, occupied, enemy;
     int turn;
     void _recalc();
-
+    Bitboard _white_pawn_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _black_pawn_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _knight_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _bishop_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _rook_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _queen_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _king_moves(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_right(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_left(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_up(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_down(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_ne(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_sw(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_se(int index, Bitboard enemy_and_empty);
+    Bitboard _moves_nw(int index, Bitboard enemy_and_empty);
 };
 
 #endif // CHESSBOARD_H

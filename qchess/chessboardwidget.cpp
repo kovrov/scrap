@@ -22,7 +22,8 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
     QColor white(0xFF, 0xCE, 0x9E);  // ffce9e
     QColor black(0xD1, 0x8B, 0x47);  // d18b47
     QPainter painter(this);
-
+    painter.translate((width()-side + side%8)/2,
+                      (height()-side + side%8)/2);
     for (int i=0; i < 64; i++)
     {
         int x = i % 8;
