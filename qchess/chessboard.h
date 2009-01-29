@@ -8,6 +8,7 @@ class ChessBoard
 public:
     ChessBoard();
     void move(int src_index, int dst_index);
+    const char* squareInfo(int index);
 private:
     Bitboard white_pawns,
              black_pawns,
@@ -19,8 +20,8 @@ private:
              black_rooks,
              white_queens,
              black_queens,
-             white_king,
-             black_king;
+             white_kings,
+             black_kings;
     Bitboard white, black, occupied, enemy;
     int turn;
     void _recalc();

@@ -12,8 +12,8 @@ ChessBoard::ChessBoard() :
     black_rooks (0x8100000000000000LL),
     white_queens (0x0000000000000008LL),
     black_queens (0x0800000000000000LL),
-    white_king (0x0000000000000010LL),
-    black_king (0x1000000000000000LL),
+    white_kings (0x0000000000000010LL),
+    black_kings (0x1000000000000000LL),
     turn (0)
 {
 }
@@ -21,8 +21,8 @@ ChessBoard::ChessBoard() :
 
 void ChessBoard::_recalc()
 {
-    white = white_pawns | white_knights | white_bishops | white_rooks | white_queens | white_king;
-    black = black_pawns | black_knights | black_bishops | black_rooks | black_queens | black_king;
+    white = white_pawns | white_knights | white_bishops | white_rooks | white_queens | white_kings;
+    black = black_pawns | black_knights | black_bishops | black_rooks | black_queens | black_kings;
     occupied = white | black;
     enemy = (turn % 2) ? white : black;
     //in_check = _in_check();
@@ -30,8 +30,8 @@ void ChessBoard::_recalc()
 
 void ChessBoard::move(int src_index, int dst_index)
 {
-    Bitboard src_bit = 1L << src_index;
-    Bitboard dst_bit = 1L << dst_index;
+    Bitboard src_bit = 1LL << src_index;
+    Bitboard dst_bit = 1LL << dst_index;
     if (white_pawns & src_bit)
     {
         white_pawns ^= src_bit;
@@ -82,20 +82,74 @@ void ChessBoard::move(int src_index, int dst_index)
         black_queens ^= src_bit;
         black_queens |= dst_bit;
     }
-    else if (white_king & src_bit)
+    else if (white_kings & src_bit)
     {
-        white_king ^= src_bit;
-        white_king |= dst_bit;
+        white_kings ^= src_bit;
+        white_kings |= dst_bit;
     }
-    else if (black_king & src_bit)
+    else if (black_kings & src_bit)
     {
-        black_king ^= src_bit;
-        black_king |= dst_bit;
+        black_kings ^= src_bit;
+        black_kings |= dst_bit;
     }
     //else
     //    raise Exception("invalid move");
     turn++;
     _recalc();
+}
+
+const char* ChessBoard::squareInfo(int index)
+{
+    Bitboard bit = 1LL << index;
+    if (white_pawns & bit)
+    {
+        return "wp";
+    }
+    if (black_pawns & bit)
+    {
+        return "bp";
+    }
+    if (white_knights & bit)
+    {
+        return "wn";
+    }
+    if (black_knights & bit)
+    {
+        return "bn";
+    }
+    if (white_bishops & bit)
+    {
+        return "wb";
+    }
+    if (black_bishops & bit)
+    {
+        return "bb";
+    }
+    if (white_rooks & bit)
+    {
+        return "wr";
+    }
+    if (black_rooks & bit)
+    {
+        return "br";
+    }
+    if (white_queens & bit)
+    {
+        return "wq";
+    }
+    if (black_queens & bit)
+    {
+        return "bq";
+    }
+    if (white_kings & bit)
+    {
+        return "wk";
+    }
+    if (black_kings & bit)
+    {
+        return "bk";
+    }
+    return "";
 }
 
 Bitboard ChessBoard::_white_pawn_moves(int index, Bitboard enemy_and_empty)
@@ -157,7 +211,7 @@ Bitboard ChessBoard::_queen_moves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_king_moves(int index, Bitboard enemy_and_empty)
 {
-    Bitboard pos = 1L << index;
+    Bitboard pos = 1LL << index;
     Bitboard king_moves = pos << 8 | pos >> 8;
     if (index % 8)
         king_moves |= pos << 7 | pos >> 9;
