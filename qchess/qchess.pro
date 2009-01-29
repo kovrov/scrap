@@ -5,7 +5,10 @@ TARGET = qchess
 TEMPLATE = app
 SOURCES += main.cpp \
     mainwindow.cpp \
-    chessboardwidget.cpp
+    chessboardwidget.cpp \
+    chessboard.cpp
 HEADERS += mainwindow.h \
-    chessboardwidget.h
+    chessboardwidget.h \
+    chessboard.h \
+    movebits.h
 FORMS += 
