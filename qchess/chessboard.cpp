@@ -1,5 +1,6 @@
 #include "chessboard.h"
 #include "movebits.h"
+#include "squareinfo.h"
 
 ChessBoard::ChessBoard() :
     white_pawns (0x000000000000FF00LL),
@@ -98,58 +99,58 @@ void ChessBoard::move(int src_index, int dst_index)
     _recalc();
 }
 
-const char* ChessBoard::squareInfo(int index)
+SquareInfo ChessBoard::squareInfo(int index)
 {
     Bitboard bit = 1LL << index;
     if (white_pawns & bit)
     {
-        return "wp";
+        return SquareInfo(WHITE, PAWN);
     }
     if (black_pawns & bit)
     {
-        return "bp";
+        return SquareInfo(BLACK, PAWN);
     }
     if (white_knights & bit)
     {
-        return "wn";
+        return SquareInfo(WHITE, KNIGHT);
     }
     if (black_knights & bit)
     {
-        return "bn";
+        return SquareInfo(BLACK, KNIGHT);
     }
     if (white_bishops & bit)
     {
-        return "wb";
+        return SquareInfo(WHITE, BISHOP);
     }
     if (black_bishops & bit)
     {
-        return "bb";
+        return SquareInfo(BLACK, BISHOP);
     }
     if (white_rooks & bit)
     {
-        return "wr";
+        return SquareInfo(WHITE, ROOK);
     }
     if (black_rooks & bit)
     {
-        return "br";
+        return SquareInfo(BLACK, ROOK);
     }
     if (white_queens & bit)
     {
-        return "wq";
+        return SquareInfo(WHITE, QUEEN);
     }
     if (black_queens & bit)
     {
-        return "bq";
+        return SquareInfo(BLACK, QUEEN);
     }
     if (white_kings & bit)
     {
-        return "wk";
+        return SquareInfo(WHITE, KING);
     }
     if (black_kings & bit)
     {
-        return "bk";
+        return SquareInfo(BLACK, KING);
     }
-    return "";
+    return SquareInfo(COLOR(0), PIECE(0));
 }
 
 Bitboard ChessBoard::_white_pawn_moves(int index, Bitboard enemy_and_empty)

@@ -2,13 +2,14 @@
 #define CHESSBOARD_H
 
 typedef unsigned long long Bitboard;
+class SquareInfo;
 
 class ChessBoard
 {
 public:
     ChessBoard();
     void move(int src_index, int dst_index);
-    const char* squareInfo(int index);
+    SquareInfo squareInfo(int index);
 private:
     Bitboard white_pawns,
              black_pawns,
