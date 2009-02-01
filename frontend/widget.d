@@ -1,9 +1,10 @@
 /* 
   TODO:
-   * implement activatable interface
+   * finalize activatable concept
+   * integrate focus interface
    * tweak button behaviour (keyboard)
    * implement radio button
-   * Activatable concept (interface)
+   * introduce layout managers concept
    * ...
 */
 

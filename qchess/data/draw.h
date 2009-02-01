@@ -2,7 +2,7 @@
 void draw_pawn(QPainter *painter)
 {
     painter->save();
-    painter->scale(0.007, 0.007);
+	painter->scale(0.0066, 0.0066);
     painter->translate(-180, -110);
 	QPainterPath path;
 	path.moveTo(180.01563, 79.906825);
@@ -23,7 +23,7 @@ void draw_pawn(QPainter *painter)
 void draw_knight(QPainter *painter)
 {
     painter->save();
-    painter->scale(0.007, 0.007);
+	painter->scale(0.0066, 0.0066);
     painter->translate(-222, -85);
     QPainterPath path;
     path.moveTo(213.18227,65.21189);
@@ -44,7 +44,7 @@ void draw_knight(QPainter *painter)
 void draw_bishop(QPainter *painter)
 {
     painter->save();
-    painter->scale(0.007, 0.007);
+	painter->scale(0.0066, 0.0066);
     painter->translate(-301, -100);
     QPainterPath path;
     path.moveTo(301.40625,46.4375);
@@ -91,7 +91,7 @@ void draw_bishop(QPainter *painter)
 void draw_rook(QPainter *painter)
 {
     painter->save();
-    painter->scale(0.007, 0.007);
+	painter->scale(0.0066, 0.0066);
     painter->translate(-147, -80);
     QPainterPath path;
     path.moveTo(122.28835, 46.4375);
@@ -116,7 +116,7 @@ void draw_rook(QPainter *painter)
 void draw_queen(QPainter *painter)
 {
     painter->save();
-    painter->scale(0.007, 0.007);
+	painter->scale(0.0066, 0.0066);
     painter->translate(-378, -110);
     QPainterPath path;
     path.moveTo(378.42367,46.4375);
@@ -153,7 +153,7 @@ void draw_queen(QPainter *painter)
 void draw_king(QPainter *painter)
 {
     painter->save();
-    painter->scale(0.007, 0.007);
+	painter->scale(0.0066, 0.0066);
     painter->translate(-452, -120);
     QPainterPath path;
     path.moveTo(452.53128,46.4375);

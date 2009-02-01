@@ -1,6 +1,7 @@
 /* 
   TODO:
    * overhul event interfaces
+   * implement focus interface (with event propagation)
    * ...
    * keyboard state / API (set focus, etc.)
    * mouse state / API (capture, etc.)
@@ -29,6 +30,7 @@ struct FocusEvent(T)
 {
 	T target;
 	bool accepted;
+	uint button;
 }
 
 struct EventHandlers(T)

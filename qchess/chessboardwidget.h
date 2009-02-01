@@ -5,18 +5,29 @@
 
 class ChessBoard;
 
+struct DragPiece
+{
+	DragPiece() : index (-1) {}
+	int index;
+	QPainterPath fillPath;
+	QPen fillPen;
+	QBrush fillBrush;
+};
+
 class ChessBoardWidget : public QWidget
 {
     Q_OBJECT
 public:
     ChessBoardWidget();
-    ~ChessBoardWidget();
+	virtual ~ChessBoardWidget();
 protected:
-    void paintEvent(QPaintEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
+	virtual void paintEvent(QPaintEvent *event);
+	virtual void mouseMoveEvent(QMouseEvent *event);
+	virtual void mousePressEvent(QMouseEvent *event);
 
     ChessBoard* _board;
     int _hot_square;
+	DragPiece _dragPiece;
 };
 
 #endif // CHESSBOARDWIDGET_H

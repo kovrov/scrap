@@ -3,18 +3,18 @@
 #include "squareinfo.h"
 
 ChessBoard::ChessBoard() :
-    white_pawns (0x000000000000FF00LL),
-    black_pawns (0x00FF000000000000LL),
+	white_pawns   (0x000000000000FF00LL),
+	black_pawns   (0x00FF000000000000LL),
     white_knights (0x0000000000000042LL),
     black_knights (0x4200000000000000LL),
     white_bishops (0x0000000000000024LL),
     black_bishops (0x2400000000000000LL),
-    white_rooks (0x0000000000000081LL),
-    black_rooks (0x8100000000000000LL),
-    white_queens (0x0000000000000008LL),
-    black_queens (0x0800000000000000LL),
-    white_kings (0x0000000000000010LL),
-    black_kings (0x1000000000000000LL),
+	white_rooks   (0x0000000000000081LL),
+	black_rooks   (0x8100000000000000LL),
+	white_queens  (0x0000000000000008LL),
+	black_queens  (0x0800000000000000LL),
+	white_kings   (0x0000000000000010LL),
+	black_kings   (0x1000000000000000LL),
     turn (0)
 {
 }

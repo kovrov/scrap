@@ -15,6 +15,16 @@ const char* coords[] = {
     "a7","b7","c7","d7","e7","f7","g7","h7",
     "a8","b8","c8","d8","e8","f8","g8","h8"};
 
+int GetSquareIndex(const QRect &rect, const QPoint &ev_pos)
+{
+	int board_side = qMin(rect.width(), rect.height());
+	QPoint offset((rect.width() - board_side + board_side % 8) / 2, (rect.height() - board_side + board_side % 8) / 2);
+	QPoint pos = ev_pos - offset;
+	int row =  pos.y() < 0 ? -1 : 7 - pos.y() / (board_side / 8);
+	int file = pos.x() < 0 ? -1 :     pos.x() / (board_side / 8);
+	return (row >= 0 && row < 8 && file >= 0 && file < 8)? row * 8 + file : -1;
+}
+
 ChessBoardWidget::ChessBoardWidget()
 {
     setMouseTracking(true);
@@ -31,8 +41,8 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
 {
     QColor white(0xFF, 0xCE, 0x9E);  // ffce9e
     QColor black(0xD1, 0x8B, 0x47);  // d18b47
-    int side = qMin(width(), height());
-    QPoint offset((width() - side + side % 8) / 2, (height() - side + side % 8) / 2);
+	int board_side = qMin(width(), height());
+	QPoint offset((width() - board_side + board_side % 8) / 2, (height() - board_side + board_side % 8) / 2);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(offset);
@@ -40,7 +50,7 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
     {
         int x = i % 8;
         int y = 7 - i / 8;
-        QRect square_rect(side / 8 * x, side / 8 * y, side / 8, side / 8);
+		QRect square_rect(board_side / 8 * x, board_side / 8 * y, board_side / 8, board_side / 8);
 
         painter.setPen(Qt::NoPen);
         painter.setBrush(((x + y % 2) % 2) ? black : white);
@@ -58,13 +68,13 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
         {
             painter.save();
             painter.translate(square_rect.center());
-            qreal scale = side / 8;
+			qreal scale = board_side / 8;
             painter.scale(scale, scale);
 
-            QPen p((si.color == WHITE) ? QColor(0xDE,0xDE,0xDE) : QColor(0x91,0x91,0x91));
+			QPen p(QColor(0x00,0x00,0x00));
             p.setWidth(5);
             painter.setPen(p);
-            painter.setBrush(QBrush((si.color == WHITE) ? QColor(0xBA,0xBA,0xBA) : QColor(0x40,0x40,0x40)));
+			painter.setBrush(QBrush((si.color == WHITE) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
             switch (si.piece)
             {
             case PAWN:
@@ -94,16 +104,22 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
 
 void ChessBoardWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    int side = qMin(width(), height());
-    int square = side / 8;
-    QPoint offset((width() - side + side % 8) / 2, (height() - side + side % 8) / 2);
-    QPoint pos = event->pos() - offset;
-    int row =  pos.y() < 0 ? -1 : 7 - pos.y() / square;
-    int file = pos.x() < 0 ? -1 :     pos.x() / square;
-    int hot  = (row >= 0 && row < 8 && file >= 0 && file < 8)? row * 8 + file : -1;
+	int hot = GetSquareIndex(rect(), event->pos());
     if (_hot_square != hot)
     {
         _hot_square = hot;
         update();
     }
+}
+
+void ChessBoardWidget::mousePressEvent(QMouseEvent *event)
+{
+	if (event->button() != Qt::LeftButton)
+		return;
+	int index = GetSquareIndex(rect(), event->pos());
+	if (index < 0 || index > 63)
+		return;
+	SquareInfo si = _board->squareInfo(index);
+	_dragPiece.index = index;
+	_dragPiece.fillPath;
 }
