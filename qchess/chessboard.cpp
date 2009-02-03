@@ -153,6 +153,31 @@ SquareInfo ChessBoard::squareInfo(int index)
     return SquareInfo(COLOR(0), PIECE(0));
 }
 
+Bitboard ChessBoard::getMoves(int index)
+{
+    SquareInfo si = squareInfo(index);
+    Bitboard enemy_and_empty = (si.color == WHITE) ? ~occupied ^ black : ~occupied ^ white;
+    switch (si.piece)
+    {
+    case PAWN:
+        return (si.color == WHITE)?
+                _white_pawn_moves(index, enemy_and_empty):
+                _black_pawn_moves(index, enemy_and_empty);
+    case KNIGHT:
+        return _knight_moves(index, enemy_and_empty);
+    case BISHOP:
+        return _bishop_moves(index, enemy_and_empty);
+    case ROOK:
+        return _rook_moves(index, enemy_and_empty);
+    case QUEEN:
+        return _queen_moves(index, enemy_and_empty);
+    case KING:
+        return _king_moves(index, enemy_and_empty);
+    default:
+        return 0LL;
+    }
+}
+
 Bitboard ChessBoard::_white_pawn_moves(int index, Bitboard enemy_and_empty)
 {
     Bitboard pos = 1LL << index;

@@ -10,6 +10,7 @@ public:
     ChessBoard();
     void move(int src_index, int dst_index);
     SquareInfo squareInfo(int index);
+    Bitboard getMoves(int index);
 private:
     Bitboard white_pawns,
              black_pawns,

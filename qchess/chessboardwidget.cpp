@@ -54,14 +54,24 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
 
         painter.setPen(Qt::NoPen);
         painter.setBrush(((x + y % 2) % 2) ? black : white);
-        painter.drawRect(square_rect);
         if (i == _hot_square)
         {
-            QColor white_tr(0xFF, 0xCE, 0x9E, 0x80);  // ffce9e
-            QColor black_tr(0xD1, 0x8B, 0x47, 0x80);  // d18b47
+            QColor white_tr(0xFF, 0xCE, 0x9E, 0x40);  // ffce9e
+            QColor black_tr(0xD1, 0x8B, 0x47, 0x40);  // d18b47
             painter.setBrush(((x + y % 2) % 2) ? white_tr : black_tr);
-            painter.drawRect(square_rect);
         }
+
+        if (_selection.squareIndex != -1)
+        {
+            if (_selection.moveBits & 1LL << i)
+            {
+                QColor white_tr(0xFF, 0xCE, 0x9E, 0x80);  // ffce9e
+                QColor black_tr(0xD1, 0x8B, 0x47, 0x80);  // d18b47
+                painter.setBrush(((x + y % 2) % 2) ? white_tr : black_tr);
+            }
+        }
+
+        painter.drawRect(square_rect);
 
         SquareInfo si = _board->squareInfo(i);
         if (si.color != 0)
@@ -120,6 +130,6 @@ void ChessBoardWidget::mousePressEvent(QMouseEvent *event)
 	if (index < 0 || index > 63)
 		return;
 	SquareInfo si = _board->squareInfo(index);
-	_dragPiece.index = index;
-	_dragPiece.fillPath;
+    _selection.squareIndex = index;
+    _selection.moveBits = _board->getMoves(index);
 }

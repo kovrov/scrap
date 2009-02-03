@@ -2,17 +2,10 @@
 #define CHESSBOARDWIDGET_H
 
 #include <QWidget>
+#include "selection.h"
 
 class ChessBoard;
 
-struct DragPiece
-{
-	DragPiece() : index (-1) {}
-	int index;
-	QPainterPath fillPath;
-	QPen fillPen;
-	QBrush fillBrush;
-};
 
 class ChessBoardWidget : public QWidget
 {
@@ -27,7 +20,7 @@ protected:
 
     ChessBoard* _board;
     int _hot_square;
-	DragPiece _dragPiece;
+    Selection _selection;
 };
 
 #endif // CHESSBOARDWIDGET_H

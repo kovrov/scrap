@@ -7,11 +7,13 @@ SOURCES += main.cpp \
     mainwindow.cpp \
     chessboardwidget.cpp \
     chessboard.cpp \
-    squareinfo.cpp
+    squareinfo.cpp \
+    selection.cpp
 HEADERS += mainwindow.h \
     chessboardwidget.h \
     chessboard.h \
     movebits.h \
     squareinfo.h \
-    data/draw.h
+    data/draw.h \
+    selection.h
 FORMS += 
