@@ -15,8 +15,9 @@ ChessBoard::ChessBoard() :
 	black_queens  (0x0800000000000000LL),
 	white_kings   (0x0000000000000010LL),
 	black_kings   (0x1000000000000000LL),
-    turn (0)
+	moves (0)
 {
+	_recalc();
 }
 
 
@@ -25,7 +26,7 @@ void ChessBoard::_recalc()
     white = white_pawns | white_knights | white_bishops | white_rooks | white_queens | white_kings;
     black = black_pawns | black_knights | black_bishops | black_rooks | black_queens | black_kings;
     occupied = white | black;
-    enemy = (turn % 2) ? white : black;
+	enemy = (moves % 2) == 1 ? white : black;
     //in_check = _in_check();
 }
 
@@ -95,7 +96,7 @@ void ChessBoard::move(int src_index, int dst_index)
     }
     //else
     //    raise Exception("invalid move");
-    turn++;
+	moves++;
     _recalc();
 }
 
@@ -153,6 +154,11 @@ SquareInfo ChessBoard::squareInfo(int index)
     return SquareInfo(COLOR(0), PIECE(0));
 }
 
+Turn ChessBoard::getTurn()
+{
+	return Turn(moves, (moves % 2) == 0 ? WHITE : BLACK );
+}
+
 Bitboard ChessBoard::getMoves(int index)
 {
     SquareInfo si = squareInfo(index);
@@ -202,11 +208,12 @@ Bitboard ChessBoard::_black_pawn_moves(int index, Bitboard enemy_and_empty)
     if (pawn_moves && index >= 48 && index < 56)
         pawn_moves |= pos >> 16 & ~occupied;
     if (index % 8)
-        captures = pos >> 7;
+		captures = pos >> 9;
     if ((index + 1) % 8)
-        captures |= pos >> 9;
+		captures |= pos >> 7;
     captures &= enemy_and_empty & occupied;
-    return pawn_moves | captures;
+	// TODO: en passant
+	return pawn_moves | captures;
 }
 
 Bitboard ChessBoard::_knight_moves(int index, Bitboard enemy_and_empty)
@@ -300,7 +307,7 @@ Bitboard ChessBoard::_moves_sw(int index, Bitboard enemy_and_empty)
 Bitboard ChessBoard::_moves_se(int index, Bitboard enemy_and_empty)
 {
     Bitboard blockers = se_moves[index] & occupied;
-    Bitboard blocked_slide = blockers<<7 | blockers<<14 | blockers<<21 | blockers<<28 | blockers<<35 | blockers<<42;
+	Bitboard blocked_slide = blockers>>7 | blockers>>14 | blockers>>21 | blockers>>28 | blockers>>35 | blockers>>42;
     Bitboard blocked_moves = blocked_slide & se_moves[index];
     return ~blocked_moves & (se_moves[index] & enemy_and_empty);
 }

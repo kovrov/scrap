@@ -1,16 +1,34 @@
 #ifndef CHESSBOARD_H
 #define CHESSBOARD_H
 
+#include <QWidget>
+#include "squareinfo.h"
+
 typedef unsigned long long Bitboard;
 class SquareInfo;
-
-class ChessBoard
+struct Turn
 {
+	int turn;
+	COLOR color;
+	Turn(int t, COLOR c) : turn(t), color(c) {}
+};
+
+class ChessBoard : public QWidget
+{
+	Q_OBJECT
+
 public:
     ChessBoard();
-    void move(int src_index, int dst_index);
     SquareInfo squareInfo(int index);
-    Bitboard getMoves(int index);
+	Turn getTurn();
+	Bitboard getMoves(int index);
+
+public slots:
+	void move(int src_index, int dst_index);
+
+signals:
+	void stateChanged();
+
 private:
     Bitboard white_pawns,
              black_pawns,
@@ -25,7 +43,7 @@ private:
              white_kings,
              black_kings;
     Bitboard white, black, occupied, enemy;
-    int turn;
+	int moves;
     void _recalc();
     Bitboard _white_pawn_moves(int index, Bitboard enemy_and_empty);
     Bitboard _black_pawn_moves(int index, Bitboard enemy_and_empty);

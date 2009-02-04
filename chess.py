@@ -191,9 +191,9 @@ class Board:
 		if pawn_moves and index >= 48 and index < 56:
 			pawn_moves |= pos >> 16 & ~self.occupied
 		if index % 8:
-			captures = pos >> 7
+			captures = pos >> 9
 		if (index + 1) % 8:
-			captures |= pos >> 9
+			captures |= pos >> 7
 		captures &= enemy_and_empty & self.occupied
 		return pawn_moves | captures
 
@@ -265,7 +265,7 @@ class Board:
 
 	def __moves_se(self, index, enemy_and_empty):
 		blockers = moves.se[index] & self.occupied
-		blocked_slide = blockers<<7 | blockers<<14 | blockers<<21 | blockers<<28 | blockers<<35 | blockers<<42
+		blocked_slide = blockers>>7 | blockers>>14 | blockers>>21 | blockers>>28 | blockers>>35 | blockers>>42
 		blocked_moves = blocked_slide & moves.se[index]
 		return ~blocked_moves & (moves.se[index] & enemy_and_empty)
 

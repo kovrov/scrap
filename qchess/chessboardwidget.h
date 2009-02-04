@@ -10,13 +10,19 @@ class ChessBoard;
 class ChessBoardWidget : public QWidget
 {
     Q_OBJECT
+
 public:
     ChessBoardWidget();
 	virtual ~ChessBoardWidget();
+
+signals:
+	void pieceMoveInput(int src_index, int dst_index);
+
 protected:
 	virtual void paintEvent(QPaintEvent *event);
 	virtual void mouseMoveEvent(QMouseEvent *event);
 	virtual void mousePressEvent(QMouseEvent *event);
+	virtual void mouseReleaseEvent(QMouseEvent *event);
 
     ChessBoard* _board;
     int _hot_square;

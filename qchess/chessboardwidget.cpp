@@ -25,11 +25,14 @@ int GetSquareIndex(const QRect &rect, const QPoint &ev_pos)
 	return (row >= 0 && row < 8 && file >= 0 && file < 8)? row * 8 + file : -1;
 }
 
+
+
 ChessBoardWidget::ChessBoardWidget()
 {
     setMouseTracking(true);
     _board = new ChessBoard;
     _hot_square = -1;
+	connect(this, SIGNAL(pieceMoveInput(int,int)), _board, SLOT(move(int,int)));
 }
 
 ChessBoardWidget::~ChessBoardWidget()
@@ -130,6 +133,24 @@ void ChessBoardWidget::mousePressEvent(QMouseEvent *event)
 	if (index < 0 || index > 63)
 		return;
 	SquareInfo si = _board->squareInfo(index);
+	Turn turn = _board->getTurn();
+	if (si.color != turn.color)
+		return;
     _selection.squareIndex = index;
     _selection.moveBits = _board->getMoves(index);
+	update();
+}
+
+void ChessBoardWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+	if (event->button() != Qt::LeftButton)
+		return;
+
+	int index = GetSquareIndex(rect(), event->pos());
+	if (_selection.moveBits & 1LL << index)
+		emit pieceMoveInput(_selection.squareIndex, index);
+
+	_selection.squareIndex = -1;
+	_selection.moveBits = 0LL;
+	update();
 }
