@@ -27,17 +27,11 @@ int GetSquareIndex(const QRect &rect, const QPoint &ev_pos)
 
 
 
-ChessBoardWidget::ChessBoardWidget()
+ChessBoardWidget::ChessBoardWidget(ChessBoard *board)
 {
-    setMouseTracking(true);
-    _board = new ChessBoard;
     _hot_square = -1;
-	connect(this, SIGNAL(pieceMoveInput(int,int)), _board, SLOT(move(int,int)));
-}
-
-ChessBoardWidget::~ChessBoardWidget()
-{
-    delete _board;
+    setMouseTracking(true);
+    _board = board;
 }
 
 void ChessBoardWidget::paintEvent(QPaintEvent *event)

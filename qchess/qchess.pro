@@ -4,13 +4,11 @@
 TARGET = qchess
 TEMPLATE = app
 SOURCES += main.cpp \
-    mainwindow.cpp \
     chessboardwidget.cpp \
     chessboard.cpp \
     squareinfo.cpp \
     selection.cpp
-HEADERS += mainwindow.h \
-    chessboardwidget.h \
+HEADERS += chessboardwidget.h \
     chessboard.h \
     movebits.h \
     squareinfo.h \

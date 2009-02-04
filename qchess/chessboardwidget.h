@@ -12,8 +12,7 @@ class ChessBoardWidget : public QWidget
     Q_OBJECT
 
 public:
-    ChessBoardWidget();
-	virtual ~ChessBoardWidget();
+    ChessBoardWidget(ChessBoard *board);
 
 signals:
 	void pieceMoveInput(int src_index, int dst_index);
