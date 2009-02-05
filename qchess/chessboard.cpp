@@ -1,6 +1,5 @@
 #include "chessboard.h"
 #include "movebits.h"
-#include "squareinfo.h"
 
 ChessBoard::ChessBoard() :
 	white_pawns   (0x000000000000FF00LL),
@@ -94,94 +93,30 @@ void ChessBoard::move(int src_index, int dst_index)
         black_kings ^= src_bit;
         black_kings |= dst_bit;
     }
-    //else
-    //    raise Exception("invalid move");
+    else
+    {
+        return; // exception
+    }
 	moves++;
     _recalc();
 }
 
-SquareInfo ChessBoard::squareInfo(int index)
-{
-    Bitboard bit = 1LL << index;
-    if (white_pawns & bit)
-    {
-        return SquareInfo(WHITE, PAWN);
-    }
-    if (black_pawns & bit)
-    {
-        return SquareInfo(BLACK, PAWN);
-    }
-    if (white_knights & bit)
-    {
-        return SquareInfo(WHITE, KNIGHT);
-    }
-    if (black_knights & bit)
-    {
-        return SquareInfo(BLACK, KNIGHT);
-    }
-    if (white_bishops & bit)
-    {
-        return SquareInfo(WHITE, BISHOP);
-    }
-    if (black_bishops & bit)
-    {
-        return SquareInfo(BLACK, BISHOP);
-    }
-    if (white_rooks & bit)
-    {
-        return SquareInfo(WHITE, ROOK);
-    }
-    if (black_rooks & bit)
-    {
-        return SquareInfo(BLACK, ROOK);
-    }
-    if (white_queens & bit)
-    {
-        return SquareInfo(WHITE, QUEEN);
-    }
-    if (black_queens & bit)
-    {
-        return SquareInfo(BLACK, QUEEN);
-    }
-    if (white_kings & bit)
-    {
-        return SquareInfo(WHITE, KING);
-    }
-    if (black_kings & bit)
-    {
-        return SquareInfo(BLACK, KING);
-    }
-    return SquareInfo(COLOR(0), PIECE(0));
-}
-
-Turn ChessBoard::getTurn()
-{
-	return Turn(moves, (moves % 2) == 0 ? WHITE : BLACK );
-}
-
 Bitboard ChessBoard::getMoves(int index)
 {
-    SquareInfo si = squareInfo(index);
-    Bitboard enemy_and_empty = (si.color == WHITE) ? ~occupied ^ black : ~occupied ^ white;
-    switch (si.piece)
-    {
-    case PAWN:
-        return (si.color == WHITE)?
-                _white_pawn_moves(index, enemy_and_empty):
-                _black_pawn_moves(index, enemy_and_empty);
-    case KNIGHT:
-        return _knight_moves(index, enemy_and_empty);
-    case BISHOP:
-        return _bishop_moves(index, enemy_and_empty);
-    case ROOK:
-        return _rook_moves(index, enemy_and_empty);
-    case QUEEN:
-        return _queen_moves(index, enemy_and_empty);
-    case KING:
-        return _king_moves(index, enemy_and_empty);
-    default:
-        return 0LL;
-    }
+    Bitboard bit = 1LL << index;
+    if (white_pawns & bit)   return _white_pawn_moves(index, ~occupied ^ black);
+    if (black_pawns & bit)   return _black_pawn_moves(index, ~occupied ^ white);
+    if (white_knights & bit) return _knight_moves(index, ~occupied ^ black);
+    if (black_knights & bit) return _knight_moves(index, ~occupied ^ white);
+    if (white_bishops & bit) return _bishop_moves(index, ~occupied ^ black);
+    if (black_bishops & bit) return _bishop_moves(index, ~occupied ^ white);
+    if (white_rooks & bit)   return _rook_moves(index, ~occupied ^ black);
+    if (black_rooks & bit)   return _rook_moves(index, ~occupied ^ white);
+    if (white_queens & bit)  return _queen_moves(index, ~occupied ^ black);
+    if (black_queens & bit)  return _queen_moves(index, ~occupied ^ white);
+    if (white_kings & bit)   return _king_moves(index, ~occupied ^ black);
+    if (black_kings & bit)   return _king_moves(index, ~occupied ^ white);
+    return 0LL;
 }
 
 Bitboard ChessBoard::_white_pawn_moves(int index, Bitboard enemy_and_empty)

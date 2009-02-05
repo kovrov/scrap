@@ -6,12 +6,12 @@ TEMPLATE = app
 SOURCES += main.cpp \
     chessboardwidget.cpp \
     chessboard.cpp \
-    squareinfo.cpp \
-    selection.cpp
+    selection.cpp \
+    chessgame.cpp
 HEADERS += chessboardwidget.h \
     chessboard.h \
     movebits.h \
-    squareinfo.h \
     data/draw.h \
-    selection.h
+    selection.h \
+    chessgame.h
 FORMS += 

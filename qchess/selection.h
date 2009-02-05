@@ -1,11 +1,9 @@
 #ifndef SELECTION_H
 #define SELECTION_H
 
-class Selection
+struct Selection
 {
-public:
     Selection() : squareIndex(-1), moveBits(0LL) {}
-
     int squareIndex;
     unsigned long long moveBits;
 };
