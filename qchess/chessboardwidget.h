@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "selection.h"
 
-class ChessBoard;
+class ChessGame;
 
 
 class ChessBoardWidget : public QWidget
@@ -12,7 +12,7 @@ class ChessBoardWidget : public QWidget
     Q_OBJECT
 
 public:
-    ChessBoardWidget(ChessBoard *board);
+    ChessBoardWidget(ChessGame *game);
 
 signals:
 	void pieceMoveInput(int src_index, int dst_index);
@@ -23,7 +23,7 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *event);
 	virtual void mouseReleaseEvent(QMouseEvent *event);
 
-    ChessBoard* _board;
+    ChessGame* _game;
     int _hot_square;
     Selection _selection;
 };

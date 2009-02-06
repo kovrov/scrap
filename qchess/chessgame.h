@@ -32,7 +32,8 @@ class ChessGame : public QWidget
 public:
     ChessGame();
     SquareInfo squareInfo(int index);
-    Turn getTurn() { return Turn(moves, (moves % 2) == 0 ? WHITE : BLACK ); }
+    Turn getTurn() { return Turn(_board.getMoveNumber(), (_board.getMoveNumber() % 2) == 0 ? WHITE : BLACK ); }
+    Bitboard getPossibleMoves(int index);
 
 public slots:
     void move(int src_index, int dst_index);

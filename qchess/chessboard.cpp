@@ -31,91 +31,112 @@ void ChessBoard::_recalc()
 
 void ChessBoard::move(int src_index, int dst_index)
 {
-    Bitboard src_bit = 1LL << src_index;
-    Bitboard dst_bit = 1LL << dst_index;
-    if (white_pawns & src_bit)
+    // TODO: validate!
+    moves++;
+    _update(1LL << src_index, 1LL << dst_index);
+}
+
+void ChessBoard::_update(Bitboard clear_bit, Bitboard set_bit)
+{
+    // capture
+    if (white & set_bit)
     {
-        white_pawns ^= src_bit;
-        white_pawns |= dst_bit;
+        white_pawns &= ~set_bit;
+        white_knights &= ~set_bit;
+        white_bishops &= ~set_bit;
+        white_rooks &= ~set_bit;
+        white_queens &= ~set_bit;
+        white_kings &= ~set_bit;
     }
-    else if (black_pawns & src_bit)
+    else if (black & set_bit)
     {
-        black_pawns ^= src_bit;
-        black_pawns |= dst_bit;
+        black_pawns &= ~set_bit;
+        black_knights &= ~set_bit;
+        black_bishops &= ~set_bit;
+        black_rooks &= ~set_bit;
+        black_queens &= ~set_bit;
+        black_kings &= ~set_bit;
     }
-    else if (white_knights & src_bit)
+
+    // move
+    if (white_pawns & clear_bit)  // a white pawn move...
     {
-        white_knights ^= src_bit;
-        white_knights |= dst_bit;
+        white_pawns ^= clear_bit;
+        white_pawns |= set_bit;
     }
-    else if (black_knights & src_bit)
+    else if (black_pawns & clear_bit)  // a black pawn move...
     {
-        black_knights ^= src_bit;
-        black_knights |= dst_bit;
+        black_pawns ^= clear_bit;
+        black_pawns |= set_bit;
     }
-    else if (white_bishops & src_bit)
+    else if (white_knights & clear_bit)  // a white knight move...
     {
-        white_bishops ^= src_bit;
-        white_bishops |= dst_bit;
+        white_knights ^= clear_bit;
+        white_knights |= set_bit;
     }
-    else if (black_bishops & src_bit)
+    else if (black_knights & clear_bit)  // a black knight move...
     {
-        black_bishops ^= src_bit;
-        black_bishops |= dst_bit;
+        black_knights ^= clear_bit;
+        black_knights |= set_bit;
     }
-    else if (white_rooks & src_bit)
+    else if (white_bishops & clear_bit)  // a  move...
     {
-        white_rooks ^= src_bit;
-        white_rooks |= dst_bit;
+        white_bishops ^= clear_bit;
+        white_bishops |= set_bit;
     }
-    else if (black_rooks & src_bit)
+    else if (black_bishops & clear_bit)  // a  move...
     {
-        black_rooks ^= src_bit;
-        black_rooks |= dst_bit;
+        black_bishops ^= clear_bit;
+        black_bishops |= set_bit;
     }
-    else if (white_queens & src_bit)
+    else if (white_rooks & clear_bit)  // a  move...
     {
-        white_queens ^= src_bit;
-        white_queens |= dst_bit;
+        white_rooks ^= clear_bit;
+        white_rooks |= set_bit;
     }
-    else if (black_queens & src_bit)
+    else if (black_rooks & clear_bit)  // a  move...
     {
-        black_queens ^= src_bit;
-        black_queens |= dst_bit;
+        black_rooks ^= clear_bit;
+        black_rooks |= set_bit;
     }
-    else if (white_kings & src_bit)
+    else if (white_queens & clear_bit)  // a  move...
     {
-        white_kings ^= src_bit;
-        white_kings |= dst_bit;
+        white_queens ^= clear_bit;
+        white_queens |= set_bit;
     }
-    else if (black_kings & src_bit)
+    else if (black_queens & clear_bit)
     {
-        black_kings ^= src_bit;
-        black_kings |= dst_bit;
+        black_queens ^= clear_bit;
+        black_queens |= set_bit;
     }
-    else
+    else if (white_kings & clear_bit)
     {
-        return; // exception
+        white_kings ^= clear_bit;
+        white_kings |= set_bit;
     }
-	moves++;
+    else if (black_kings & clear_bit)
+    {
+        black_kings ^= clear_bit;
+        black_kings |= set_bit;
+    }
     _recalc();
 }
 
 Bitboard ChessBoard::getMoves(int index)
 {
     Bitboard bit = 1LL << index;
-    if (white_pawns & bit)   return _white_pawn_moves(index, ~occupied ^ black);
-    if (black_pawns & bit)   return _black_pawn_moves(index, ~occupied ^ white);
-    if (white_knights & bit) return _knight_moves(index, ~occupied ^ black);
-    if (black_knights & bit) return _knight_moves(index, ~occupied ^ white);
-    if (white_bishops & bit) return _bishop_moves(index, ~occupied ^ black);
-    if (black_bishops & bit) return _bishop_moves(index, ~occupied ^ white);
-    if (white_rooks & bit)   return _rook_moves(index, ~occupied ^ black);
-    if (black_rooks & bit)   return _rook_moves(index, ~occupied ^ white);
-    if (white_queens & bit)  return _queen_moves(index, ~occupied ^ black);
-    if (black_queens & bit)  return _queen_moves(index, ~occupied ^ white);
-    if (white_kings & bit)   return _king_moves(index, ~occupied ^ black);
-    if (black_kings & bit)   return _king_moves(index, ~occupied ^ white);
+    if (white_pawns & bit) return _white_pawn_moves(index, ~occupied ^ black);
+    if (black_pawns & bit) return _black_pawn_moves(index, ~occupied ^ white);
+    if (white_knights & bit) return   _knight_moves(index, ~occupied ^ black);
+    if (black_knights & bit) return   _knight_moves(index, ~occupied ^ white);
+    if (white_bishops & bit) return   _bishop_moves(index, ~occupied ^ black);
+    if (black_bishops & bit) return   _bishop_moves(index, ~occupied ^ white);
+    if (white_rooks & bit)   return     _rook_moves(index, ~occupied ^ black);
+    if (black_rooks & bit)   return     _rook_moves(index, ~occupied ^ white);
+    if (white_queens & bit)  return    _queen_moves(index, ~occupied ^ black);
+    if (black_queens & bit)  return    _queen_moves(index, ~occupied ^ white);
+    if (white_kings & bit)   return     _king_moves(index, ~occupied ^ black);
+    if (black_kings & bit)   return     _king_moves(index, ~occupied ^ white);
     return 0LL;
 }
 

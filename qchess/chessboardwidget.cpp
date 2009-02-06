@@ -17,11 +17,11 @@ int GetSquareIndex(const QRect &rect, const QPoint &ev_pos)
 
 
 
-ChessBoardWidget::ChessBoardWidget(ChessBoard *board)
+ChessBoardWidget::ChessBoardWidget(ChessGame *game)
 {
     _hot_square = -1;
     setMouseTracking(true);
-    _board = board;
+    _game = game;
 }
 
 void ChessBoardWidget::paintEvent(QPaintEvent *event)
@@ -60,7 +60,7 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
 
         painter.drawRect(square_rect);
 
-        SquareInfo si = _board->squareInfo(i);
+        SquareInfo si = _game->squareInfo(i);
         if (si.color != 0)
         {
             painter.save();
@@ -116,12 +116,12 @@ void ChessBoardWidget::mousePressEvent(QMouseEvent *event)
 	int index = GetSquareIndex(rect(), event->pos());
 	if (index < 0 || index > 63)
 		return;
-	SquareInfo si = _board->squareInfo(index);
-	Turn turn = _board->getTurn();
+    SquareInfo si = _game->squareInfo(index);
+    Turn turn = _game->getTurn();
 	if (si.color != turn.color)
 		return;
     _selection.squareIndex = index;
-    _selection.moveBits = _board->getMoves(index);
+    _selection.moveBits = _game->getPossibleMoves(index);
 	update();
 }
 

@@ -10,6 +10,8 @@ class ChessBoard
 public:
     ChessBoard();
 	Bitboard getMoves(int index);
+    int getMoveNumber() { return moves; }
+    void move(int src_index, int dst_index);
 
 
 private:
@@ -28,6 +30,7 @@ private:
     Bitboard white, black, occupied, enemy;
 	int moves;
     void _recalc();
+    void _update(Bitboard clear_bit, Bitboard set_bit);
     Bitboard _white_pawn_moves(int index, Bitboard enemy_and_empty);
     Bitboard _black_pawn_moves(int index, Bitboard enemy_and_empty);
     Bitboard _knight_moves(int index, Bitboard enemy_and_empty);
