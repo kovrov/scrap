@@ -4,6 +4,16 @@
 
 typedef unsigned long long Bitboard;  // 64-bit
 
+enum COLOR { WHITE=1, BLACK };
+enum PIECE { PAWN=1, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+
+struct SquareInfo
+{
+    COLOR color;
+    PIECE piece;
+    SquareInfo(COLOR c, PIECE p): color(c), piece(p) {}
+};
+
 
 class ChessBoard
 {
@@ -12,7 +22,7 @@ public:
 	Bitboard getMoves(int index);
     int getMoveNumber() { return moves; }
     void move(int src_index, int dst_index);
-
+    SquareInfo squareInfo(int index);
 
 private:
     Bitboard white_pawns,

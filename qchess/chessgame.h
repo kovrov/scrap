@@ -5,18 +5,6 @@
 #include "chessboard.h"
 
 
-enum COLOR { WHITE=1, BLACK };
-enum PIECE { PAWN=1, KNIGHT, BISHOP, ROOK, QUEEN, KING };
-
-
-struct SquareInfo
-{
-    COLOR color;
-    PIECE piece;
-    SquareInfo(COLOR c, PIECE p): color(c), piece(p) {}
-};
-
-
 struct Turn
 {
     int turn;

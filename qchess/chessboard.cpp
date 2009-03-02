@@ -275,3 +275,47 @@ Bitboard ChessBoard::_moves_nw(int index, Bitboard enemy_and_empty)
     Bitboard blocked_moves = blocked_slide & nw_moves[index];
     return ~blocked_moves & (nw_moves[index] & enemy_and_empty);
 }
+
+
+SquareInfo ChessBoard::squareInfo(int index)
+{
+    Bitboard bit = 1LL << index;
+
+    if (white_pawns & bit)
+        return SquareInfo(WHITE, PAWN);
+
+    if (black_pawns & bit)
+        return SquareInfo(BLACK, PAWN);
+
+    if (white_knights & bit)
+        return SquareInfo(WHITE, KNIGHT);
+
+    if (black_knights & bit)
+        return SquareInfo(BLACK, KNIGHT);
+
+    if (white_bishops & bit)
+        return SquareInfo(WHITE, BISHOP);
+
+    if (black_bishops & bit)
+        return SquareInfo(BLACK, BISHOP);
+
+    if (white_rooks & bit)
+        return SquareInfo(WHITE, ROOK);
+
+    if (black_rooks & bit)
+        return SquareInfo(BLACK, ROOK);
+
+    if (white_queens & bit)
+        return SquareInfo(WHITE, QUEEN);
+
+    if (black_queens & bit)
+        return SquareInfo(BLACK, QUEEN);
+
+    if (white_kings & bit)
+        return SquareInfo(WHITE, KING);
+
+    if (black_kings & bit)
+        return SquareInfo(BLACK, KING);
+
+    return SquareInfo(COLOR(0), PIECE(0));
+}
