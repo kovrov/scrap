@@ -132,7 +132,7 @@ void ChessBoardWidget::mouseReleaseEvent(QMouseEvent *event)
 
 	int index = GetSquareIndex(rect(), event->pos());
 	if (_selection.moveBits & 1LL << index)
-		emit pieceMoveInput(_selection.squareIndex, index);
+		_game->move(_selection.squareIndex, index);
 
 	_selection.squareIndex = -1;
 	_selection.moveBits = 0LL;
