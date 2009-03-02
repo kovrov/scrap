@@ -41,21 +41,21 @@ void ChessBoard::_update(Bitboard clear_bit, Bitboard set_bit)
     // capture
     if (white & set_bit)
     {
-        white_pawns &= ~set_bit;
+		white_pawns   &= ~set_bit;
         white_knights &= ~set_bit;
         white_bishops &= ~set_bit;
-        white_rooks &= ~set_bit;
-        white_queens &= ~set_bit;
-        white_kings &= ~set_bit;
+		white_rooks   &= ~set_bit;
+		white_queens  &= ~set_bit;
+		white_kings   &= ~set_bit;
     }
     else if (black & set_bit)
     {
-        black_pawns &= ~set_bit;
+		black_pawns   &= ~set_bit;
         black_knights &= ~set_bit;
         black_bishops &= ~set_bit;
-        black_rooks &= ~set_bit;
-        black_queens &= ~set_bit;
-        black_kings &= ~set_bit;
+		black_rooks   &= ~set_bit;
+		black_queens  &= ~set_bit;
+		black_kings   &= ~set_bit;
     }
 
     // move
@@ -131,12 +131,12 @@ Bitboard ChessBoard::getMoves(int index)
     if (black_knights & bit) return   _knight_moves(index, ~occupied ^ white);
     if (white_bishops & bit) return   _bishop_moves(index, ~occupied ^ black);
     if (black_bishops & bit) return   _bishop_moves(index, ~occupied ^ white);
-    if (white_rooks & bit)   return     _rook_moves(index, ~occupied ^ black);
-    if (black_rooks & bit)   return     _rook_moves(index, ~occupied ^ white);
-    if (white_queens & bit)  return    _queen_moves(index, ~occupied ^ black);
-    if (black_queens & bit)  return    _queen_moves(index, ~occupied ^ white);
-    if (white_kings & bit)   return     _king_moves(index, ~occupied ^ black);
-    if (black_kings & bit)   return     _king_moves(index, ~occupied ^ white);
+	if (white_rooks   & bit) return     _rook_moves(index, ~occupied ^ black);
+	if (black_rooks   & bit) return     _rook_moves(index, ~occupied ^ white);
+	if (white_queens  & bit) return    _queen_moves(index, ~occupied ^ black);
+	if (black_queens  & bit) return    _queen_moves(index, ~occupied ^ white);
+	if (white_kings   & bit) return     _king_moves(index, ~occupied ^ black);
+	if (black_kings   & bit) return     _king_moves(index, ~occupied ^ white);
     return 0LL;
 }
 
