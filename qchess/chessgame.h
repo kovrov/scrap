@@ -16,7 +16,7 @@ class ChessGame
 {
 public:
 	ChessGame() {}
-	SquareInfo squareInfo(int index)  { return _board.squareInfo(index); }
+	SquareInfo getSquareInfo(int index)  { return _board.getSquareInfo(index); }
 	Turn getTurn()  { return Turn(_board.getMoveNumber(), (_board.getMoveNumber() % 2) == 0 ? WHITE : BLACK); }
 	Bitboard getPossibleMoves(int index)  { return _board.getMoves(index); }
 	void move(int src, int dst);

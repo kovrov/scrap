@@ -2,9 +2,16 @@
 #define CHESSBOARDWIDGET_H
 
 #include <QWidget>
-#include "selection.h"
+
 
 class ChessGame;
+
+struct Selection
+{
+	Selection() : squareIndex(-1), moveBits(0LL) {}
+	int squareIndex;
+	unsigned long long moveBits;
+};
 
 
 class ChessBoardWidget : public QWidget

@@ -20,42 +20,41 @@ class ChessBoard
 public:
     ChessBoard();
 	Bitboard getMoves(int index);
-    int getMoveNumber() { return moves; }
+	int getMoveNumber() { return _moves; }
     void move(int src_index, int dst_index);
-    SquareInfo squareInfo(int index);
+	SquareInfo getSquareInfo(int index);
 
 private:
-	Bitboard _white_pawns,
-			 _black_pawns,
-			 _white_knights,
-			 _black_knights,
-			 _white_bishops,
-			 _black_bishops,
-			 _white_rooks,
-			 _black_rooks,
-			 _white_queens,
-			 _black_queens,
-			 _white_kings,
-			 _black_kings;
-    Bitboard white, black, occupied, enemy;
-	int moves;
+	Bitboard _whitePawns,
+			 _blackPawns,
+			 _whiteKnights,
+			 _blackKnights,
+			 _whiteBishops,
+			 _blackBishops,
+			 _whiteRooks,
+			 _blackRooks,
+			 _whiteQueens,
+			 _blackQueens,
+			 _whiteKings,
+			 _blackKings;
+	Bitboard _white, _black, _occupied, _enemy;
+	int _moves;
     void _recalc();
-    void _update(Bitboard clear_bit, Bitboard set_bit);
-    Bitboard _white_pawn_moves(int index, Bitboard enemy_and_empty);
-    Bitboard _black_pawn_moves(int index, Bitboard enemy_and_empty);
-	Bitboard _knight_moves(    int index, Bitboard enemy_and_empty);
-	Bitboard _bishop_moves(    int index, Bitboard enemy_and_empty);
-	Bitboard _rook_moves(      int index, Bitboard enemy_and_empty);
-	Bitboard _queen_moves(     int index, Bitboard enemy_and_empty);
-	Bitboard _king_moves(      int index, Bitboard enemy_and_empty);
-	Bitboard _moves_right(     int index, Bitboard enemy_and_empty);
-	Bitboard _moves_left(      int index, Bitboard enemy_and_empty);
-	Bitboard _moves_up(        int index, Bitboard enemy_and_empty);
-	Bitboard _moves_down(      int index, Bitboard enemy_and_empty);
-	Bitboard _moves_ne(        int index, Bitboard enemy_and_empty);
-	Bitboard _moves_sw(        int index, Bitboard enemy_and_empty);
-	Bitboard _moves_se(        int index, Bitboard enemy_and_empty);
-	Bitboard _moves_nw(        int index, Bitboard enemy_and_empty);
+	Bitboard _whitePawnMoves(int index, Bitboard enemy_and_empty);
+	Bitboard _blackPawnMoves(int index, Bitboard enemy_and_empty);
+	Bitboard _knightMoves(   int index, Bitboard enemy_and_empty);
+	Bitboard _bishopMoves(   int index, Bitboard enemy_and_empty);
+	Bitboard _rookMoves(     int index, Bitboard enemy_and_empty);
+	Bitboard _queenMoves(    int index, Bitboard enemy_and_empty);
+	Bitboard _kingMoves(     int index, Bitboard enemy_and_empty);
+	Bitboard _rightMoves(    int index, Bitboard enemy_and_empty);
+	Bitboard _leftMoves(     int index, Bitboard enemy_and_empty);
+	Bitboard _upMoves(       int index, Bitboard enemy_and_empty);
+	Bitboard _downMoves(     int index, Bitboard enemy_and_empty);
+	Bitboard _neMoves(       int index, Bitboard enemy_and_empty);
+	Bitboard _swMoves(       int index, Bitboard enemy_and_empty);
+	Bitboard _seMoves(       int index, Bitboard enemy_and_empty);
+	Bitboard _nwMoves(       int index, Bitboard enemy_and_empty);
 };
 
 #endif // CHESSBOARD_H
