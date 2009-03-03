@@ -22,10 +22,10 @@ ChessBoard::ChessBoard() :
 
 void ChessBoard::_recalc()
 {
-	_white = _whitePawns | _whiteKnights | _whiteBishops | _whiteRooks | _whiteQueens | _whiteKings;
-	_black = _blackPawns | _blackKnights | _blackBishops | _blackRooks | _blackQueens | _blackKings;
-	_occupied = _white | _black;
-	_enemy = (_moves % 2) == 1 ? _white : _black;
+    _whitePieces = _whitePawns | _whiteKnights | _whiteBishops | _whiteRooks | _whiteQueens | _whiteKings;
+    _blackPieces = _blackPawns | _blackKnights | _blackBishops | _blackRooks | _blackQueens | _blackKings;
+    _occupiedSquares = _whitePieces | _blackPieces;
+    //_enemy = (_moves % 2) == 1 ? _whitePieces : _blackPieces;
     //in_check = _in_check();
 }
 
@@ -36,7 +36,7 @@ void ChessBoard::move(int src_index, int dst_index)
 	Bitboard dst_bit = 1LL << dst_index;
 
 	// capture
-	if (_white & dst_bit)
+    if (_whitePieces & dst_bit)
 	{
 		_whitePawns   &= ~dst_bit;
 		_whiteKnights &= ~dst_bit;
@@ -45,7 +45,7 @@ void ChessBoard::move(int src_index, int dst_index)
 		_whiteQueens  &= ~dst_bit;
 		_whiteKings   &= ~dst_bit;
 	}
-	else if (_black & dst_bit)
+    else if (_blackPieces & dst_bit)
 	{
 		_blackPawns   &= ~dst_bit;
 		_blackKnights &= ~dst_bit;
@@ -124,18 +124,18 @@ void ChessBoard::move(int src_index, int dst_index)
 Bitboard ChessBoard::getMoves(int index)
 {
     Bitboard bit = 1LL << index;
-	if (_whitePawns & bit) return _whitePawnMoves(index, ~_occupied ^ _black);
-	if (_blackPawns & bit) return _blackPawnMoves(index, ~_occupied ^ _white);
-	if (_whiteKnights & bit) return  _knightMoves(index, ~_occupied ^ _black);
-	if (_blackKnights & bit) return  _knightMoves(index, ~_occupied ^ _white);
-	if (_whiteBishops & bit) return  _bishopMoves(index, ~_occupied ^ _black);
-	if (_blackBishops & bit) return  _bishopMoves(index, ~_occupied ^ _white);
-	if (_whiteRooks   & bit) return    _rookMoves(index, ~_occupied ^ _black);
-	if (_blackRooks   & bit) return    _rookMoves(index, ~_occupied ^ _white);
-	if (_whiteQueens  & bit) return   _queenMoves(index, ~_occupied ^ _black);
-	if (_blackQueens  & bit) return   _queenMoves(index, ~_occupied ^ _white);
-	if (_whiteKings   & bit) return    _kingMoves(index, ~_occupied ^ _black);
-	if (_blackKings   & bit) return    _kingMoves(index, ~_occupied ^ _white);
+    if (_whitePawns & bit) return _whitePawnMoves(index, ~_occupiedSquares ^ _blackPieces);
+    if (_blackPawns & bit) return _blackPawnMoves(index, ~_occupiedSquares ^ _whitePieces);
+    if (_whiteKnights & bit) return  _knightMoves(index, ~_occupiedSquares ^ _blackPieces);
+    if (_blackKnights & bit) return  _knightMoves(index, ~_occupiedSquares ^ _whitePieces);
+    if (_whiteBishops & bit) return  _bishopMoves(index, ~_occupiedSquares ^ _blackPieces);
+    if (_blackBishops & bit) return  _bishopMoves(index, ~_occupiedSquares ^ _whitePieces);
+    if (_whiteRooks   & bit) return    _rookMoves(index, ~_occupiedSquares ^ _blackPieces);
+    if (_blackRooks   & bit) return    _rookMoves(index, ~_occupiedSquares ^ _whitePieces);
+    if (_whiteQueens  & bit) return   _queenMoves(index, ~_occupiedSquares ^ _blackPieces);
+    if (_blackQueens  & bit) return   _queenMoves(index, ~_occupiedSquares ^ _whitePieces);
+    if (_whiteKings   & bit) return    _kingMoves(index, ~_occupiedSquares ^ _blackPieces);
+    if (_blackKings   & bit) return    _kingMoves(index, ~_occupiedSquares ^ _whitePieces);
     return 0LL;
 }
 
@@ -143,14 +143,14 @@ Bitboard ChessBoard::_whitePawnMoves(int index, Bitboard enemy_and_empty)
 {
     Bitboard pos = 1LL << index;
     Bitboard captures = 0LL;
-	Bitboard pawn_moves = pos << 8 & ~_occupied;
+    Bitboard pawn_moves = pos << 8 & ~_occupiedSquares;
     if (pawn_moves && index >= 8 && index < 16)
-		pawn_moves |= pos << 16 & ~_occupied;
+        pawn_moves |= pos << 16 & ~_occupiedSquares;
     if (index % 8)
         captures = pos << 7;
     if ((index + 1) % 8)
         captures |= pos << 9;
-	captures &= enemy_and_empty & _occupied;
+    captures &= enemy_and_empty & _occupiedSquares;
     // TODO: en passant
     return pawn_moves | captures;
 }
@@ -159,14 +159,14 @@ Bitboard ChessBoard::_blackPawnMoves(int index, Bitboard enemy_and_empty)
 {
     Bitboard pos = 1LL << index;
     Bitboard captures = 0LL;
-	Bitboard pawn_moves = pos >> 8 & ~_occupied;
+    Bitboard pawn_moves = pos >> 8 & ~_occupiedSquares;
     if (pawn_moves && index >= 48 && index < 56)
-		pawn_moves |= pos >> 16 & ~_occupied;
+        pawn_moves |= pos >> 16 & ~_occupiedSquares;
     if (index % 8)
 		captures = pos >> 9;
     if ((index + 1) % 8)
 		captures |= pos >> 7;
-	captures &= enemy_and_empty & _occupied;
+    captures &= enemy_and_empty & _occupiedSquares;
 	// TODO: en passant
 	return pawn_moves | captures;
 }
@@ -213,7 +213,7 @@ Bitboard ChessBoard::_kingMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_rightMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = right_moves[index] & _occupied;
+    Bitboard blockers = right_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers<<1 | blockers<<2 | blockers<<3 | blockers<<4 | blockers<<5 | blockers<<6;
     Bitboard blocked_moves = blocked_slide & right_moves[index];
     return ~blocked_moves & (right_moves[index] & enemy_and_empty);
@@ -221,7 +221,7 @@ Bitboard ChessBoard::_rightMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_leftMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = left_moves[index] & _occupied;
+    Bitboard blockers = left_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers>>1 | blockers>>2 | blockers>>3 | blockers>>4 | blockers>>5 | blockers>>6;
     Bitboard blocked_moves = blocked_slide & left_moves[index];
     return ~blocked_moves & (left_moves[index] & enemy_and_empty);
@@ -229,7 +229,7 @@ Bitboard ChessBoard::_leftMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_upMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = up_moves[index] & _occupied;
+    Bitboard blockers = up_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers<<8 | blockers<<16 | blockers<<24 | blockers<<32 | blockers<<40 | blockers<<48;
     Bitboard blocked_moves = blocked_slide & up_moves[index];
     return ~blocked_moves & (up_moves[index] & enemy_and_empty);
@@ -237,7 +237,7 @@ Bitboard ChessBoard::_upMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_downMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = down_moves[index] & _occupied;
+    Bitboard blockers = down_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers>>8 | blockers>>16 | blockers>>24 | blockers>>32 | blockers>>40 | blockers>>48;
     Bitboard blocked_moves = blocked_slide & down_moves[index];
     return ~blocked_moves & (down_moves[index] & enemy_and_empty);
@@ -245,7 +245,7 @@ Bitboard ChessBoard::_downMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_neMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = ne_moves[index] & _occupied;
+    Bitboard blockers = ne_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers<<9 | blockers<<18 | blockers<<27 | blockers<<36 | blockers<<45 | blockers<<54;
     Bitboard blocked_moves = blocked_slide & ne_moves[index];
     return ~blocked_moves & (ne_moves[index] & enemy_and_empty);
@@ -253,7 +253,7 @@ Bitboard ChessBoard::_neMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_swMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = sw_moves[index] & _occupied;
+    Bitboard blockers = sw_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers>>9 | blockers>>18 | blockers>>27 | blockers>>36 | blockers>>45 | blockers>>54;
     Bitboard blocked_moves = blocked_slide & sw_moves[index];
     return ~blocked_moves & (sw_moves[index] & enemy_and_empty);
@@ -261,7 +261,7 @@ Bitboard ChessBoard::_swMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_seMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = se_moves[index] & _occupied;
+    Bitboard blockers = se_moves[index] & _occupiedSquares;
 	Bitboard blocked_slide = blockers>>7 | blockers>>14 | blockers>>21 | blockers>>28 | blockers>>35 | blockers>>42;
     Bitboard blocked_moves = blocked_slide & se_moves[index];
     return ~blocked_moves & (se_moves[index] & enemy_and_empty);
@@ -269,52 +269,52 @@ Bitboard ChessBoard::_seMoves(int index, Bitboard enemy_and_empty)
 
 Bitboard ChessBoard::_nwMoves(int index, Bitboard enemy_and_empty)
 {
-	Bitboard blockers = nw_moves[index] & _occupied;
+    Bitboard blockers = nw_moves[index] & _occupiedSquares;
     Bitboard blocked_slide = blockers<<7 | blockers<<14 | blockers<<21 | blockers<<28 | blockers<<35 | blockers<<42;
     Bitboard blocked_moves = blocked_slide & nw_moves[index];
     return ~blocked_moves & (nw_moves[index] & enemy_and_empty);
 }
 
 
-SquareInfo ChessBoard::getSquareInfo(int index)
+PIECE ChessBoard::getPiece(int index)
 {
     Bitboard bit = 1LL << index;
 
 	if (_whitePawns & bit)
-        return SquareInfo(WHITE, PAWN);
+        return WHITE_PAWN;
 
 	if (_blackPawns & bit)
-        return SquareInfo(BLACK, PAWN);
+        return BLACK_PAWN;
 
 	if (_whiteKnights & bit)
-        return SquareInfo(WHITE, KNIGHT);
+        return WHITE_KNIGHT;
 
 	if (_blackKnights & bit)
-        return SquareInfo(BLACK, KNIGHT);
+        return BLACK_KNIGHT;
 
 	if (_whiteBishops & bit)
-        return SquareInfo(WHITE, BISHOP);
+        return WHITE_BISHOP;
 
 	if (_blackBishops & bit)
-        return SquareInfo(BLACK, BISHOP);
+        return BLACK_BISHOP;
 
 	if (_whiteRooks & bit)
-        return SquareInfo(WHITE, ROOK);
+        return WHITE_ROOK;
 
 	if (_blackRooks & bit)
-        return SquareInfo(BLACK, ROOK);
+        return BLACK_ROOK;
 
 	if (_whiteQueens & bit)
-        return SquareInfo(WHITE, QUEEN);
+        return WHITE_QUEEN;
 
 	if (_blackQueens & bit)
-        return SquareInfo(BLACK, QUEEN);
+        return BLACK_QUEEN;
 
 	if (_whiteKings & bit)
-        return SquareInfo(WHITE, KING);
+        return WHITE_KING;
 
 	if (_blackKings & bit)
-        return SquareInfo(BLACK, KING);
+        return BLACK_KING;
 
-    return SquareInfo(COLOR(0), PIECE(0));
+    return NONE;
 }

@@ -22,6 +22,7 @@ ChessBoardWidget::ChessBoardWidget(ChessGame *game)
     _game = game;
     _hot_square = -1;
     setMouseTracking(true);
+    initDraw();
 }
 
 void ChessBoardWidget::paintEvent(QPaintEvent *event)
@@ -60,42 +61,65 @@ void ChessBoardWidget::paintEvent(QPaintEvent *event)
 
         painter.drawRect(square_rect);
 
-		SquareInfo si = _game->getSquareInfo(i);  // draw fn?
-        if (si.color != 0)
+        PIECE piece = _game->getPiece(i);
+        if (piece == NONE)
+            continue;
+
+        painter.save();
+        painter.translate(square_rect.topLeft());
+        qreal scale = board_side / 8;
+        painter.scale(scale, scale);
+
+        DrawData *dd = &cachedDrawData[piece];
+
+        painter.setBrush(dd->brush);
+        dd->pen.setWidth(dd->strokeWidth);
+        painter.setPen(dd->pen);
+        painter.drawPath(dd->path);
+
+        painter.setBrush(dd->brush2);
+        dd->pen2.setWidthF(dd->strokeWidth);
+        painter.setPen(dd->pen2);
+        painter.drawPath(dd->path2);
+        /*
+        QPen p(QColor(0x00,0x00,0x00));
+        p.setWidth(5);
+        painter.setPen(p);
+        switch (piece)
         {
-            painter.save();
-            painter.translate(square_rect.center());
-			qreal scale = board_side / 8;
-            painter.scale(scale, scale);
-
-			QPen p(QColor(0x00,0x00,0x00));
-            p.setWidth(5);
-            painter.setPen(p);
-			painter.setBrush(QBrush((si.color == WHITE) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
-            switch (si.piece)
-            {
-            case PAWN:
-                draw_pawn(&painter);
-                break;
-            case KNIGHT:
-                draw_knight(&painter);
-                break;
-            case BISHOP:
-                draw_bishop(&painter);
-                break;
-            case ROOK:
-                draw_rook(&painter);
-                break;
-            case QUEEN:
-                draw_queen(&painter);
-                break;
-            case KING:
-                draw_king(&painter);
-                break;
-            }
-
-            painter.restore();
+        case WHITE_PAWN:
+        case BLACK_PAWN:
+            painter.setBrush(QBrush((piece == WHITE_PAWN) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
+            draw_pawn(&painter);
+            break;
+        case WHITE_KNIGHT:
+        case BLACK_KNIGHT:
+            painter.setBrush(QBrush((piece == WHITE_KNIGHT) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
+            draw_knight(&painter);
+            break;
+        case WHITE_BISHOP:
+        case BLACK_BISHOP:
+            painter.setBrush(QBrush((piece == WHITE_BISHOP) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
+            draw_bishop(&painter);
+            break;
+        case WHITE_ROOK:
+        case BLACK_ROOK:
+            painter.setBrush(QBrush((piece == WHITE_ROOK) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
+            draw_rook(&painter);
+            break;
+        case WHITE_QUEEN:
+        case BLACK_QUEEN:
+            painter.setBrush(QBrush((piece == WHITE_QUEEN) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
+            draw_queen(&painter);
+            break;
+        case WHITE_KING:
+        case BLACK_KING:
+            painter.setBrush(QBrush((piece == WHITE_KING) ? QColor(0xFF,0xFF,0xFF) : QColor(0x00,0x00,0x00)));
+            draw_king(&painter);
+            break;
         }
+        */
+        painter.restore();
     }
 }
 
@@ -116,9 +140,7 @@ void ChessBoardWidget::mousePressEvent(QMouseEvent *event)
 	int index = GetSquareIndex(rect(), event->pos());
 	if (index < 0 || index > 63)
 		return;
-	SquareInfo si = _game->getSquareInfo(index);  // color?
-    Turn turn = _game->getTurn();
-	if (si.color != turn.color)
+    if (!_game->isPlayablePiece(index))
 		return;
     _selection.squareIndex = index;
     _selection.moveBits = _game->getPossibleMoves(index);

@@ -4,15 +4,9 @@
 
 typedef unsigned long long Bitboard;  // 64-bit
 
-enum COLOR { WHITE=1, BLACK };
-enum PIECE { PAWN=1, KNIGHT, BISHOP, ROOK, QUEEN, KING };
-
-struct SquareInfo
-{
-    COLOR color;
-    PIECE piece;
-    SquareInfo(COLOR c, PIECE p): color(c), piece(p) {}
-};
+enum PIECE { NONE = -1,
+             WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
+             BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING };
 
 
 class ChessBoard
@@ -22,7 +16,9 @@ public:
 	Bitboard getMoves(int index);
 	int getMoveNumber() { return _moves; }
     void move(int src_index, int dst_index);
-	SquareInfo getSquareInfo(int index);
+    PIECE getPiece(int index);
+    bool isPieceWhite(int index) { return (_whitePieces & 1LL << index) ? true : false; }
+    bool isPieceBlack(int index) { return (_blackPieces & 1LL << index) ? true : false; }
 
 private:
 	Bitboard _whitePawns,
@@ -37,7 +33,7 @@ private:
 			 _blackQueens,
 			 _whiteKings,
 			 _blackKings;
-	Bitboard _white, _black, _occupied, _enemy;
+    Bitboard _whitePieces, _blackPieces, _occupiedSquares;//, _enemy;
 	int _moves;
     void _recalc();
 	Bitboard _whitePawnMoves(int index, Bitboard enemy_and_empty);

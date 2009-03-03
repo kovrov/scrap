@@ -1,4 +1,60 @@
 
+struct DrawData
+{
+    qreal strokeWidth;
+    QPen pen;
+    QBrush brush;
+    QPainterPath path;
+    QPen pen2;
+    QBrush brush2;
+    QPainterPath path2;
+};
+
+DrawData cachedDrawData[BLACK_KING+1];
+
+void initDraw()
+{
+    cachedDrawData[BLACK_BISHOP].strokeWidth = 0.033333333;
+
+    cachedDrawData[BLACK_BISHOP].pen = QPen(QColor(0xFF,0x00,0x00));
+    cachedDrawData[BLACK_BISHOP].brush = QBrush(QColor(0x00,0x00,0x00));
+
+    cachedDrawData[BLACK_BISHOP].pen2 = QPen(QColor(0xFF,0xFF,0xFF));
+    cachedDrawData[BLACK_BISHOP].brush2 = QBrush(QColor(0x00,0x00,0x00));
+
+    QPainterPath *path = &cachedDrawData[BLACK_BISHOP].path;
+    path->moveTo(0.20, 0.80);
+    path->cubicTo(0.27522789, 0.77839269, 0.42477209, 0.8095738, 0.5, 0.75555555);
+    path->cubicTo(0.57522791, 0.8095738, 0.72477211, 0.77839269, 0.8, 0.8);
+    path->cubicTo(0.8, 0.8, 0.83657551, 0.81203349, 0.86666667, 0.84444444);
+    path->cubicTo(0.85162109, 0.86605173, 0.83009115, 0.8663592, 0.8, 0.85555556);
+    path->cubicTo(0.72477211, 0.83394827, 0.57522791, 0.86574429, 0.5, 0.83333333);
+    path->cubicTo(0.42477209, 0.86574429, 0.27522789, 0.83394827, 0.2, 0.85555556);
+    path->cubicTo(0.16990884, 0.8663592, 0.14837891, 0.86605173, 0.13333333, 0.84444444);
+    path->cubicTo(0.16342449, 0.80122984, 0.2, 0.8, 0.2, 0.8);
+    path->closeSubpath();
+    path->moveTo(0.33333333, 0.71111111);
+    path->cubicTo(0.38888888, 0.76666667, 0.61111111, 0.76666667, 0.66666667, 0.71111111);
+    path->cubicTo(0.67777778, 0.67777778, 0.66666667, 0.66666667, 0.66666667, 0.66666667);
+    path->cubicTo(0.66666667, 0.61111111, 0.61111111, 0.57777778, 0.61111111, 0.57777778);
+    path->cubicTo(0.73333333, 0.54444444, 0.74444444, 0.32222222, 0.50, 0.23333333);
+    path->cubicTo(0.25555556, 0.32222222, 0.26666667, 0.54444444, 0.38888888, 0.57777778);
+    path->cubicTo(0.38888888, 0.57777778, 0.33333333, 0.61111111, 0.33333333, 0.66666667);
+    path->cubicTo(0.33333333, 0.66666667, 0.32222222, 0.67777778, 0.33333333, 0.71111111);
+    path->closeSubpath();
+    path->addEllipse(0.44444444, 0.1111111, 0.11111112, 0.11111112);
+
+    QPainterPath *path2 = &cachedDrawData[BLACK_BISHOP].path2;
+    path2->moveTo(0.38888889, 0.57777778);
+    path2->lineTo(0.61111111, 0.57777778);
+    path2->moveTo(0.33333333, 0.66666667);
+    path2->lineTo(0.66666667, 0.66666667);
+    path2->moveTo(0.50, 0.34444444);
+    path2->lineTo(0.50, 0.45555556);
+    path2->moveTo(0.44444444, 0.40);
+    path2->lineTo(0.55555556, 0.40);
+}
+
 void draw_pawn(QPainter *painter)
 {
     painter->save();

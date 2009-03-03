@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <QMainWindow>
-#include <QObject>
 #include "chessboardwidget.h"
 #include "chessgame.h"
 

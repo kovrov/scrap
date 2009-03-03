@@ -4,22 +4,20 @@
 #include "chessboard.h"
 
 
-struct Turn
-{
-    int turn;
-    COLOR color;
-    Turn(int t, COLOR c) : turn(t), color(c) {}
-};
-
-
 class ChessGame
 {
 public:
 	ChessGame() {}
-	SquareInfo getSquareInfo(int index)  { return _board.getSquareInfo(index); }
-	Turn getTurn()  { return Turn(_board.getMoveNumber(), (_board.getMoveNumber() % 2) == 0 ? WHITE : BLACK); }
+    PIECE getPiece(int index)  { return _board.getPiece(index); }
 	Bitboard getPossibleMoves(int index)  { return _board.getMoves(index); }
-	void move(int src, int dst);
+    bool isPlayablePiece(int index)
+    {
+        if (_board.getMoveNumber() % 2 == 0)  // WHITE
+            return _board.isPieceWhite(index);
+        else  // BLACK
+            return _board.isPieceBlack(index);
+    }
+    void move(int src, int dst);
 
 private:
     ChessBoard _board;
