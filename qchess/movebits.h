@@ -1,9 +1,10 @@
+// basic moves bit-tables
+
 #ifndef MOVEBITS_H
 #define MOVEBITS_H
 
 typedef unsigned long long Bitboard;
 
-// basic moves bit-tables
 const Bitboard left_moves[] = {
     0x0000000000000000LL, 0x0000000000000001LL, 0x0000000000000003LL, 0x0000000000000007LL,
     0x000000000000000FLL, 0x000000000000001FLL, 0x000000000000003FLL, 0x000000000000007FLL,
