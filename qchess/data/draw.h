@@ -231,4 +231,53 @@ void initDraw()
 	cachedDrawData[BLACK_ROOK].pen2 = QPen(QColor(0xFF,0xFF,0xFF), 0.03);
 	cachedDrawData[BLACK_ROOK].pen2.setCapStyle(Qt::RoundCap);
 	cachedDrawData[BLACK_ROOK].path2 = cachedDrawData[WHITE_ROOK].path2;
+
+	//
+	cachedDrawData[WHITE_KING].pen = QPen(QColor(0x00,0x00,0x00), 0.03);
+	cachedDrawData[WHITE_KING].brush = QBrush(QColor(0xFF,0xFF,0xFF));
+	path = &cachedDrawData[WHITE_KING].path;
+	path->moveTo(22.5/45.0, 11.625/45.0);
+	path->lineTo(22.5/45.0, 6.0/45.0);
+	path->moveTo(22.5/45.0, 25.0/45.0);
+	path->cubicTo(22.5/45.0, 25.0/45.0, 27.0/45.0, 17.5/45.0, 25.5/45.0, 14.5/45.0);
+	path->cubicTo(25.5/45.0, 14.5/45.0, 24.5/45.0, 12.0/45.0, 22.5/45.0, 12.0/45.0);
+	path->cubicTo(20.5/45.0, 12.0/45.0, 19.5/45.0, 14.5/45.0, 19.5/45.0, 14.5/45.0);
+	path->cubicTo(18.0/45.0, 17.5/45.0, 22.5/45.0, 25.0/45.0, 22.5/45.0, 25.0/45.0);
+	path->moveTo(11.5/45.0, 37.0/45.0);
+	path->cubicTo(17.0/45.0, 40.5/45.0, 27.0/45.0, 40.5/45.0, 32.5/45.0, 37.0/45.0);
+	path->lineTo(32.5/45.0, 30.0/45.0);
+	path->cubicTo(32.5/45.0, 30.0/45.0, 41.5/45.0, 25.5/45.0, 38.5/45.0, 19.5/45.0);
+	path->cubicTo(34.5/45.0, 13.0/45.0, 25.0/45.0, 16.0/45.0, 22.5/45.0, 23.5/45.0);
+	path->lineTo(22.5/45.0, 27.0/45.0);
+	path->lineTo(22.5/45.0, 23.5/45.0);
+	path->cubicTo(19.0/45.0, 16.0/45.0, 9.5/45.0, 13.0/45.0, 6.5/45.0, 19.5/45.0);
+	path->cubicTo(3.5/45.0, 25.5/45.0, 11.5/45.0, 29.5/45.0, 11.5/45.0, 29.5/45.0);
+	path->lineTo(11.5/45.0, 37.0/45.0);
+	path->closeSubpath();
+	path->moveTo(20.0/45.0, 8.0/45.0);
+	path->lineTo(25.0/45.0, 8.0/45.0);
+	cachedDrawData[WHITE_KING].pen2 = QPen(QColor(0x00,0x00,0x00), 0.03);
+	path = &cachedDrawData[WHITE_KING].path2;
+	path->moveTo(11.5/45.0, 29.5/45.0);
+	path->cubicTo(17.0/45.0, 27.0/45.0, 27.0/45.0, 27.0/45.0, 32.5/45.0, 30.0/45.0);
+	path->moveTo(11.5/45.0, 37.0/45.0);
+	path->cubicTo(17.0/45.0, 34.5/45.0, 27.0/45.0, 34.5/45.0, 32.5/45.0, 37.0/45.0);
+	path->moveTo(11.5/45.0, 33.5/45.0);
+	path->cubicTo(17.0/45.0, 31.5/45.0, 27.0/45.0, 31.5/45.0, 32.5/45.0, 33.5/45.0);
+
+	//
+	cachedDrawData[BLACK_KING].pen = QPen(QColor(0x00,0x00,0x00), 0.03);
+	cachedDrawData[BLACK_KING].brush = QBrush(QColor(0x00,0x00,0x00));
+	cachedDrawData[BLACK_KING].path = cachedDrawData[WHITE_KING].path;
+	cachedDrawData[BLACK_KING].pen2 = QPen(QColor(0xFF,0xFF,0xFF), 0.03);
+	cachedDrawData[BLACK_KING].pen2.setCapStyle(Qt::RoundCap);
+	cachedDrawData[BLACK_KING].path2 = cachedDrawData[WHITE_KING].path2;
+	path = &cachedDrawData[BLACK_KING].path2;
+	path->moveTo(32.0/45.0, 29.5/45.0);
+	path->cubicTo(32.0/45.0, 29.5/45.0, 40.5/45.0, 25.5/45.0, 38.025969/45.0, 19.846552/45.0);
+	path->cubicTo(34.147406/45.0, 13.996552/45.0, 25.0/45.0, 18.0/45.0, 22.5/45.0, 24.5/45.0);
+	path->lineTo(22.511718/45.0, 26.596552/45.0);
+	path->lineTo(22.5/45.0, 24.5/45.0);
+	path->cubicTo(20.0/45.0, 18.0/45.0, 9.9063892/45.0, 13.996552/45.0, 6.9974672/45.0, 19.846552/45.0);
+	path->cubicTo(4.5/45.0, 25.5/45.0, 11.845671/45.0, 28.846552/45.0, 11.845671/45.0, 28.846552/45.0);
 }
