@@ -186,50 +186,49 @@ void initDraw()
     cachedDrawData[WHITE_ROOK].pen = QPen(QColor(0x00,0x00,0x00), 0.03);
     cachedDrawData[WHITE_ROOK].brush = QBrush(QColor(0xFF,0xFF,0xFF));
     path = &cachedDrawData[WHITE_ROOK].path;
-// top
-    path->moveTo(11.0/45.0, 14.0/45.0);
+	path->moveTo(11.0/45.0, 14.0/45.0);
     path->lineTo(11.0/45.0, 9.0/45.0);
     path->lineTo(15.0/45.0, 9.0/45.0);
-    path->lineTo(15.0/45.0, 11.0/45.0);
-    path->lineTo(20.0/45.0, 11.0/45.0);
-    path->lineTo(20.0/45.0, 9.0/45.0);
-    path->lineTo(25.0/45.0, 9.0/45.0);
-    path->lineTo(25.0/45.0, 11.0/45.0);
-    path->lineTo(30.0/45.0, 11.0/45.0);
-    path->lineTo(30.0/45.0, 9.0/45.0);
-    path->lineTo(34.0/45.0, 9.0/45.0);
-    path->lineTo(34.0/45.0, 14.0/45.0);
-    path->closeSubpath();
-// top -1
-    path->moveTo(34.0/45.0, 14.0/45.0);
-    path->lineTo(31.0/45.0, 17.0/45.0);
-    path->lineTo(14.0/45.0, 17.0/45.0);
-    path->lineTo(11.0/45.0, 14.0/45.0);
-// middle
-    path->moveTo(31.0/45.0, 17.0/45.0);
+	path->lineTo(15.0/45.0, 11.0/45.0);
+	path->lineTo(20.0/45.0, 11.0/45.0);
+	path->lineTo(20.0/45.0, 9.0/45.0);
+	path->lineTo(25.0/45.0, 9.0/45.0);
+	path->lineTo(25.0/45.0, 11.0/45.0);
+	path->lineTo(30.0/45.0, 11.0/45.0);
+	path->lineTo(30.0/45.0, 9.0/45.0);
+	path->lineTo(34.0/45.0, 9.0/45.0);
+	path->lineTo(34.0/45.0, 14.0/45.0);
+	path->lineTo(31.0/45.0, 17.0/45.0);
     path->lineTo(31.0/45.0, 29.5/45.0);
-    path->lineTo(14.0/45.0, 29.5/45.0);
-    path->lineTo(14.0/45.0, 17.0/45.0);
-// ?
-    path->moveTo(31.0/45.0, 29.5/45.0);
-    path->lineTo(32.5/45.0, 32.0/45.0);
-    path->lineTo(12.5/45.0, 32.0/45.0);
-    path->lineTo(14.0/45.0, 29.5/45.0);
-// bottom +1
-    path->moveTo(12.0/45.0, 36.0/45.0);
-    path->lineTo(12.0/45.0, 32.0/45.0);
-    path->lineTo(33.0/45.0, 32.0/45.0);
-    path->lineTo(33.0/45.0, 36.0/45.0);
-    path->lineTo(12.0/45.0, 36.0/45.0);
-    path->closeSubpath();
-// bottom
-    path->moveTo(9.0/45.0, 39.0/45.0);
-    path->lineTo(36.0/45.0, 39.0/45.0);
+	path->lineTo(32.5/45.0, 32.0/45.0);
+	path->lineTo(33.0/45.0, 36.0/45.0);
     path->lineTo(36.0/45.0, 36.0/45.0);
-    path->lineTo(9.0/45.0, 36.0/45.0);
-    path->lineTo(9.0/45.0, 39.0/45.0);
-    path->closeSubpath();
+	path->lineTo(36.0/45.0, 39.0/45.0);
+	path->lineTo(9.0/45.0, 39.0/45.0);
+	path->lineTo(9.0/45.0, 36.0/45.0);
+	path->lineTo(12.0/45.0, 36.0/45.0);
+	path->lineTo(12.0/45.0, 32.0/45.0);
+	path->lineTo(14.0/45.0, 29.5/45.0);
+	path->lineTo(14.0/45.0, 17.0/45.0);
+	path->closeSubpath();
+	cachedDrawData[WHITE_ROOK].pen2 = QPen(QColor(0x00,0x00,0x00), 0.03);
+	path = &cachedDrawData[WHITE_ROOK].path2;
+	path->moveTo(11.0/45.0, 14.0/45.0);
+	path->lineTo(34.0/45.0, 14.0/45.0);
+	path->moveTo(31.0/45.0, 17.0/45.0);
+	path->lineTo(14.0/45.0, 17.0/45.0);
+	path->moveTo(31.0/45.0, 29.5/45.0);
+	path->lineTo(14.0/45.0, 29.5/45.0);
+	path->moveTo(32.5/45.0, 32.0/45.0);
+	path->lineTo(12.0/45.0, 32.0/45.0);
+	path->moveTo(33.0/45.0, 36.0/45.0);
+	path->lineTo(12.0/45.0, 36.0/45.0);
 
-    //cachedDrawData[WHITE_ROOK].pen2 = QPen(QColor(0xFF,0x00,0x00), 0.03);
-    //path = &cachedDrawData[WHITE_ROOK].path2;
+	//
+	cachedDrawData[BLACK_ROOK].pen = QPen(QColor(0x00,0x00,0x00), 0.03);
+	cachedDrawData[BLACK_ROOK].brush = QBrush(QColor(0x00,0x00,0x00));
+	cachedDrawData[BLACK_ROOK].path = cachedDrawData[WHITE_ROOK].path;
+	cachedDrawData[BLACK_ROOK].pen2 = QPen(QColor(0xFF,0xFF,0xFF), 0.03);
+	cachedDrawData[BLACK_ROOK].pen2.setCapStyle(Qt::RoundCap);
+	cachedDrawData[BLACK_ROOK].path2 = cachedDrawData[WHITE_ROOK].path2;
 }
