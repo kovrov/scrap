@@ -105,14 +105,14 @@ class TargetNode(alias PAINT_INTERFACE)
 		this.name = name;
 	}
 
-	Point position_abs()
+	Point position_abs() const
 	{
-		auto abs_pos = this._rect.position;
-		auto parent = this.nested ? this.parent : null;
-		while (parent)
+		Point abs_pos = this._rect.position;
+		const(TargetNode)* parent = this.nested ? &this.parent : null;
+		while (parent !is null && *parent !is null)
 		{
 			abs_pos += parent._rect.position;
-			parent = parent.nested ? parent.parent : null;
+			parent = parent.nested ? &parent.parent : null;
 		}
 		return abs_pos;
 	}
@@ -372,9 +372,15 @@ T findControl(T)(T root, const ref Point point)
 {
 	foreach (ref node; root)
 	{
-		auto translated_point = (!node.nested || node.parent is null) ?
-				point :
-				point - node.parent.position_abs();
+		Point translated_point = point;
+		if ((node.nested && node.parent !is null))
+		{
+			auto position_abs = node.parent.position_abs();
+			translated_point = point - position_abs;
+		}
+		//Point translated_point = (!node.nested || node.parent is null) ?
+		//		point :
+		//		point - node.parent.position_abs();
 		if (node._rect.contains(translated_point))
 			return node;
 	}

@@ -1,10 +1,10 @@
 struct Point(T)
 {
 	T x, y;
-	typeof(this) opAdd(/*const*/ ref typeof(this) other) const { return typeof(this)(x + other.x, y + other.y); }
-	typeof(this) opSub(/*const*/ ref typeof(this) other) const { return typeof(this)(x - other.x, y - other.y); }
-	void opAddAssign(/*const*/ ref typeof(this) other)               { x += other.x; y += other.y; }
-	void opSubAssign(/*const*/ ref typeof(this) other)               { x -= other.x; y -= other.y; }
+	typeof(this) opAdd(const ref typeof(this) other) const { return typeof(this)(x + other.x, y + other.y); }
+	typeof(this) opSub(const ref typeof(this) other) const { return typeof(this)(x - other.x, y - other.y); }
+	void opAddAssign(const ref typeof(this) other)               { x += other.x; y += other.y; }
+	void opSubAssign(const ref typeof(this) other)               { x -= other.x; y -= other.y; }
 }
 
 struct Size(T) { T width, height; }
