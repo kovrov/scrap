@@ -7,6 +7,7 @@
    * mouse state / API (capture, etc.)
 */
 
+import std.typecons;
 static import sys;
 static import tree;
 static import generic;
@@ -108,11 +109,11 @@ class TargetNode(alias PAINT_INTERFACE)
 	Point position_abs() const
 	{
 		Point abs_pos = this._rect.position;
-		const(TargetNode)* parent = this.nested ? &this.parent : null;
-		while (parent !is null && *parent !is null)
+		auto parent = Rebindable!(const TargetNode)(this.nested ? this.parent : null);
+		while (parent.opDot !is null)
 		{
 			abs_pos += parent._rect.position;
-			parent = parent.nested ? &parent.parent : null;
+			parent = parent.nested ? parent.parent : null;
 		}
 		return abs_pos;
 	}
