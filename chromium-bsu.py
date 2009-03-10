@@ -1,101 +1,67 @@
 
-def draw():
-	""" declarations """
-	Global	*game = Global::getInstance()
-	Uint32 start_time	= 0
-	int done = 0
-	int frames = 0
+def mainGL():
 	# enter main loop...
-	start_time = SDL_GetTicks()
+	done = False
 	while not done:
-		SDL_Event event
-		update_game() # me: refactoring in progress
-		# Draw our scene...
-		game.mainGL.drawGL()
-		SDL_GL_SwapBuffers( )
-		# Delay
-		SDL_Delay( 32-(int)(24.0*game.gameSpeed) )
-		""" Check if there's a pending event. """
+		# Check if there's a pending event
 		while SDL_PollEvent(&event):
 			done = self.process(&event)
 		self.joystickMove()
-		frames += 1
-		game.frame += 1
+		# game logic
+		update_game()
+		# draw logic
+		draw_game()
+		SDL_GL_SwapBuffers( )
 		WTF()
-	fflush(stdout)
 	# Delete game objects
-	game.deleteGame()
 	# Destroy our GL context, etc.
-	fprintf(stderr, "exit.\n")
-	SDL_Quit()
-	return false
 
 
 
-def MainGL::drawGL():
-	switch game->gameMode:
-		case Global::Game:
-			drawGameGL();
-			break;
-		case Global::HeroDead:
-			drawDeadGL();
-			break;
-		case Global::LevelOver:
-			drawSuccessGL();
-			break;
-		case Global::Menu:
-			game->menu->drawGL();
-			break;
-		default:
-			fprintf(stderr, "!!MainGL::drawGL() HUH?\n");
-			break;
-
-
-
-def MainGL::drawGameGL():
-	Config *config = Config::instance()
+def draw_game(self):
+	config = Config()
 	# Clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 	# Place camera
 	glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 	# Draw background
-	game.ground.drawGL()  # draw/update
+	self.ground_drawGL()  # draw/update
 	# Draw actors
-	game.enemyFleet.drawGL()
-	game.hero.drawGL()
+	self.enemyFleet_drawGL()
+	self.hero_drawGL()
 	if config.gfxLevel() > 0:
-		game.statusDisplay.darkenGL()
+		self.statusDisplay_darkenGL()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-	game.powerUps.drawGL()
+	self.powerUps_drawGL()
 	# Draw ammo
-	game.heroAmmo.drawGL()
-	game.enemyAmmo.drawGL()
+	self.heroAmmo_drawGL()
+	self.enemyAmmo.draw()
 	# Draw explosions
-	game.explosions.drawGL()
+	self.explosions_drawGL()
 	# Draw stats
-	game.statusDisplay.drawGL(game.hero)
+	self.statusDisplay_drawGL(game.hero)
 
 
 
-def update_game():
-	if not game.game_pause:
+def update_game(self):
+	if not self.game_pause:
 		# Add items to scene
-		game.itemAdd.putScreenItems()
+		put_screen_items()
 		# Update scene
-		game.enemyFleet.update()
-		game.powerUps.update()
-		game.heroAmmo.updateAmmo()
-		game.enemyAmmo.updateAmmo()
-		game.heroAmmo.checkForHits(game.enemyFleet)
-		if game.gameMode == Global::Game:
-			game.enemyAmmo.checkForHits(game.hero)
-			game.hero.checkForCollisions(game.enemyFleet)
-			game.hero.checkForPowerUps(game.powerUps)
-		game.explosions.update()
-		game.audio.update()
-		game.hero.update()
-		game.gameFrame++
+		self.enemyFleet_update()
+		self.powerUps_update()
+		self.heroAmmo_updateAmmo()
+		self.enemyAmmo.update()
+		self.heroAmmo_checkForHits(game.enemyFleet)
+		if self.gameMode == Global::Game:
+			self.enemyAmmo.checkForHits(game.hero)
+			self.hero_checkForCollisions(game.enemyFleet)
+			self.hero_checkForPowerUps(game.powerUps)
+		self.explosions_update()
+		#self.audio.update()
+		self.hero_update()
+		self.gameFrame++
 
 
 
@@ -136,7 +102,7 @@ def WTF():
 
 def process(SDL_Event *event):
 	Global	*game = Global::getInstance()
-	switch (event.type) 
+	switch (event.type)
 	    case SDL_ACTIVEEVENT:
 			activation(event)
 			break
@@ -167,9 +133,11 @@ def process(SDL_Event *event):
 			break
 	return game.game_quit
 
-#-------------------------------------------------------------------------------
 
-def ScreenItemAdd::putScreenItems()
+#-update------------------------------------------------------------------------
+
+
+def put_screen_items(): # ScreenItemAdd
 	ItemThing *curItem = root->next;
 	while curItem:
 		if curItem->releaseTime <= game->gameFrame:
@@ -188,21 +156,22 @@ def ScreenItemAdd::putScreenItems()
 		else:
 			curItem = 0;
 
-void	EnemyFleet::update()
-{
+
+
+def enemyFleet_update(): # EnemyFleet
 	EnemyAircraft	*thisEnemy;
 	EnemyAircraft	*backEnemy;
 	EnemyAircraft	*nextEnemy;
-	//-- clean up enemies
+	#-- clean up enemies
 	thisEnemy = squadRoot->next;
-	
+
 	while(thisEnemy)
 	{
 		thisEnemy->update();
 		float p[3] = { thisEnemy->pos[0], thisEnemy->pos[1], thisEnemy->pos[2] };
-		
-		//-------------- Add some damage explosions to the bosses so 
-		//               we know when they're hurting...
+
+		#-------------- Add some damage explosions to the bosses so
+		#               we know when they're hurting...
 		if((int)thisEnemy->type >= (int)EnemyBoss00)
 		{
 			float s[2] = { thisEnemy->size[0]*0.7, thisEnemy->size[1]*0.7 };
@@ -231,48 +200,47 @@ void	EnemyFleet::update()
 					game->explosions->addExplo(Explosions::EnemyDamage, p, 0, 1.0);
 				}
 		}
-		//-------------- Delete enemies that got through...
-		
-//		if( thisEnemy->pos[1] < -12.0 ) 
-		if( thisEnemy->pos[1] < -8.0 && thisEnemy->type != EnemyGnat) 
+		#-------------- Delete enemies that got through...
+
+		if( thisEnemy->pos[1] < -8.0 && thisEnemy->type != EnemyGnat)
 			game->statusDisplay->enemyWarning( 1.0-((thisEnemy->pos[1]+14.0)/6.0) );
-		if( thisEnemy->pos[1] < -14.0 ) 
+		if( thisEnemy->pos[1] < -14.0 )
 		{
 			thisEnemy->damage = 1;
 			thisEnemy->age = 0;
 			game->hero->loseLife();
 			game->tipShipPast++;
 		}
-		
-		//-------------- If enemies are critically damaged, destroy them...
+
+		#-------------- If enemies are critically damaged, destroy them...
 		if( thisEnemy->damage > 0 )
 		{
-			
+
 			backEnemy = thisEnemy->back;
 			nextEnemy = thisEnemy->next;
 			backEnemy->next = nextEnemy;
 			if(nextEnemy)
 				nextEnemy->back = backEnemy;
-			
-			if(	thisEnemy->age ) //-- set age to 0 for silent deletion...
+
+			if(	thisEnemy->age ) #-- set age to 0 for silent deletion...
 			{
 				switch(thisEnemy->type)
 				{
-					case EnemyBoss01: //-- BIG explosion for the Boss...
-					case EnemyBoss00: //-- BIG explosion for the Boss...
-						//-- now for the BIG one...
+					case EnemyBoss01: #-- BIG explosion for the Boss...
+					case EnemyBoss00: #-- BIG explosion for the Boss...
+						#-- now for the BIG one...
 						destroyAll();
 						bossExplosion(thisEnemy);
-						
+
 						if( game->gameMode != Global::HeroDead )
 						{
-							//--*** TRIGGER END OF LEVEL ***--//
+							#--*** TRIGGER END OF LEVEL ***--#
 							game->hero->addScore(5000.0);
 							game->gameMode = Global::LevelOver;
 							game->heroSuccess = 0;
 						}
 						break;
-					case EnemyOmni:	
+					case EnemyOmni:
 						game->hero->addScore(25.0);
 						game->explosions->addExplo(Explosions::EnemyDamage, thisEnemy->pos);
 						game->explosions->addExplo(Explosions::EnemyDamage, thisEnemy->pos, -3, 0.7);
@@ -314,12 +282,12 @@ void	EnemyFleet::update()
 						game->audio->playSound(Audio::Explosion, thisEnemy->pos);
 						game->audio->playSound(Audio::ExploBig, thisEnemy->pos);
 						break;
-					case EnemyGnat:	
+					case EnemyGnat:
 						game->hero->addScore(10.0);
 						game->explosions->addExplo(Explosions::EnemyAmmo04, thisEnemy->pos);
 						game->audio->playSound(Audio::ExploPop, thisEnemy->pos);
 						break;
-					default:	//-- Add extra Damage explosion delayed for nice bloom
+					default:	#-- Add extra Damage explosion delayed for nice bloom
 						game->hero->addScore(75.0);
 						game->explosions->addExplo(Explosions::EnemyDestroyed, thisEnemy->pos);
 						game->explosions->addExplo(Explosions::EnemyDamage, thisEnemy->pos, -15);
@@ -327,18 +295,17 @@ void	EnemyFleet::update()
 						break;
 				}
 			}
-			
+
 			killEnemy(thisEnemy);
-			
+
 			thisEnemy = backEnemy;
 		}
 		thisEnemy = thisEnemy->next;
 	}
-}
 
 
-void PowerUps::update()
-{
+
+def powerUps_update(): # PowerUps
 	Config	*config = Config::instance();
 
 	PowerUp	*pwrUp;
@@ -363,7 +330,7 @@ void PowerUps::update()
 			pwrUp->pos[0] = -b;
 		if(pwrUp->pos[0] >  b)
 			pwrUp->pos[0] =  b;
-			
+
 		if(pwrUp->pos[1] < -12)
 		{
 			if(game->gameMode == Global::Game)
@@ -390,23 +357,21 @@ void PowerUps::update()
 			pwrUp = pwrUp->next;
 		}
 	}
-}
 
 
 
-void HeroAmmo::updateAmmo()
-{
+def heroAmmo_updateAmmo(): # HeroAmmo
 	Config *config = Config::instance();
 	int i;
 	ActiveAmmo *thisAmmo;
-	
+
 	for(i = 0; i < NUM_HERO_AMMO_TYPES; i++)
 	{
 		thisAmmo = ammoRoot[i]->next;
 		while(thisAmmo)
 		{
-			//-- clean up ammo
-			if(thisAmmo->pos[1] > config->screenBoundY()) // remove ammo
+			#-- clean up ammo
+			if(thisAmmo->pos[1] > config->screenBoundY()) # remove ammo
 			{
 				ActiveAmmo *backAmmo = thisAmmo->back;
 				ActiveAmmo *nextAmmo = thisAmmo->next;
@@ -414,68 +379,30 @@ void HeroAmmo::updateAmmo()
 				if(nextAmmo)
 					 nextAmmo->back = backAmmo;
 				killAmmo(thisAmmo);
-				thisAmmo = nextAmmo; //ADVANCE
+				thisAmmo = nextAmmo; #ADVANCE
 			}
 			else
 			{
 				thisAmmo->updatePos();
-				thisAmmo = thisAmmo->next; //ADVANCE
+				thisAmmo = thisAmmo->next; #ADVANCE
 			}
 		}
 	}
-}
 
 
 
-void EnemyAmmo::updateAmmo()
-{
-	Config *config = Config::instance();
-	int i;
-	ActiveAmmo *thisAmmo;
-	
-	for(i = 0; i < NUM_ENEMY_AMMO_TYPES; i++)
-	{
-		thisAmmo = ammoRoot[i]->next;
-		while(thisAmmo)
-		{
-			//-- clean up ammo
-			if(	thisAmmo->pos[0] >  config->screenBoundX() ||
-				thisAmmo->pos[0] < -config->screenBoundX() ||
-				thisAmmo->pos[1] >  config->screenBoundY() ||
-				thisAmmo->pos[1] < -config->screenBoundY() ) // remove ammo
-			{
-				ActiveAmmo *backAmmo = thisAmmo->back;
-				ActiveAmmo *nextAmmo = thisAmmo->next;
-				backAmmo->next = nextAmmo;
-				if(nextAmmo)
-					 nextAmmo->back = backAmmo;
-				killAmmo(thisAmmo);
-				thisAmmo = nextAmmo; //ADVANCE
-			}
-			else
-			{
-				thisAmmo->updatePos();
-				thisAmmo = thisAmmo->next; //ADVANCE
-			}
-		}
-	}
-}
-
-
-
-void HeroAmmo::checkForHits(EnemyFleet *fleet)
-{
+def heroAmmo_checkForHits(EnemyFleet *fleet): # HeroAmmo
 	int		i;
 	float	minShipY = 100.0;
 	ActiveAmmo		*thisAmmo;
 	ActiveAmmo		*backAmmo;
 	ActiveAmmo		*nextAmmo;
 	EnemyAircraft	*enemy;
-	
-	//-- Get minimum ship Y location so we can ignore some of the ammunition
+
+	#-- Get minimum ship Y location so we can ignore some of the ammunition
 	fleet->toFirst();
 	enemy = fleet->getShip();
-	if(!enemy) //-- no ships - return immediately
+	if(!enemy) #-- no ships - return immediately
 		return;
 	while(enemy)
 	{
@@ -483,8 +410,8 @@ void HeroAmmo::checkForHits(EnemyFleet *fleet)
 			minShipY = enemy->pos[1]-3.0;
 		enemy = fleet->getShip();
 	}
-	
-	//-- Go through all the ammunition and check for hits
+
+	#-- Go through all the ammunition and check for hits
 	for(i = 0; i < NUM_HERO_AMMO_TYPES; i++)
 	{
 		thisAmmo = ammoRoot[i]->next;
@@ -501,16 +428,16 @@ void HeroAmmo::checkForHits(EnemyFleet *fleet)
 			{
 				if(enemy->checkHit(thisAmmo) == true)
 				{
-					//do damage
+					#do damage
 					if(i == 1)
 						enemy->damage += ammoDamage[i]*game->speedAdj;
 					else
 						enemy->damage += ammoDamage[i];
-					
-					//add explosion
-					game->explosions->addExplo((Explosions::ExploType)(Explosions::HeroAmmo00+i), thisAmmo->pos);					
 
-					if(i != 1) // ammo type 1 doesn't get killed
+					#add explosion
+					game->explosions->addExplo((Explosions::ExploType)(Explosions::HeroAmmo00+i), thisAmmo->pos);
+
+					if(i != 1) # ammo type 1 doesn't get killed
 					{
 						backAmmo = thisAmmo->back;
 						nextAmmo = thisAmmo->next;
@@ -519,7 +446,7 @@ void HeroAmmo::checkForHits(EnemyFleet *fleet)
 							 nextAmmo->back = backAmmo;
 						killAmmo(thisAmmo);
 						thisAmmo = backAmmo;
-						enemy = 0; //-- break out of enemy loop
+						enemy = 0; #-- break out of enemy loop
 					}
 					else
 						enemy = fleet->getShip();
@@ -530,71 +457,17 @@ void HeroAmmo::checkForHits(EnemyFleet *fleet)
 			thisAmmo = thisAmmo->next;
 		}
 	}
-}
 
 
 
-void EnemyAmmo::checkForHits(HeroAircraft *hero)
-{
-	int		i;
-	ActiveAmmo		*thisAmmo;
-	ActiveAmmo		*backAmmo;
-	ActiveAmmo		*nextAmmo;
-	float	minDist;
-	float	dist;
-	float	*p;
-	
-	minDist = (hero->getSize(0)+hero->getSize(1))*0.5;
-	
-	if(!hero->isVisible())
-		return;
-	//-- Go through all the ammunition and check for hits
-	for(i = 0; i < NUM_ENEMY_AMMO_TYPES; i++)
-	{
-		thisAmmo = ammoRoot[i]->next;
-		while(thisAmmo)
-		{
-			p = thisAmmo->pos;
-			dist = fabs(p[0]-hero->pos[0]) + fabs(p[1]-hero->pos[1]);	
-			if(dist < minDist)
-			{
-				Explo *explo;
-				//do damage
-//				hero->doDamage(ammoDamage[i]);
-				hero->ammoDamage(ammoDamage[i], thisAmmo->vel);
-				//add explosion
-				explo = game->explosions->addExplo((Explosions::ExploType)(Explosions::EnemyAmmo00+i), thisAmmo->pos);
-				if(i > 1)	// add second explosion for the bug guns...		
-					explo = game->explosions->addExplo((Explosions::ExploType)(Explosions::EnemyAmmo00+i), thisAmmo->pos, -5);
-				else
-					if(explo) 
-						explo->vel[1] = -0.1;
-				
-
-				backAmmo = thisAmmo->back;
-				nextAmmo = thisAmmo->next;
-				backAmmo->next = nextAmmo;
-				if(nextAmmo)
-					 nextAmmo->back = backAmmo;
-				killAmmo(thisAmmo);
-				thisAmmo = backAmmo;
-			}
-			thisAmmo = thisAmmo->next;
-		}
-	}
-}
-
-
-
-void HeroAircraft::checkForCollisions(EnemyFleet *fleet)
-{
+def hero_checkForCollisions(EnemyFleet *fleet): # HeroAircraft
 	float	p[3];
 	float	r1,r2;
 	float	diffX, diffY;
 	float	dist;
 	float	power;
 	EnemyAircraft *enemy;
-	
+
 	fleet->toFirst();
 	while( (enemy = fleet->getShip()) )
 	{
@@ -603,20 +476,20 @@ void HeroAircraft::checkForCollisions(EnemyFleet *fleet)
 		dist = fabs(diffX) + fabs(diffY);
 		if(!dontShow && dist < enemy->size[0]+size[0])
 		{
-			//-- damage
+			#-- damage
 			power = -enemy->damage*0.5;
 			if(power > 35.0)
 				power = 35.0;
 			doDamage(power);
 			if(shields > HERO_SHIELDS)
 			{
-				power*=0.5;	// reduce secondary movement when super shields are enabled
+				power*=0.5;	# reduce secondary movement when super shields are enabled
 				enemy->damage += 70.0;
 			}
 			else
-				enemy->damage += 40.0; // normal collision
-				
-			//-- explosions
+				enemy->damage += 40.0; # normal collision
+
+			#-- explosions
 			r1 = SRAND*0.3;
 			r2 = SRAND*0.4;
 			p[0] = enemy->pos[0]+r1;
@@ -630,19 +503,19 @@ void HeroAircraft::checkForCollisions(EnemyFleet *fleet)
 				game->explosions->addExplo(Explosions::HeroShields, p);
 			else
 				game->explosions->addExplo(Explosions::HeroDamage, p);
-			
+
 			secondaryMove[0] =  diffX*power*0.03;
 			secondaryMove[1] =  diffY*power*0.03;
 			enemy->secondaryMove[0] -= diffX* enemy->collisionMove;
 			enemy->secondaryMove[1] -= diffY*(enemy->collisionMove*0.5);
-			
+
 		}
 		if(superBomb)
 		{
 			diffX = -enemy->pos[0];
 			diffY = -15.0-enemy->pos[1];
 			float dist = sqrt(diffX*diffX + diffY*diffY);
-			if( (dist < superBomb*0.1 && enemy->type < EnemyBoss00) || 
+			if( (dist < superBomb*0.1 && enemy->type < EnemyBoss00) ||
 				(enemy->pos[1] < -11.0) )
 			{
 				enemy->damage += 5000.0;
@@ -653,25 +526,23 @@ void HeroAircraft::checkForCollisions(EnemyFleet *fleet)
 	}
 	if(superBomb)
 		superBomb += 2;
-}
 
 
 
-void HeroAircraft::checkForPowerUps(PowerUps *powerUps)
-{
+def hero_checkForPowerUps(PowerUps *powerUps): # HeroAircraft
 	if(dontShow)
 		return;
 	float	dist;
 	float	stock;
 	PowerUp *pwrUp;
 	PowerUp *delUp;
-	
+
 	if(score > scoreTarget)
 	{
 		scoreTarget += scoreStep;
 		addLife(true);
 	}
-	
+
 	float p0[3] = {10.4,-8.30, 25.0 };
 	float v0[3] = { 0.0, 0.08, 0.0 };
 	float clr[4] = { 1.0, 1.0, 1.0, 1.0 };
@@ -767,12 +638,10 @@ void HeroAircraft::checkForPowerUps(PowerUps *powerUps)
 			pwrUp = pwrUp->next;
 		}
 	}
-}
 
 
 
-void	Explosions::update()
-{
+def explosions_update(): # Explosions
 	Explo	*explo;
 	Explo	*backExplo;
 	Explo	*nextExplo;
@@ -782,12 +651,12 @@ void	Explosions::update()
 			exploPause[i][0] -= game->speedAdj;
 		else
 			exploPause[i][0] = 0.0;
-		if(exploPause[i][2]) //-- if flag was set, init count
+		if(exploPause[i][2]) #-- if flag was set, init count
 		{
 			exploPause[i][0] = exploPause[i][1];
 			exploPause[i][2] = 0.0;
 		}
-		
+
 		explo = exploRoot[i]->next;
 		while(explo)
 		{
@@ -806,18 +675,16 @@ void	Explosions::update()
 				if(nextExplo)
 					nextExplo->back = backExplo;
 				killExplo(explo);
-				explo = nextExplo;	
+				explo = nextExplo;
 			}
 			else
 				explo = explo->next;
 		}
 	}
-}
 
 
 
-void HeroAircraft::update()
-{
+def hero_update(): # HeroAircraft
 	if(dontShow > 1)
 	{
 		pos[0] =  		cos(game->frame*0.02) * 9.0;
@@ -828,8 +695,8 @@ void HeroAircraft::update()
 		pos[0] =  0.0f;
 		pos[1] = -3.0f;
 	}
-	
-	//-- Gun flashes are drawn in StatusDisplay
+
+	#-- Gun flashes are drawn in StatusDisplay
 	if(gunTrigger)
 		shootGun();
 	for(int i = 0; i < NUM_HERO_AMMO_TYPES; i++)
@@ -890,16 +757,16 @@ void HeroAircraft::update()
 		{
 			if(gunFlash0[i] > 0.0)	gunFlash0[i] -= 0.075*game->speedAdj;
 			else	gunFlash0[i] = 0.0;
-			
+
 			if(gunFlash1[i] > 0.0)	gunFlash1[i] -= 0.075*game->speedAdj;
 			else	gunFlash1[i] = 0.0;
 		}
 	}
-	
-	//-- decrement item activation
+
+	#-- decrement item activation
 	switch(currentItemIndex)
 	{
-		case 0: // self destruct
+		case 0: # self destruct
 			useItemArmed -= 0.02;
 			break;
 		case 1:
@@ -909,38 +776,37 @@ void HeroAircraft::update()
 	}
 	if(useItemArmed < 0.0)
 		useItemArmed = 0.0;
-	
-	//-- decrement supershields
+
+	#-- decrement supershields
 	if(shields >= HERO_SHIELDS)
 	{
 		shields -= 0.15*game->speedAdj;
-		
+
 	}
-	
+
 	float s = (1.0-game->speedAdj)+(game->speedAdj*0.8);
 	secondaryMove[0] *= s;
 	secondaryMove[1] *= s;
 	pos[0] += secondaryMove[0]*game->speedAdj;
 	pos[1] += secondaryMove[1]*game->speedAdj;
 	moveEvent(0,0);
-	
-}
 
 
+#-draw--------------------------------------------------------------------------
 
-void GroundMetal::drawGL()
-{
+
+def ground_drawGL(): # GroundMetal
 	GroundSegment	*seg;
 	GroundSegment	*tmp;
 	float	s2 = size * 2.0;
-	
-	//-- Set background color for low and med gfx
+
+	#-- Set background color for low and med gfx
 	float	pulse = sin(game->gameFrame*0.03);
-	if(pulse < 0.0) 
+	if(pulse < 0.0)
 		pulse = 0.0;
 	glClearColor( 0.2+pulse, 0.2, 0.25, 1.0 );
-	
-	//-- draw ground segments
+
+	#-- draw ground segments
 	if( !game->game_pause || game->gameMode == Global::Menu)
 	{
 		seg = rootSeg->next;
@@ -955,7 +821,7 @@ void GroundMetal::drawGL()
 	while(seg)
 	{
 		seg->drawGL();
-		
+
 		if(seg->pos[1] < -s2)
 		{
 			float p[3] = { 0.0, seg->pos[1]+s2+s2, 0.0};
@@ -972,29 +838,24 @@ void GroundMetal::drawGL()
 		seg = seg->next;
 	}
 
-}
 
 
-
-void	EnemyFleet::drawGL()
-{
+def enemyFleet_drawGL(): # EnemyFleet
 	float szx, szy;
 	float *p;
 	EnemyAircraft	*thisEnemy;
-	
+
 	glColor4f(1.0, 1.0, 1.0, 1.0);
-	
+
 	thisEnemy = squadRoot->next;
-//	int num = 0;
 	while(thisEnemy)
 	{
-//		num++;
 		p = thisEnemy->pos;
 		szx = thisEnemy->size[0];
 		szy = thisEnemy->size[1];
 		glBindTexture(GL_TEXTURE_2D, shipTex[(int)thisEnemy->type]);
 		glColor4f(1.0, 1.0, 1.0, 1.0);
-		
+
 		glPushMatrix();
 		glTranslatef( p[0],  p[1],  p[2] );
 		glBegin(GL_TRIANGLE_STRIP);
@@ -1004,7 +865,7 @@ void	EnemyFleet::drawGL()
 			glTexCoord2f(0.0, 1.0); glVertex3f(-szx, -szy, 0.0);
 		glEnd();
 		glPopMatrix();
-		
+
 		switch(thisEnemy->type)
 		{
 			case EnemyStraight:
@@ -1044,7 +905,7 @@ void	EnemyFleet::drawGL()
 					glBindTexture(GL_TEXTURE_2D, extraTex[EnemyTank]);
 					glColor4f(1.0, 1.0, 1.0, thisEnemy->preFire);
 					glPushMatrix();
-					glTranslatef(p[0], p[1]-0.63, p[2]);//NOTE: offset is ~szy*0.3
+					glTranslatef(p[0], p[1]-0.63, p[2]);#NOTE: offset is ~szy*0.3
 					glRotatef(IRAND, 0.0, 0.0, 1.0);
 					szx = 0.4+0.6*thisEnemy->preFire;
 					drawQuad(szx,szx);
@@ -1112,15 +973,11 @@ void	EnemyFleet::drawGL()
 		}
 		thisEnemy = thisEnemy->next;
 	}
-//	if(num)
-//		fprintf(stderr, "num enemies on screen = %d\n", num);
-}
 
 
 
-void HeroAircraft::drawGL()
-{
-	//-- draw hero
+def hero_drawGL(): # HeroAircraft
+	#-- draw hero
 	glPushMatrix();
 	glTranslatef(pos[0], pos[1], pos[2]);
 	if(!dontShow)
@@ -1133,7 +990,7 @@ void HeroAircraft::drawGL()
 	{
 		dontShow--;
 	}
-	//-- draw super shields in StatusDisplay to get better blend mode...	
+	#-- draw super shields in StatusDisplay to get better blend mode...
 	glPopMatrix();
 
 	if(superBomb)
@@ -1148,13 +1005,11 @@ void HeroAircraft::drawGL()
 		glPopMatrix();
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-}
 
 
 
-void StatusDisplay::darkenGL()
-{
-	//-- sidebars
+def statusDisplay_darkenGL(): # StatusDisplay
+	#-- sidebars
 	glBindTexture(GL_TEXTURE_2D, shldTex);
 	glBegin(GL_QUADS);
 	glColor4f(0.25, 0.2, 0.2, 0.6);
@@ -1170,29 +1025,27 @@ void StatusDisplay::darkenGL()
 	glColor4f(0.25, 0.25, 0.35, 0.6);
 		glTexCoord2f(0.0, 1.7); glVertex3f(  9.2, -8.5, 25.0);
 		glTexCoord2f(1.0, 1.7); glVertex3f( 11.5, -8.5, 25.0);
-		
+
 	glEnd();
-}
 
 
 
-void PowerUps::drawGL()
-{
+def powerUps_drawGL(): # PowerUps
 	float	*pos, *sz, szp;
 	PowerUp	*pwrUp;
-	
+
 	pwrUp = pwrUpRoot->next;
 	while(pwrUp)
 	{
 		pos	= pwrUp->pos;
 		sz	= pwrUpSize[pwrUp->type];
 		szp = sz[0]*2.5;
-		
+
 		glColor4fv(pwrUpColor[pwrUp->type]);
 		glBindTexture(GL_TEXTURE_2D, pwrTex);
 		glPushMatrix();
-		glTranslatef(	pos[0]+wobble_0[pwrUp->age%WOBBLE_0], 
-						pos[1]+wobble_1[pwrUp->age%WOBBLE_1], 
+		glTranslatef(	pos[0]+wobble_0[pwrUp->age%WOBBLE_0],
+						pos[1]+wobble_1[pwrUp->age%WOBBLE_1],
 						pos[2]);
 		glRotatef(IRAND, 0.0, 0.0, 1.0);
 		glBegin(GL_QUADS);
@@ -1203,22 +1056,22 @@ void PowerUps::drawGL()
 		glEnd();
 		glPopMatrix();
 
-		pwrUp = pwrUp->next; //ADVANCE
+		pwrUp = pwrUp->next; #ADVANCE
 	}
-		
+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 	pwrUp = pwrUpRoot->next;
 	while(pwrUp)
 	{
 		pos	= pwrUp->pos;
 		sz	= pwrUpSize[pwrUp->type];
-		
+
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 		glBindTexture(GL_TEXTURE_2D, tex[pwrUp->type]);
 		glPushMatrix();
-		glTranslatef(	pos[0]+wobble_0[pwrUp->age%WOBBLE_0], 
-						pos[1]+wobble_1[pwrUp->age%WOBBLE_1], 
+		glTranslatef(	pos[0]+wobble_0[pwrUp->age%WOBBLE_0],
+						pos[1]+wobble_1[pwrUp->age%WOBBLE_1],
 						pos[2]);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0, 0.0); glVertex3f(-sz[0],  sz[1], 0.0);
@@ -1227,21 +1080,19 @@ void PowerUps::drawGL()
 		glTexCoord2f(1.0, 0.0); glVertex3f( sz[0],  sz[1], 0.0);
 		glEnd();
 		glPopMatrix();
-		
-		pwrUp = pwrUp->next; //ADVANCE
+
+		pwrUp = pwrUp->next; #ADVANCE
 	}
-	
+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-}
 
 
 
-void HeroAmmo::drawGL()
-{
+def heroAmmo_drawGL(): # HeroAmmo
 	int i;
 	float	*pos;
 	ActiveAmmo 	*thisAmmo;
-	
+
 	for(i = 0; i < NUM_HERO_AMMO_TYPES; i++)
 	{
 		glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -1255,67 +1106,92 @@ void HeroAmmo::drawGL()
 			glTexCoord2f(0.0, 1.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
 			glTexCoord2f(1.0, 1.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
 			glTexCoord2f(1.0, 0.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1],     pos[2]);
-			thisAmmo = thisAmmo->next; //ADVANCE
+			thisAmmo = thisAmmo->next; #ADVANCE
 		}
-		glEnd();
+		glEnd()
 	}
-}
 
 
 
-void EnemyAmmo::drawGL()
-{
-	int i;
-	float	*pos;
-	ActiveAmmo 	*thisAmmo;
-	
-	for(i = 0; i < NUM_ENEMY_AMMO_TYPES; i++)
-	{
-		glColor4f(1.0, 1.0, 1.0, 1.0);
-		glBindTexture(GL_TEXTURE_2D, ammoTex[i]);
-		thisAmmo = ammoRoot[i]->next;
-		glBegin(GL_QUADS);
-		while(thisAmmo)
-		{
-			pos = thisAmmo->pos;
-			switch(IRAND%4)
-			{
-				case 0:
-					glTexCoord2f(0.0, 0.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					glTexCoord2f(0.0, 1.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(1.0, 1.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(1.0, 0.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					break;
-				case 1:
-					glTexCoord2f(1.0, 0.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					glTexCoord2f(1.0, 1.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(0.0, 1.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(0.0, 0.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					break;
-				case 2:
-					glTexCoord2f(0.0, 1.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					glTexCoord2f(0.0, 0.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(1.0, 0.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(1.0, 1.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					break;
-				case 3:
-					glTexCoord2f(1.0, 1.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					glTexCoord2f(1.0, 0.0); glVertex3f(pos[0]-ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(0.0, 0.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]-ammoSize[i][1], pos[2]);
-					glTexCoord2f(0.0, 1.0); glVertex3f(pos[0]+ammoSize[i][0], pos[1]+ammoSize[i][1], pos[2]);
-					break;
-			}
-			thisAmmo = thisAmmo->next; //ADVANCE
-		}
-		glEnd();
-	}
-}
+class EnemyAmmo:
+	def checkForHits(self, hero):
+		minDist = (hero.getSize(0) + hero.getSize(1)) * 0.5
+		if !hero.isVisible():
+			return
+		#-- Go through all the ammunition and check for hits
+		for ammo_type in self.enemy_ammo_types:
+			for ammo in ammo_type[:]:
+				p = ammo.pos
+				dist = abs(p[0]-hero.pos[0]) + abs(p[1]-hero.pos[1])
+				if dist < minDist:
+					#do damage
+					hero.ammoDamage(ammoDamage[i], ammo.vel)
+					#add explosion
+					explo = game.explosions.addExplo(ammo_type, ammo.pos)
+					if ammo_type == BUG_GUN:  # add second explosion for the bug guns...
+						explo = game.explosions.addExplo(ammo_type, ammo.pos, -5)
+					elif explo:
+						explo.vel[1] = -0.1
+					ammo_type.remove(ammo)
+					killAmmo(ammo)
+	def update(self):
+		conf = Config()
+		for ammo_type in self.enemy_ammo_types:
+			for ammo in ammo_type[:]:  # clean up ammo
+				if not intersects(conf.screenBound, ammo.pos):
+					ammo_type.remove(ammo)
+					killAmmo(ammo)
+				else:
+					ammo.updatePos()
+	def draw(self):
+		for ammo_type in self.enemy_ammo_types:
+			glColor4f(1.0, 1.0, 1.0, 1.0)
+			glBindTexture(GL_TEXTURE_2D, ammo_type.ammoTex)
+			glBegin(GL_QUADS)
+			for ammo in ammo_type:
+				pos = ammo.pos
+				ammoSize = ammo_type.ammoSize
+				if 0 == IRAND % 4:
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+				elif 1 == IRAND % 4:
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+				elif 2 == IRAND % 4:
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+				elif 3 == IRAND % 4:
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+			glEnd()
 
 
 
-void	Explosions::drawGL()
-{
-
+def explosions_drawGL(): # Explosions
 	if(exploRoot[EnemyDestroyed]->next)	drawExplo(EnemyDestroyed);
 	if(exploRoot[EnemyDamage]->next)	drawExplo(EnemyDamage);
 	if(exploRoot[EnemyAmmo00]->next)	drawAmmo(EnemyAmmo00);
@@ -1323,28 +1199,26 @@ void	Explosions::drawGL()
 	if(exploRoot[EnemyAmmo02]->next)	drawAmmo(EnemyAmmo02);
 	if(exploRoot[EnemyAmmo03]->next)	drawAmmo(EnemyAmmo03);
 	if(exploRoot[EnemyAmmo04]->next)	drawAmmo(EnemyAmmo04);
-	
+
 	if(exploRoot[HeroDestroyed]->next)	drawExplo(HeroDestroyed);
 	if(exploRoot[HeroDamage]->next)		drawExplo(HeroDamage);
 	if(exploRoot[HeroAmmo00]->next)		drawAmmo(HeroAmmo00);
 	if(exploRoot[HeroAmmo01]->next)		drawAmmo(HeroAmmo01);
-	if(exploRoot[HeroAmmo02]->next)		drawAmmo(HeroAmmo02);  
-	
+	if(exploRoot[HeroAmmo02]->next)		drawAmmo(HeroAmmo02);
+
 	if(exploRoot[HeroShields]->next)	drawShields(HeroShields);
 	if(exploRoot[PowerBurst]->next)		drawBurst(PowerBurst);
-	
+
 	if(exploRoot[AddLife]->next)		drawLife(AddLife);
 	if(exploRoot[LoseLife]->next)		drawLife(LoseLife);
 	if(exploRoot[ScoreLife]->next)		drawLife(ScoreLife);
-	
+
 	if(exploRoot[Electric]->next)		drawElectric(Electric);
 	if(exploRoot[Glitter]->next)		drawGlitter(Glitter);
-}
 
 
 
-void StatusDisplay::drawGL(HeroAircraft	*hero)
-{
+def statusDisplay_drawGL(HeroAircraft *hero): # StatusDisplay
 	Config	*config = Config::instance();
 	static	char scoreBuf[32];
 	int 	i;
@@ -1353,25 +1227,24 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 	float	x = 0.0,y,y3;
 	float	size[2];
 	float	ammoStock;
-	
+
 	if(!hero)
 		return;
 	if(!(game->frame%15) )
 		blink = !blink;
-		
+
 	ammoAlpha *= 0.96;
-		
+
 	float	shields = hero->getShields();
 	float	superShields = 0.0;
 	float	damage	= hero->getDamage();
 	if(shields > HERO_SHIELDS)
 	{
 		superShields = HERO_SHIELDS-(shields-HERO_SHIELDS);
-//		superShields = (shields-HERO_SHIELDS);
 		shields = HERO_SHIELDS;
 	}
-	
-	//-- draw score
+
+	#-- draw score
 	glColor4f(1.0, 1.0, 1.0, 0.4);
 	glPushMatrix();
 		sprintf(scoreBuf, "%07d", (int)hero->getScore());
@@ -1379,7 +1252,7 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glScalef(0.025, 0.02, 1.0);
 		game->text->Render(scoreBuf);
 	glPopMatrix();
-	//-- draw fps
+	#-- draw fps
 	if(config->showFPS())
 	{
 		glPushMatrix();
@@ -1389,8 +1262,8 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 			game->text->Render(scoreBuf);
 		glPopMatrix();
 	}
-	
-	//-- draw ship lives
+
+	#-- draw ship lives
 	glPushMatrix();
 	glColor4f(0.6, 0.6, 0.7, 1.0);
 	glBindTexture(GL_TEXTURE_2D, game->hero->heroTex);
@@ -1402,9 +1275,9 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		drawQuad(size[0], size[1]);
 		glTranslatef(0.0, -size[1]*2.0, 0.0);
 	}
-	glPopMatrix();	
-		
-	//-- draw usable items
+	glPopMatrix();
+
+	#-- draw usable items
 	if(config->gfxLevel() > 1)
 	{
 		glPushMatrix();
@@ -1426,10 +1299,10 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 			drawQuad(size[0], size[0]);
 			glTranslatef(-size[1]*2.0, 0.0, 0.0);
 		}
-		glPopMatrix();	
+		glPopMatrix();
 	}
-	
-	//-- draw 'enemy-got-past' Warning
+
+	#-- draw 'enemy-got-past' Warning
 	if(enemyWarn && game->hero->getLives() >= 0)
 	{
 		glPushMatrix();
@@ -1437,16 +1310,16 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTranslatef(0.0, -8.75, 25.0);
 		glBindTexture(GL_TEXTURE_2D, heroAmmoFlash[0]);
 		drawQuad(12.0, 3.0);
-		glPopMatrix();	
+		glPopMatrix();
 		enemyWarn = 0.0;
 	}
-	
-	//-- draw AMMO
+
+	#-- draw AMMO
 	glPushMatrix();
 	glTranslatef(statPosAmmo[0], statPosAmmo[1], statPosAmmo[2]);
-	
-	
-	//--draw ammo reserves
+
+
+	#--draw ammo reserves
 	glBindTexture(GL_TEXTURE_2D, statTex);
 	glBegin(GL_QUADS);
 	for(i = 0; i < NUM_HERO_AMMO_TYPES; i++)
@@ -1465,15 +1338,15 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 				statClrWarnAmmo = true;
 				glColor4fv(statClrWarn);
 			}
-			
+
 			glTexCoord2f(1.0, 0.00); glVertex3f( x+w, -y3, 0.0 );
 			glTexCoord2f(1.0,    y); glVertex3f( x+w, 0.0, 0.0 );
-			glTexCoord2f(0.0,    y); glVertex3f( x-w, 0.0, 0.0 );			
+			glTexCoord2f(0.0,    y); glVertex3f( x-w, 0.0, 0.0 );
 			glTexCoord2f(0.0, 0.00); glVertex3f( x-w, -y3, 0.0 );
 		}
 	}
 	glEnd();
-	
+
 	glBindTexture(GL_TEXTURE_2D, topTex);
 	if(statClrWarnAmmo)
 		glColor4f(statClrWarn[0], statClrWarn[1], statClrWarn[2], 0.5+ammoAlpha);
@@ -1486,10 +1359,10 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTexCoord2f(0.0,  1.0); glVertex3f( -0.75, -2.85, 0.0 );
 	glEnd();
 	x += w*1.5;
-	
+
 	glPopMatrix();
 
-	//--draw Shields
+	#--draw Shields
 	damageAlpha *= 0.94;
 	shieldAlpha *= 0.94;
 	float	dc = damageAlpha*0.5;
@@ -1501,20 +1374,19 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 	rot+=2.0*game->speedAdj;
 	float	rot2;
 	rot2 = 2*((int)rot%180);
-	
+
 	sl  = sls = (shields/HERO_SHIELDS)-1.0;
 	dl  = dls = ( damage/HERO_DAMAGE)-1.0;
 	if(superShields)
 		sls = dls = ((shields+superShields)/HERO_SHIELDS)-1.0;
-	
-	//------ draw Engine
+
+	#------ draw Engine
 	if(hero->isVisible() && config->gfxLevel() >= 1)
 	{
 		float c1f = 1.0+dl;
 		float c2f = -dl;
 		float c1[4] = { 0.85, 0.65, 1.00, 0.7 };
 		float c2[4] = { 1.00, 0.20, 0.25, 0.7 };
-//		glColor4f(0.9, 0.7, 1.0, 0.7);
 		glColor4f(	c1[0]*c1f+c2[0]*c2f,
 					c1[1]*c1f+c2[1]*c2f,
 					c1[2]*c1f+c2[2]*c2f,
@@ -1529,20 +1401,8 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		drawQuad(0.85*esz, 0.6*esz);
 		glPopMatrix();
 	}
-	
-//	if(shields > 0)
-//	{
-//		glPushMatrix();
-//		float sz = hero->getSize(1)*1.5;
-//		glColor4f(0.5, 0.5, 1.0, 0.2);
-//		glBindTexture(GL_TEXTURE_2D, heroShieldTex);
-//		glTranslatef(hero->pos[0], hero->pos[1]-0.05, hero->pos[2]);
-//		glRotatef(IRAND, 0.0, 0.0, 1.0);
-//		drawQuad(sz, sz);
-//		glPopMatrix();
-//	}
-	
-	//------ draw Super Shields
+
+	#------ draw Super Shields
 	if(superShields)
 	{
 		glPushMatrix();
@@ -1553,8 +1413,8 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glRotatef(IRAND, 0.0, 0.0, 1.0);
 		drawQuad(sz, sz);
 		glPopMatrix();
-		
-		//------ add a bit of Glitter...
+
+		#------ add a bit of Glitter...
 		if(config->gfxLevel() > 1 && (!game->game_pause) )
 		{
 			float p[3] = { 0.0, 0.0, hero->pos[2] };
@@ -1587,8 +1447,8 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 			}
 		}
 	}
-	
-	//---------- Draw ammo flash
+
+	#---------- Draw ammo flash
 	if(config->gfxLevel() > 1)
 	{
 		glPushMatrix();
@@ -1646,7 +1506,7 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glPopMatrix();
 	}
 
-//	//-- shield indicator
+	#-- shield indicator
 	glBindTexture(GL_TEXTURE_2D, shldTex);
 	glColor4f(0.2, 0.2, 0.2, 0.5);
 	glBegin(GL_QUADS);
@@ -1656,24 +1516,22 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTexCoord2f(-2.5, 1.0); glVertex3f(  statPosShld[0]-2.0,  statPosShld[1]+szy, statPosShld[2] );
 		glTexCoord2f(-2.5, 0.0); glVertex3f(  statPosShld[0]-2.0,  statPosShld[1]+0.0, statPosShld[2] );
 		glTexCoord2f( 1.0, 0.0); glVertex3f(  statPosShld[0]+szx,  statPosShld[1]+0.0, statPosShld[2] );
-	
+
 		glTexCoord2f( 3.5, 1.0); glVertex3f( -statPosShld[0]+2.0,  statPosShld[1]+szy, statPosShld[2] );
 		glTexCoord2f( 0.0, 1.0); glVertex3f( -statPosShld[0]-szx,  statPosShld[1]+szy, statPosShld[2] );
 		glTexCoord2f( 0.0, 0.0); glVertex3f( -statPosShld[0]-szx,  statPosShld[1]+0.0, statPosShld[2] );
 		glTexCoord2f( 3.5, 0.0); glVertex3f( -statPosShld[0]+2.0,  statPosShld[1]+0.0, statPosShld[2] );
 	glEnd();
-		
+
 	if(config->gfxLevel() > 0)
 	{
-		//-- Shields 
+		#-- Shields
 		if( (sl < -0.7 && blink && shields > 0.0) || superShields )
 			glColor4fv(statClrWarn);
 		else
 			glColor4f(0.7+dc, 0.6+dc, 0.8+dc, 0.5+damageAlpha);
-//			glColor4f(0.0+sc, 0.35+sc, 1.0+sc, 0.5+shieldAlpha);
 		glPushMatrix();
 		glTranslatef(statPosShld[0], statPosShld[1], statPosShld[2]);
-//		glScalef(1.0, 1.0, 1.5);
 		glRotatef(-rot, 0.0, 1.0, 0.0);
 		glBegin(GL_QUADS);
 		szx = 0.5;
@@ -1681,35 +1539,34 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTexCoord2f( 0.0,     sls); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 0.0, 1.0+sls); glVertex3f( -szx,  0.0,  szx );
 		glTexCoord2f( 1.0, 1.0+sls); glVertex3f(  szx,  0.0,  szx );
-		
+
 		glTexCoord2f( 0.0,     sls); glVertex3f(  szx,  szy, -szx );
 		glTexCoord2f( 0.0, 1.0+sls); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 1.0, 1.0+sls); glVertex3f( -szx,  0.0, -szx );
 		glTexCoord2f( 1.0,     sls); glVertex3f( -szx,  szy, -szx );
-		
+
 		glTexCoord2f( 1.0,     sls); glVertex3f(  szx,  szy,  szx );
 		glTexCoord2f( 1.0, 1.0+sls); glVertex3f(  szx,  0.0,  szx );
 		glTexCoord2f( 0.0, 1.0+sls); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 0.0,     sls); glVertex3f(  szx,  szy, -szx );
-		
+
 		glTexCoord2f( 1.0,     sls); glVertex3f( -szx,  szy, -szx );
 		glTexCoord2f( 1.0, 1.0+sls); glVertex3f( -szx,  0.0, -szx );
 		glTexCoord2f( 0.0, 1.0+sls); glVertex3f( -szx,  0.0,  szx );
 		glTexCoord2f( 0.0,     sls); glVertex3f( -szx,  szy,  szx );
-		
+
 		if(shields)
 		{
-			glTexCoord2f( 1.0, 1.0); 
+			glTexCoord2f( 1.0, 1.0);
 			glColor4f(0.3+sc, 0.4+sc, 1.0+sc, 0.5);
 			glVertex3f(  szx,  0.0,  szx );
 			glVertex3f(  szx,  0.0, -szx );
 			glVertex3f( -szx,  0.0, -szx );
 			glVertex3f( -szx,  0.0,  szx );
-		}	
+		}
 		glEnd();
-		
+
 		glRotatef( rot2, 0.0, 1.0, 0.0);
-//		glColor4f(0.4+sc, 0.5+sc, 1.0+sc, 0.6+shieldAlpha);
 		glColor4f(0.1+sc, 0.15+sc, 0.9+sc, 0.6+shieldAlpha);
 		glBegin(GL_QUADS);
 		szx = 0.4;
@@ -1717,17 +1574,17 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTexCoord2f( 0.0,     sl); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 0.0, 1.0+sl); glVertex3f( -szx,  0.0,  szx );
 		glTexCoord2f( 1.0, 1.0+sl); glVertex3f(  szx,  0.0,  szx );
-		
+
 		glTexCoord2f( 0.0,     sl); glVertex3f(  szx,  szy, -szx );
 		glTexCoord2f( 0.0, 1.0+sl); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 1.0, 1.0+sl); glVertex3f( -szx,  0.0, -szx );
 		glTexCoord2f( 1.0,     sl); glVertex3f( -szx,  szy, -szx );
-		
+
 		glTexCoord2f( 1.0,     sl); glVertex3f(  szx,  szy,  szx );
 		glTexCoord2f( 1.0, 1.0+sl); glVertex3f(  szx,  0.0,  szx );
 		glTexCoord2f( 0.0, 1.0+sl); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 0.0,     sl); glVertex3f(  szx,  szy, -szx );
-		
+
 		glTexCoord2f( 0.0,     sl); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 1.0,     sl); glVertex3f( -szx,  szy, -szx );
 		glTexCoord2f( 1.0, 1.0+sl); glVertex3f( -szx,  0.0, -szx );
@@ -1749,36 +1606,36 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 			if(config->texBorder())
 				glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, statClrZero );
 		}
-		//-- Life
+		#-- Life
 		glPushMatrix();
 		glTranslatef(-statPosShld[0], statPosShld[1], statPosShld[2]);
 		glRotatef( rot, 0.0, 1.0, 0.0);
-		
+
 		glBegin(GL_QUADS);
 		szx = 0.5;
 		glTexCoord2f( 1.0,     dls); glVertex3f(  szx,  szy,  szx );
 		glTexCoord2f( 0.0,     dls); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 0.0, 1.0+dls); glVertex3f( -szx,  0.0,  szx );
 		glTexCoord2f( 1.0, 1.0+dls); glVertex3f(  szx,  0.0,  szx );
-		
+
 		glTexCoord2f( 0.0,     dls); glVertex3f(  szx,  szy, -szx );
 		glTexCoord2f( 0.0, 1.0+dls); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 1.0, 1.0+dls); glVertex3f( -szx,  0.0, -szx );
 		glTexCoord2f( 1.0,     dls); glVertex3f( -szx,  szy, -szx );
-		
+
 		glTexCoord2f( 1.0,     dls); glVertex3f(  szx,  szy,  szx );
 		glTexCoord2f( 1.0, 1.0+dls); glVertex3f(  szx,  0.0,  szx );
 		glTexCoord2f( 0.0, 1.0+dls); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 0.0,     dls); glVertex3f(  szx,  szy, -szx );
-		
+
 		glTexCoord2f( 0.0,     dls); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 1.0,     dls); glVertex3f( -szx,  szy, -szx );
 		glTexCoord2f( 1.0, 1.0+dls); glVertex3f( -szx,  0.0, -szx );
 		glTexCoord2f( 0.0, 1.0+dls); glVertex3f( -szx,  0.0,  szx );
-		
+
 		if(damage)
 		{
-			glTexCoord2f( 1.0, 1.0); 
+			glTexCoord2f( 1.0, 1.0);
 			glColor4f(1.0+dc, 0.0+dc, 0.0+dc, 0.5);
 			glVertex3f(  szx,  0.0,  szx );
 			glVertex3f(  szx,  0.0, -szx );
@@ -1786,7 +1643,7 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 			glVertex3f( -szx,  0.0,  szx );
 		}
 		glEnd();
-		
+
 		glRotatef(-rot2, 0.0, 1.0, 0.0);
 		glColor4f(1.0+dc, 0.0+dc, 0.0+dc, 0.6+damageAlpha);
 		glBegin(GL_QUADS);
@@ -1795,17 +1652,17 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTexCoord2f( 0.0,     dl); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 0.0, 1.0+dl); glVertex3f( -szx,  0.0,  szx );
 		glTexCoord2f( 1.0, 1.0+dl); glVertex3f(  szx,  0.0,  szx );
-		
+
 		glTexCoord2f( 0.0,     dl); glVertex3f(  szx,  szy, -szx );
 		glTexCoord2f( 0.0, 1.0+dl); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 1.0, 1.0+dl); glVertex3f( -szx,  0.0, -szx );
 		glTexCoord2f( 1.0,     dl); glVertex3f( -szx,  szy, -szx );
-		
+
 		glTexCoord2f( 1.0,     dl); glVertex3f(  szx,  szy,  szx );
 		glTexCoord2f( 1.0, 1.0+dl); glVertex3f(  szx,  0.0,  szx );
 		glTexCoord2f( 0.0, 1.0+dl); glVertex3f(  szx,  0.0, -szx );
 		glTexCoord2f( 0.0,     dl); glVertex3f(  szx,  szy, -szx );
-		
+
 		glTexCoord2f( 0.0,     dl); glVertex3f( -szx,  szy,  szx );
 		glTexCoord2f( 1.0,     dl); glVertex3f( -szx,  szy, -szx );
 		glTexCoord2f( 1.0, 1.0+dl); glVertex3f( -szx,  0.0, -szx );
@@ -1821,13 +1678,13 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 			glColor4fv(statClrWarn);
 		else
 			glColor4f(0.0+sc, 0.35+sc, 1.0+sc, 0.7+shieldAlpha);
-		//-- Shields
+		#-- Shields
 		glBegin(GL_QUADS);
 		glTexCoord2f( 1.0,     sl); glVertex3f( statPosShld[0]    , statPosShld[1]+szy, statPosShld[2] );
 		glTexCoord2f( 0.0,     sl); glVertex3f( statPosShld[0]-szx, statPosShld[1]+szy, statPosShld[2] );
 		glTexCoord2f( 0.0, 1.0+sl); glVertex3f( statPosShld[0]-szx, statPosShld[1]    , statPosShld[2] );
 		glTexCoord2f( 1.0, 1.0+sl); glVertex3f( statPosShld[0]    , statPosShld[1]    , statPosShld[2] );
-		//-- Life
+		#-- Life
 
 		if( (dl < -0.7 && blink) )
 			glColor4fv(statClrWarn);
@@ -1839,8 +1696,8 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		glTexCoord2f( 0.0,     dl); glVertex3f( -statPosShld[0]+szx, statPosShld[1]+szy, statPosShld[2] );
 		glEnd();
 	}
-	
-	//-- print message if we're paused...
+
+	#-- print message if we're paused...
 	if(game->game_pause)
 	{
 		float off[2];
@@ -1890,4 +1747,3 @@ void StatusDisplay::drawGL(HeroAircraft	*hero)
 		game->text->Render(str);
 		glPopMatrix();
 	}
-}
