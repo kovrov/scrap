@@ -11,58 +11,56 @@ def mainGL():
 		update_game()
 		# draw logic
 		draw_game()
-		SDL_GL_SwapBuffers( )
+		GL_SwapBuffers()
 		WTF()
 	# Delete game objects
 	# Destroy our GL context, etc.
 
 
-
-def draw_game(self):
-	config = Config()
-	# Clear buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-	# Place camera
-	glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-	# Draw background
-	self.ground_drawGL()  # draw/update
-	# Draw actors
-	self.enemyFleet_drawGL()
-	self.hero_drawGL()
-	if config.gfxLevel() > 0:
-		self.statusDisplay_darkenGL()
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-	self.powerUps_drawGL()
-	# Draw ammo
-	self.heroAmmo_drawGL()
-	self.enemyAmmo.draw()
-	# Draw explosions
-	self.explosions_drawGL()
-	# Draw stats
-	self.statusDisplay_drawGL(game.hero)
+class Game:
+	def update(self):
+		if not self.game_pause:
+			# Add items to scene
+			put_screen_items()
+			# Update scene
+			self.enemyFleet_update()
+			self.powerUps_update()
+			self.heroAmmo_updateAmmo()
+			self.enemyAmmo.update()
+			self.heroAmmo_checkForHits(game.enemyFleet)
+			if self.gameMode == Global::Game:
+				self.enemyAmmo.checkForHits(game.hero)
+				self.hero_checkForCollisions(game.enemyFleet)
+				self.hero_checkForPowerUps(game.powerUps)
+			self.explosions_update()
+			#self.audio.update()
+			self.hero_update()
+			self.gameFrame++
 
 
-
-def update_game(self):
-	if not self.game_pause:
-		# Add items to scene
-		put_screen_items()
-		# Update scene
-		self.enemyFleet_update()
-		self.powerUps_update()
-		self.heroAmmo_updateAmmo()
-		self.enemyAmmo.update()
-		self.heroAmmo_checkForHits(game.enemyFleet)
-		if self.gameMode == Global::Game:
-			self.enemyAmmo.checkForHits(game.hero)
-			self.hero_checkForCollisions(game.enemyFleet)
-			self.hero_checkForPowerUps(game.powerUps)
-		self.explosions_update()
-		#self.audio.update()
-		self.hero_update()
-		self.gameFrame++
-
+	def draw(self):
+		config = Config()
+		# Clear buffers
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+		# Place camera
+		glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+		# Draw background
+		self.ground_drawGL()  # draw/update
+		# Draw actors
+		self.enemyFleet_drawGL()
+		self.hero_drawGL()
+		if config.gfxLevel() > 0:
+			self.statusDisplay_darkenGL()
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+		self.powerUps_drawGL()
+		# Draw ammo
+		self.heroAmmo_drawGL()
+		self.enemyAmmo.draw()
+		# Draw explosions
+		self.explosions_drawGL()
+		# Draw stats
+		self.statusDisplay_drawGL(game.hero)
 
 
 def WTF():
@@ -134,28 +132,100 @@ def process(SDL_Event *event):
 	return game.game_quit
 
 
+
+class EnemyAmmo:
+	def checkForHits(self, hero):
+		minDist = (hero.getSize(0) + hero.getSize(1)) * 0.5
+		if !hero.isVisible():
+			return
+		#-- Go through all the ammunition and check for hits
+		for ammo_type in self.enemy_ammo_types:
+			for ammo in ammo_type[:]:
+				p = ammo.pos
+				dist = abs(p[0]-hero.pos[0]) + abs(p[1]-hero.pos[1])
+				if dist < minDist:
+					#do damage
+					hero.ammoDamage(ammoDamage[i], ammo.vel)
+					#add explosion
+					explo = game.explosions.addExplo(ammo_type, ammo.pos)
+					if ammo_type == BUG_GUN:  # add second explosion for the bug guns...
+						explo = game.explosions.addExplo(ammo_type, ammo.pos, -5)
+					elif explo:
+						explo.vel[1] = -0.1
+					ammo_type.remove(ammo)
+					killAmmo(ammo)
+	def update(self):
+		conf = Config()
+		for ammo_type in self.enemy_ammo_types:
+			for ammo in ammo_type[:]:  # clean up ammo
+				if not intersects(conf.screenBound, ammo.pos):
+					ammo_type.remove(ammo)
+					killAmmo(ammo)
+				else:
+					ammo.updatePos()
+	def draw(self):
+		for ammo_type in self.enemy_ammo_types:
+			glColor4f(1.0, 1.0, 1.0, 1.0)
+			glBindTexture(GL_TEXTURE_2D, ammo_type.ammoTex)
+			glBegin(GL_QUADS)
+			for ammo in ammo_type:
+				pos = ammo.pos
+				ammoSize = ammo_type.ammoSize
+				if 0 == IRAND % 4:
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+				elif 1 == IRAND % 4:
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+				elif 2 == IRAND % 4:
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+				elif 3 == IRAND % 4:
+					glTexCoord2f(1.0, 1.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
+					glTexCoord2f(1.0, 0.0)
+					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 0.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
+					glTexCoord2f(0.0, 1.0)
+					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
+			glEnd()
+
+
+
 #-update------------------------------------------------------------------------
 
 
-def put_screen_items(): # ScreenItemAdd
-	ItemThing *curItem = root->next;
-	while curItem:
-		if curItem->releaseTime <= game->gameFrame:
-			switch curItem->item->itemType():
-				case ScreenItem::ItemEnemy:
-					game->enemyFleet->addEnemy( (EnemyAircraft*)(curItem->item) );
-					break;
-				case ScreenItem::ItemPowerUp:
-					game->powerUps->addPowerUp( (PowerUp*)(curItem->item) );
-					break;
-				case ScreenItem::ItemHero:
-					fprintf(stderr, "ScreenItemAdd::putScreenItems() Hero??? HUH???\n");
-					break;
-			curItem = curItem->next;
-			root->next = curItem;
-		else:
-			curItem = 0;
-
+def put_screen_items(self): # ScreenItemAdd
+	"""
+	frame-based queue of game objects for current level
+	"""
+	for curItem in self.itemQueue[:]:
+		if game.gameFrame < curItem.releaseTime:
+			break
+		if ScreenItem::ItemEnemy == curItem.item.itemType():
+			game.enemyFleet.addEnemy(curItem.item)
+		elif ScreenItem::ItemPowerUp == curItem.item.itemType():
+			game.powerUps.addPowerUp(curItem.item)
+		self.itemQueue.remove(curItem)
 
 
 def enemyFleet_update(): # EnemyFleet
@@ -304,7 +374,6 @@ def enemyFleet_update(): # EnemyFleet
 	}
 
 
-
 def powerUps_update(): # PowerUps
 	Config	*config = Config::instance();
 
@@ -359,7 +428,6 @@ def powerUps_update(): # PowerUps
 	}
 
 
-
 def heroAmmo_updateAmmo(): # HeroAmmo
 	Config *config = Config::instance();
 	int i;
@@ -388,7 +456,6 @@ def heroAmmo_updateAmmo(): # HeroAmmo
 			}
 		}
 	}
-
 
 
 def heroAmmo_checkForHits(EnemyFleet *fleet): # HeroAmmo
@@ -459,7 +526,6 @@ def heroAmmo_checkForHits(EnemyFleet *fleet): # HeroAmmo
 	}
 
 
-
 def hero_checkForCollisions(EnemyFleet *fleet): # HeroAircraft
 	float	p[3];
 	float	r1,r2;
@@ -526,7 +592,6 @@ def hero_checkForCollisions(EnemyFleet *fleet): # HeroAircraft
 	}
 	if(superBomb)
 		superBomb += 2;
-
 
 
 def hero_checkForPowerUps(PowerUps *powerUps): # HeroAircraft
@@ -640,7 +705,6 @@ def hero_checkForPowerUps(PowerUps *powerUps): # HeroAircraft
 	}
 
 
-
 def explosions_update(): # Explosions
 	Explo	*explo;
 	Explo	*backExplo;
@@ -681,7 +745,6 @@ def explosions_update(): # Explosions
 				explo = explo->next;
 		}
 	}
-
 
 
 def hero_update(): # HeroAircraft
@@ -839,7 +902,6 @@ def ground_drawGL(): # GroundMetal
 	}
 
 
-
 def enemyFleet_drawGL(): # EnemyFleet
 	float szx, szy;
 	float *p;
@@ -975,7 +1037,6 @@ def enemyFleet_drawGL(): # EnemyFleet
 	}
 
 
-
 def hero_drawGL(): # HeroAircraft
 	#-- draw hero
 	glPushMatrix();
@@ -1007,7 +1068,6 @@ def hero_drawGL(): # HeroAircraft
 	}
 
 
-
 def statusDisplay_darkenGL(): # StatusDisplay
 	#-- sidebars
 	glBindTexture(GL_TEXTURE_2D, shldTex);
@@ -1027,7 +1087,6 @@ def statusDisplay_darkenGL(): # StatusDisplay
 		glTexCoord2f(1.0, 1.7); glVertex3f( 11.5, -8.5, 25.0);
 
 	glEnd();
-
 
 
 def powerUps_drawGL(): # PowerUps
@@ -1087,7 +1146,6 @@ def powerUps_drawGL(): # PowerUps
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 
-
 def heroAmmo_drawGL(): # HeroAmmo
 	int i;
 	float	*pos;
@@ -1110,85 +1168,6 @@ def heroAmmo_drawGL(): # HeroAmmo
 		}
 		glEnd()
 	}
-
-
-
-class EnemyAmmo:
-	def checkForHits(self, hero):
-		minDist = (hero.getSize(0) + hero.getSize(1)) * 0.5
-		if !hero.isVisible():
-			return
-		#-- Go through all the ammunition and check for hits
-		for ammo_type in self.enemy_ammo_types:
-			for ammo in ammo_type[:]:
-				p = ammo.pos
-				dist = abs(p[0]-hero.pos[0]) + abs(p[1]-hero.pos[1])
-				if dist < minDist:
-					#do damage
-					hero.ammoDamage(ammoDamage[i], ammo.vel)
-					#add explosion
-					explo = game.explosions.addExplo(ammo_type, ammo.pos)
-					if ammo_type == BUG_GUN:  # add second explosion for the bug guns...
-						explo = game.explosions.addExplo(ammo_type, ammo.pos, -5)
-					elif explo:
-						explo.vel[1] = -0.1
-					ammo_type.remove(ammo)
-					killAmmo(ammo)
-	def update(self):
-		conf = Config()
-		for ammo_type in self.enemy_ammo_types:
-			for ammo in ammo_type[:]:  # clean up ammo
-				if not intersects(conf.screenBound, ammo.pos):
-					ammo_type.remove(ammo)
-					killAmmo(ammo)
-				else:
-					ammo.updatePos()
-	def draw(self):
-		for ammo_type in self.enemy_ammo_types:
-			glColor4f(1.0, 1.0, 1.0, 1.0)
-			glBindTexture(GL_TEXTURE_2D, ammo_type.ammoTex)
-			glBegin(GL_QUADS)
-			for ammo in ammo_type:
-				pos = ammo.pos
-				ammoSize = ammo_type.ammoSize
-				if 0 == IRAND % 4:
-					glTexCoord2f(0.0, 0.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
-					glTexCoord2f(0.0, 1.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(1.0, 1.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(1.0, 0.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
-				elif 1 == IRAND % 4:
-					glTexCoord2f(1.0, 0.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
-					glTexCoord2f(1.0, 1.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(0.0, 1.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(0.0, 0.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
-				elif 2 == IRAND % 4:
-					glTexCoord2f(0.0, 1.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
-					glTexCoord2f(0.0, 0.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(1.0, 0.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(1.0, 1.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
-				elif 3 == IRAND % 4:
-					glTexCoord2f(1.0, 1.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]+ammoSize[1], pos[2])
-					glTexCoord2f(1.0, 0.0)
-					glVertex3f(pos[0]-ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(0.0, 0.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]-ammoSize[1], pos[2])
-					glTexCoord2f(0.0, 1.0)
-					glVertex3f(pos[0]+ammoSize[0], pos[1]+ammoSize[1], pos[2])
-			glEnd()
-
 
 
 def explosions_drawGL(): # Explosions
@@ -1215,7 +1194,6 @@ def explosions_drawGL(): # Explosions
 
 	if(exploRoot[Electric]->next)		drawElectric(Electric);
 	if(exploRoot[Glitter]->next)		drawGlitter(Glitter);
-
 
 
 def statusDisplay_drawGL(HeroAircraft *hero): # StatusDisplay
