@@ -1,47 +1,51 @@
+import pyglet
 
-def mainGL():
-	# enter main loop...
-	done = False
-	while not done:
-		# Check if there's a pending event
-		while SDL_PollEvent(&event):
-			done = self.process(&event)
-		self.joystickMove()
-		# game logic
-		update_game()
-		# draw logic
-		draw_game()
-		GL_SwapBuffers()
-		WTF()
-	# Delete game objects
-	# Destroy our GL context, etc.
+
+def main():
+	pyglet.resource.path = ['chromium-data']
+	pyglet.resource.reindex()
+	window = pyglet.window.Window()
+	game = Game()
+
+	@window.event
+	def on_draw():
+		window.clear()
+		game.draw()
+
+	pyglet.clock.schedule(game.update)
+	pyglet.app.run()
+
 
 
 class Game:
-	def update(self):
-		if not self.game_pause:
-			# Add items to scene
-			put_screen_items()
-			# Update scene
-			self.enemyFleet_update()
-			self.powerUps_update()
-			self.heroAmmo_updateAmmo()
-			self.enemyAmmo.update()
-			self.heroAmmo_checkForHits(game.enemyFleet)
-			if self.gameMode == Global::Game:
-				self.enemyAmmo.checkForHits(game.hero)
-				self.hero_checkForCollisions(game.enemyFleet)
-				self.hero_checkForPowerUps(game.powerUps)
-			self.explosions_update()
-			#self.audio.update()
-			self.hero_update()
-			self.gameFrame++
+	"""
+	actual game state and logic
+	"""
+	def __init__(self):
+		#self.level = LevelOne()
+		self.level = Background("png/gndMetalBase00.png")
 
+	def update(self, dt):
+		'''
+		# Add items to scene
+		self.level.update(dt)
+		# Update scene
+		self.enemyFleet_update()
+		self.powerUps_update()
+		self.heroAmmo_updateAmmo()
+		self.enemyAmmo.update()
+		self.heroAmmo_checkForHits(game.enemyFleet)
+		self.enemyAmmo.checkForHits(game.hero)
+		self.hero_checkForCollisions(game.enemyFleet)
+		self.hero_checkForPowerUps(game.powerUps)
+		self.explosions_update()
+		self.hero_update()
+		'''
+		self.level.update(dt)
 
 	def draw(self):
-		config = Config()
-		# Clear buffers
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+		self.level.draw()
+		'''
 		# Place camera
 		glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -61,8 +65,40 @@ class Game:
 		self.explosions_drawGL()
 		# Draw stats
 		self.statusDisplay_drawGL(game.hero)
+		'''
 
 
+
+
+class Background:
+	def __init__(self, image):
+		image = pyglet.resource.image(image)
+		self.segments = [pyglet.sprite.Sprite(image),]
+	def update(self, dt):
+		pass
+	#	for seg in self.segments[:]:
+	#		seg.pos[1] += game.scrollSpeed*game.speedAdj
+	#		if seg.pos[1] < -s2:
+	#			p[3] = (0., seg.pos[1]+s2+s2, 0.)
+	#			s[2] = (size, size)
+	#			segments.remove(seg)
+	#			segments.insert(0, Segment(p, s, self))
+	def draw(self):
+	#	s2 = size * 2.
+	#	# Set background color for low and med gfx
+	#	pulse = math.sin(game.gameFrame*0.03)
+	#	if pulse < 0.:
+	#		pulse = 0.
+	#	glClearColor(0.2+pulse, 0.2, 0.25, 1.)
+	#	# draw ground segments
+		for seg in self.segments:
+			seg.draw()
+
+
+
+#-------------------------------------------------------------------------------
+
+'''
 def WTF():
 	Global	*game = Global::getInstance()
 	Config	*config = Config::instance()
@@ -1725,3 +1761,9 @@ def statusDisplay_drawGL(HeroAircraft *hero): # StatusDisplay
 		game->text->Render(str);
 		glPopMatrix();
 	}
+'''
+
+
+
+if __name__ == "__main__":
+	main()
