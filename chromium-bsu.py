@@ -26,10 +26,10 @@ class Game:
 		self.level = Background("png/gndMetalBase00.png")
 
 	def update(self, dt):
-		'''
 		# Add items to scene
 		self.level.update(dt)
 		# Update scene
+		'''
 		self.enemyFleet_update()
 		self.powerUps_update()
 		self.heroAmmo_updateAmmo()
@@ -41,7 +41,6 @@ class Game:
 		self.explosions_update()
 		self.hero_update()
 		'''
-		self.level.update(dt)
 
 	def draw(self):
 		self.level.draw()
@@ -69,28 +68,27 @@ class Game:
 
 
 
-
 class Background:
+	""" animated tiles """
 	def __init__(self, image):
 		image = pyglet.resource.image(image)
 		self.segments = [pyglet.sprite.Sprite(image),]
 	def update(self, dt):
-		pass
-	#	for seg in self.segments[:]:
-	#		seg.pos[1] += game.scrollSpeed*game.speedAdj
-	#		if seg.pos[1] < -s2:
-	#			p[3] = (0., seg.pos[1]+s2+s2, 0.)
-	#			s[2] = (size, size)
-	#			segments.remove(seg)
-	#			segments.insert(0, Segment(p, s, self))
+		for seg in self.segments[:]:
+			seg.pos[1] += game.scrollSpeed*game.speedAdj
+			if seg.pos[1] < -s2:
+				p[3] = (0., seg.pos[1]+s2+s2, 0.)
+				s[2] = (size, size)
+				segments.remove(seg)
+				segments.insert(0, Segment(p, s, self))
 	def draw(self):
-	#	s2 = size * 2.
-	#	# Set background color for low and med gfx
-	#	pulse = math.sin(game.gameFrame*0.03)
-	#	if pulse < 0.:
-	#		pulse = 0.
-	#	glClearColor(0.2+pulse, 0.2, 0.25, 1.)
-	#	# draw ground segments
+		s2 = size * 2.
+		# Set background color for low and med gfx
+		pulse = math.sin(game.gameFrame*0.03)
+		if pulse < 0.:
+			pulse = 0.
+		glClearColor(0.2+pulse, 0.2, 0.25, 1.)
+		# draw ground segments
 		for seg in self.segments:
 			seg.draw()
 
