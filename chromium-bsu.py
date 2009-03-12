@@ -23,6 +23,10 @@ def main():
 		glMatrixMode(gl.GL_MODELVIEW)
 		game.resize(width, height)
 
+	@window.event
+	def on_mouse_motion(x, y, dx, dy):
+		game.mouseInput(x, y, dx, dy)
+
 	#pyglet.clock.schedule(game.update)
 	pyglet.clock.schedule_interval(game.update, 1/60.)
 	pyglet.app.run()
@@ -34,52 +38,51 @@ class Game:
 	actual game state and logic
 	"""
 	def __init__(self, width):
-		#self.level = LevelOne()
 		self.background = Background("png/gndMetalBase00.png", width)
+		self.hero = HeroAircraft()
 
 	def resize(self, width, height):
 		self.background.resize(width, height)
 
+	def mouseInput(self, x, y, dx, dy):
+		self.hero.set_position(x, y)
+
 	def update(self, dt):
-		# Add items to scene
 		self.background.update(dt)
+		# Add items to scene
 		# Update scene
-		'''
-		self.enemyFleet_update()
-		self.powerUps_update()
-		self.heroAmmo_updateAmmo()
-		self.enemyAmmo.update()
-		self.heroAmmo_checkForHits(game.enemyFleet)
-		self.enemyAmmo.checkForHits(game.hero)
-		self.hero_checkForCollisions(game.enemyFleet)
-		self.hero_checkForPowerUps(game.powerUps)
-		self.explosions_update()
-		self.hero_update()
-		'''
+		#self.enemyFleet_update()
+		#self.powerUps_update()
+		#self.heroAmmo_updateAmmo()
+		#self.enemyAmmo.update()
+		#self.heroAmmo_checkForHits(game.enemyFleet)
+		#self.enemyAmmo.checkForHits(game.hero)
+		#self.hero_checkForCollisions(game.enemyFleet)
+		#self.hero_checkForPowerUps(game.powerUps)
+		#self.explosions_update()
+		self.hero.update(dt)
 
 	def draw(self):
-		self.background.draw()
-		'''
 		# Place camera
-		glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
+		#glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+		glEnable(GL_BLEND)
 		# Draw background
-		self.ground_drawGL()  # draw/update
+		self.background.draw()
 		# Draw actors
-		self.enemyFleet_drawGL()
-		self.hero_drawGL()
-		if config.gfxLevel() > 0:
-			self.statusDisplay_darkenGL()
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-		self.powerUps_drawGL()
+		#self.enemyFleet_drawGL()
+		self.hero.draw()
+		#if config.gfxLevel() > 0:
+		#	self.statusDisplay_darkenGL()
+		#glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+		#self.powerUps_drawGL()
 		# Draw ammo
-		self.heroAmmo_drawGL()
-		self.enemyAmmo.draw()
+		#self.heroAmmo_drawGL()
+		#self.enemyAmmo.draw()
 		# Draw explosions
-		self.explosions_drawGL()
+		#self.explosions_drawGL()
 		# Draw stats
-		self.statusDisplay_drawGL(game.hero)
-		'''
+		#self.statusDisplay_drawGL(game.hero)
 
 
 
@@ -123,6 +126,141 @@ class Background:
 		glClearColor(0.2+pulse, 0.2, 0.25, 1.)
 		self.draw_tiles()
 		self.draw_tiles(1.)
+
+
+
+class HeroAircraft:
+	def __init__(self):
+		image = pyglet.resource.image("png/hero.png")
+		image.anchor_x = image.width / 2.
+		image.anchor_y = image.height / 2.
+		self.sprite = pyglet.sprite.Sprite(image)
+
+	def set_position(self, x, y):
+		self.sprite.set_position(x, y)
+	def update(self, dt):
+		"""
+		if(dontShow > 1)
+		{
+			pos[0] =  		cos(game->frame*0.02) * 9.0;
+			pos[1] =  4.0 + sin(game->frame*0.07) * 2.0;
+		}
+		else if(dontShow == 1)
+		{
+			pos[0] =  0.0f;
+			pos[1] = -3.0f;
+		}
+
+		#-- Gun flashes are drawn in StatusDisplay
+		if(gunTrigger)
+			shootGun();
+		for(int i = 0; i < NUM_HERO_AMMO_TYPES; i++)
+		{
+			if(gunPause[i] >= 0)
+				gunPause[i] -= game->speedAdj;
+			if(gunTrigger)
+			{
+				float flash;
+				float pause;
+				switch(i)
+				{
+					case 0:
+						flash = 5.0/game->speedAdj;
+						pause = gunPause[i]/game->speedAdj;
+						gunFlash0[i] = (flash-pause)/flash;
+						if(gunActive[i])
+							gunFlash1[i] = (flash-pause)/flash;
+						else
+							gunFlash1[i] = 0.0;
+						break;
+					case 1:
+						flash = 10.0/game->speedAdj;
+						pause = gunPause[i]/game->speedAdj;
+						if(gunActive[i] && gunPause[i] < flash)
+							gunFlash0[i] = (flash-pause)/flash;
+						else
+							gunFlash0[i] = 0.0;
+						break;
+					case 2:
+						flash = 5.0/game->speedAdj;
+						pause = gunPause[i]/game->speedAdj;
+						if(gunActive[i])
+						{
+							if(gunPause[i] < flash)
+							{
+								if(gunSwap)
+								{
+									gunFlash0[i] = (flash-pause)/flash;
+									gunFlash1[i] = 0.0;
+								}
+								else
+								{
+									gunFlash0[i] = 0.0;
+									gunFlash1[i] = (flash-pause)/flash;
+								}
+							}
+						}
+						else
+						{
+							gunFlash0[i] = 0.0;
+							gunFlash1[i] = 0.0;
+						}
+						break;
+				}
+			}
+			else
+			{
+				if(gunFlash0[i] > 0.0)	gunFlash0[i] -= 0.075*game->speedAdj;
+				else	gunFlash0[i] = 0.0;
+
+				if(gunFlash1[i] > 0.0)	gunFlash1[i] -= 0.075*game->speedAdj;
+				else	gunFlash1[i] = 0.0;
+			}
+		}
+
+		#-- decrement item activation
+		switch(currentItemIndex)
+		{
+			case 0: # self destruct
+				useItemArmed -= 0.02;
+				break;
+			case 1:
+				if(useItemArmed)
+					doDamage(1);
+				break;
+		}
+		if(useItemArmed < 0.0)
+			useItemArmed = 0.0;
+
+		#-- decrement supershields
+		if(shields >= HERO_SHIELDS)
+		{
+			shields -= 0.15*game->speedAdj;
+
+		}
+
+		float s = (1.0-game->speedAdj)+(game->speedAdj*0.8);
+		secondaryMove[0] *= s;
+		secondaryMove[1] *= s;
+		pos[0] += secondaryMove[0]*game->speedAdj;
+		pos[1] += secondaryMove[1]*game->speedAdj;
+		moveEvent(0,0);
+		"""
+
+	def draw(self):
+		self.sprite.draw()
+		# draw super shields in StatusDisplay to get better blend mode...
+		#if superBomb:
+		#	float s = superBomb*0.1
+		#	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+		#	glBindTexture(GL_TEXTURE_2D, bombTex)
+		#	glPushMatrix()
+		#	glTranslatef(0., -15., HERO_Z)
+		#	glRotatef(IRAND, 0., 0., 1.)
+		#	drawQuad(s,s)
+		#	glPopMatrix()
+		#	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
 
 
 #-------------------------------------------------------------------------------
@@ -812,114 +950,6 @@ def explosions_update(): # Explosions
 	}
 
 
-def hero_update(): # HeroAircraft
-	if(dontShow > 1)
-	{
-		pos[0] =  		cos(game->frame*0.02) * 9.0;
-		pos[1] =  4.0 + sin(game->frame*0.07) * 2.0;
-	}
-	else if(dontShow == 1)
-	{
-		pos[0] =  0.0f;
-		pos[1] = -3.0f;
-	}
-
-	#-- Gun flashes are drawn in StatusDisplay
-	if(gunTrigger)
-		shootGun();
-	for(int i = 0; i < NUM_HERO_AMMO_TYPES; i++)
-	{
-		if(gunPause[i] >= 0)
-			gunPause[i] -= game->speedAdj;
-		if(gunTrigger)
-		{
-			float flash;
-			float pause;
-			switch(i)
-			{
-				case 0:
-					flash = 5.0/game->speedAdj;
-					pause = gunPause[i]/game->speedAdj;
-					gunFlash0[i] = (flash-pause)/flash;
-					if(gunActive[i])
-						gunFlash1[i] = (flash-pause)/flash;
-					else
-						gunFlash1[i] = 0.0;
-					break;
-				case 1:
-					flash = 10.0/game->speedAdj;
-					pause = gunPause[i]/game->speedAdj;
-					if(gunActive[i] && gunPause[i] < flash)
-						gunFlash0[i] = (flash-pause)/flash;
-					else
-						gunFlash0[i] = 0.0;
-					break;
-				case 2:
-					flash = 5.0/game->speedAdj;
-					pause = gunPause[i]/game->speedAdj;
-					if(gunActive[i])
-					{
-						if(gunPause[i] < flash)
-						{
-							if(gunSwap)
-							{
-								gunFlash0[i] = (flash-pause)/flash;
-								gunFlash1[i] = 0.0;
-							}
-							else
-							{
-								gunFlash0[i] = 0.0;
-								gunFlash1[i] = (flash-pause)/flash;
-							}
-						}
-					}
-					else
-					{
-						gunFlash0[i] = 0.0;
-						gunFlash1[i] = 0.0;
-					}
-					break;
-			}
-		}
-		else
-		{
-			if(gunFlash0[i] > 0.0)	gunFlash0[i] -= 0.075*game->speedAdj;
-			else	gunFlash0[i] = 0.0;
-
-			if(gunFlash1[i] > 0.0)	gunFlash1[i] -= 0.075*game->speedAdj;
-			else	gunFlash1[i] = 0.0;
-		}
-	}
-
-	#-- decrement item activation
-	switch(currentItemIndex)
-	{
-		case 0: # self destruct
-			useItemArmed -= 0.02;
-			break;
-		case 1:
-			if(useItemArmed)
-				doDamage(1);
-			break;
-	}
-	if(useItemArmed < 0.0)
-		useItemArmed = 0.0;
-
-	#-- decrement supershields
-	if(shields >= HERO_SHIELDS)
-	{
-		shields -= 0.15*game->speedAdj;
-
-	}
-
-	float s = (1.0-game->speedAdj)+(game->speedAdj*0.8);
-	secondaryMove[0] *= s;
-	secondaryMove[1] *= s;
-	pos[0] += secondaryMove[0]*game->speedAdj;
-	pos[1] += secondaryMove[1]*game->speedAdj;
-	moveEvent(0,0);
-
-
 #-draw--------------------------------------------------------------------------
 
 
@@ -1099,37 +1129,6 @@ def enemyFleet_drawGL(): # EnemyFleet
 				break;
 		}
 		thisEnemy = thisEnemy->next;
-	}
-
-
-def hero_drawGL(): # HeroAircraft
-	#-- draw hero
-	glPushMatrix();
-	glTranslatef(pos[0], pos[1], pos[2]);
-	if(!dontShow)
-	{
-		glColor4f(1.0, 1.0, 1.0, 1.0);
-		glBindTexture(GL_TEXTURE_2D, heroTex);
-		drawQuad(size[0], size[1]);
-	}
-	else
-	{
-		dontShow--;
-	}
-	#-- draw super shields in StatusDisplay to get better blend mode...
-	glPopMatrix();
-
-	if(superBomb)
-	{
-		float s = superBomb*0.1;
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glBindTexture(GL_TEXTURE_2D, bombTex);
-		glPushMatrix();
-		glTranslatef(0.0, -15.0, HERO_Z);
-		glRotatef(IRAND, 0.0, 0.0, 1.0);
-		drawQuad(s,s);
-		glPopMatrix();
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 
