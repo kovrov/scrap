@@ -1,18 +1,30 @@
+import math
 import pyglet
+from pyglet.gl import *
 
 
 def main():
 	pyglet.resource.path = ['chromium-data']
 	pyglet.resource.reindex()
-	window = pyglet.window.Window()
-	game = Game()
+	window = pyglet.window.Window(resizable=True)
+	game = Game(window.width)
 
 	@window.event
 	def on_draw():
 		window.clear()
 		game.draw()
 
-	pyglet.clock.schedule(game.update)
+	@window.event
+	def on_resize(width, height):
+		glViewport(0, 0, width, height)
+		glMatrixMode(gl.GL_PROJECTION)
+		glLoadIdentity()
+		glOrtho(0, width, 0, height, -1, 1)
+		glMatrixMode(gl.GL_MODELVIEW)
+		game.resize(width, height)
+
+	#pyglet.clock.schedule(game.update)
+	pyglet.clock.schedule_interval(game.update, 1/60.)
 	pyglet.app.run()
 
 
@@ -21,13 +33,16 @@ class Game:
 	"""
 	actual game state and logic
 	"""
-	def __init__(self):
+	def __init__(self, width):
 		#self.level = LevelOne()
-		self.level = Background("png/gndMetalBase00.png")
+		self.background = Background("png/gndMetalBase00.png", width)
+
+	def resize(self, width, height):
+		self.background.resize(width, height)
 
 	def update(self, dt):
 		# Add items to scene
-		self.level.update(dt)
+		self.background.update(dt)
 		# Update scene
 		'''
 		self.enemyFleet_update()
@@ -43,7 +58,7 @@ class Game:
 		'''
 
 	def draw(self):
-		self.level.draw()
+		self.background.draw()
 		'''
 		# Place camera
 		glLoadIdentity(); glTranslatef(0f, 0f, config.zTrans())
@@ -70,28 +85,44 @@ class Game:
 
 class Background:
 	""" animated tiles """
-	def __init__(self, image):
-		image = pyglet.resource.image(image)
-		self.segments = [pyglet.sprite.Sprite(image),]
+	def __init__(self, image, width):
+		# texture quadrants
+		self.tex2 = pyglet.resource.image(image).get_texture()
+		self.tex1 = self.tex2.get_transform(flip_x=True)
+		self.tex1.anchor_x = 0
+		self.tex4 = self.tex2.get_transform(flip_x=True, flip_y=True)
+		self.tex4.anchor_x = self.tex4.anchor_y = 0
+		self.tex3 = self.tex2.get_transform(flip_y=True)
+		self.tex3.anchor_y = 0
+		self.totaltime = 0.
+		self.scroll = 0.
+		self.speed = 0.05
+
+	def resize(self, width, height):
+		self.scale = 1. / width if width > height else 1. / height
+
 	def update(self, dt):
-		for seg in self.segments[:]:
-			seg.pos[1] += game.scrollSpeed*game.speedAdj
-			if seg.pos[1] < -s2:
-				p[3] = (0., seg.pos[1]+s2+s2, 0.)
-				s[2] = (size, size)
-				segments.remove(seg)
-				segments.insert(0, Segment(p, s, self))
+		self.totaltime += dt
+		self.scroll -= dt * self.speed
+		if self.scroll < -1.:
+			self.scroll = 0.
+
+	def draw_tiles(self, offset=0.):
+		y = (self.scroll + offset) / self.scale
+		size = 0.5/self.scale
+		self.tex1.blit(size, y+size, width=size, height=size)
+		self.tex2.blit(0, y+size,    width=size, height=size)
+		self.tex3.blit(0, y,         width=size, height=size)
+		self.tex4.blit(size, y,      width=size, height=size)
+
 	def draw(self):
-		s2 = size * 2.
 		# Set background color for low and med gfx
-		pulse = math.sin(game.gameFrame*0.03)
+		pulse = math.sin(self.totaltime * 0.5)
 		if pulse < 0.:
 			pulse = 0.
 		glClearColor(0.2+pulse, 0.2, 0.25, 1.)
-		# draw ground segments
-		for seg in self.segments:
-			seg.draw()
-
+		self.draw_tiles()
+		self.draw_tiles(1.)
 
 
 #-------------------------------------------------------------------------------
