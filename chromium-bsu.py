@@ -1,12 +1,17 @@
 import math
 import pyglet
 from pyglet.gl import *
+from pyglet.window import key
 
+
+world_scale = 0.
+keys = key.KeyStateHandler()
 
 def main():
 	pyglet.resource.path = ['chromium-data']
 	pyglet.resource.reindex()
 	window = pyglet.window.Window(resizable=True)
+	window.set_exclusive_mouse(True)
 	game = Game(window.width)
 
 	@window.event
@@ -16,19 +21,27 @@ def main():
 
 	@window.event
 	def on_resize(width, height):
+		global world_scale
+		world_scale = 1. / width if width > height else 1. / height
+		print world_scale
 		glViewport(0, 0, width, height)
 		glMatrixMode(gl.GL_PROJECTION)
 		glLoadIdentity()
 		glOrtho(0, width, 0, height, -1, 1)
 		glMatrixMode(gl.GL_MODELVIEW)
-		game.resize(width, height)
 
 	@window.event
 	def on_mouse_motion(x, y, dx, dy):
 		game.mouseInput(x, y, dx, dy)
 
-	#pyglet.clock.schedule(game.update)
-	pyglet.clock.schedule_interval(game.update, 1/60.)
+	@window.event
+	def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
+		game.mouseInput(x, y, dx, dy)
+
+	window.push_handlers(keys)
+
+	pyglet.clock.schedule(game.update)
+	#pyglet.clock.schedule_interval(game.update, 1/25.)
 	pyglet.app.run()
 
 
@@ -45,7 +58,7 @@ class Game:
 		self.background.resize(width, height)
 
 	def mouseInput(self, x, y, dx, dy):
-		self.hero.set_position(x, y)
+		self.hero.move(dx, dy)
 
 	def update(self, dt):
 		self.background.update(dt)
@@ -101,9 +114,6 @@ class Background:
 		self.scroll = 0.
 		self.speed = 0.05
 
-	def resize(self, width, height):
-		self.scale = 1. / width if width > height else 1. / height
-
 	def update(self, dt):
 		self.totaltime += dt
 		self.scroll -= dt * self.speed
@@ -111,8 +121,8 @@ class Background:
 			self.scroll = 0.
 
 	def draw_tiles(self, offset=0.):
-		y = (self.scroll + offset) / self.scale
-		size = 0.5/self.scale
+		y = (self.scroll + offset) / world_scale
+		size = 0.5 / world_scale
 		self.tex1.blit(size, y+size, width=size, height=size)
 		self.tex2.blit(0, y+size,    width=size, height=size)
 		self.tex3.blit(0, y,         width=size, height=size)
@@ -129,16 +139,60 @@ class Background:
 
 
 
+def length(vect):
+	return math.sqrt(vect[0]**2. + vect[1]**2.)
+
+def normalize(vect):
+	k = 1. / math.hypot(*vect)
+	return (vect[0] * k, vect[1] * k)
+
+def clamp(vect, max):
+	if length(vect) > max:
+		x, y = normalize(vect)
+		return (x * max, y * max)
+	return vect
+
+
+
 class HeroAircraft:
 	def __init__(self):
 		image = pyglet.resource.image("png/hero.png")
 		image.anchor_x = image.width / 2.
 		image.anchor_y = image.height / 2.
 		self.sprite = pyglet.sprite.Sprite(image)
+		self.movevect = (0.,0.)
+		self.maxspeed = 0.2  # units/sec
+		self.speed = 0.  # units/sec
+		self.sprite.set_position(image.width, image.height)
 
-	def set_position(self, x, y):
-		self.sprite.set_position(x, y)
+	def move(self, dx,dy):
+		self.speed = length((dx,dy)) * world_scale * 50.  # mouse sensitivity
+		self.movevect = normalize((dx, dy))
+
 	def update(self, dt):
+		dx = 0.; dy = 0.
+		if keys[key.LEFT]:
+			dx -= 1.
+		if keys[key.RIGHT]:
+			dx += 1.
+		if keys[key.UP]:
+			dy += 1.
+		if keys[key.DOWN]:
+			dy -= 1.
+		if dx != 0. or dy != 0.:
+			dx, dy = normalize((dx, dy))
+			speed = self.maxspeed
+		else:
+			dx, dy = self.movevect
+			speed = self.speed
+			self.speed -= dt * 20.  # speed decay
+			if self.speed < 0.:
+				self.speed = 0.
+		if speed > 0.:
+			offset_scale = speed/world_scale * dt
+			x,y = self.sprite.position
+			self.sprite.set_position(x + dx * offset_scale, y + dy * offset_scale)
+	#
 		"""
 		if(dontShow > 1)
 		{
@@ -249,7 +303,14 @@ class HeroAircraft:
 
 	def draw(self):
 		self.sprite.draw()
-		# draw super shields in StatusDisplay to get better blend mode...
+		x,y = self.sprite.position
+		if self.speed != 0.:
+			glBegin(GL_LINES)
+			glVertex2f(x, y)
+			glVertex2f(x+self.movevect[0]*(self.speed/10./world_scale),
+			           y+self.movevect[1]*(self.speed/10./world_scale))
+			glEnd()
+	# draw super shields in StatusDisplay to get better blend mode...
 		#if superBomb:
 		#	float s = superBomb*0.1
 		#	glBlendFunc(GL_SRC_ALPHA, GL_ONE)
