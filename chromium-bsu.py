@@ -194,111 +194,78 @@ class HeroAircraft:
 			self.sprite.set_position(x + dx * offset_scale, y + dy * offset_scale)
 	#
 		"""
-		if(dontShow > 1)
-		{
-			pos[0] =  		cos(game->frame*0.02) * 9.0;
-			pos[1] =  4.0 + sin(game->frame*0.07) * 2.0;
-		}
-		else if(dontShow == 1)
-		{
-			pos[0] =  0.0f;
-			pos[1] = -3.0f;
-		}
+		if self.dontShow > 1:
+			self.pos[0] =       math.cos(game.frame*0.02) * 9.
+			self.pos[1] =  4. + math.sin(game.frame*0.07) * 2.
+		elif self.dontShow == 1:
+			self.pos[0] =  0.
+			self.pos[1] = -3.
+		# Gun flashes are drawn in StatusDisplay
+		if self.gunTrigger:
+			self.shootGun()
+		#for i in range(NUM_HERO_AMMO_TYPES):
+		for gun in self.guns:
+			if gun.pause >= 0:
+				gun.pause -= game.speedAdj
+			if gunTrigger:
+				float flash
+				float pause
+				if i == 0:
+					flash = 5. / game.speedAdj
+					pause = gun.pause / game.speedAdj
+					gun.flash0 = (flash-pause)/flash
+					if gun.active:
+						gun.flash1 = (flash-pause)/flash
+					else:
+						gun.flash1 = 0.
+				elif i == 1:
+					flash = 10. / game.speedAdj
+					pause = gun.pause / game.speedAdj
+					if gun.active and gun.pause < flash:
+						gun.flash0 = (flash-pause)/flash
+					else
+						gun.flash0 = 0.
+				elif i == 2:
+					flash = 5. / game.speedAdj
+					pause = gun.pause / game.speedAdj
+					if gun.active:
+						if gun.pause < flash:
+							if gunSwap:
+								gun.flash0 = (flash-pause)/flash
+								gun.flash1 = 0.
+							else:
+								gun.flash0 = 0.
+								gun.flash1 = (flash-pause)/flash
+					else:
+						gun.flash0 = 0.
+						gun.flash1 = 0.
+			else:
+				if gun.flash0 > 0.:
+					gun.flash0 -= 0.075*game.speedAdj
+				else:
+					gun.flash0 = 0.
 
-		#-- Gun flashes are drawn in StatusDisplay
-		if(gunTrigger)
-			shootGun();
-		for(int i = 0; i < NUM_HERO_AMMO_TYPES; i++)
-		{
-			if(gunPause[i] >= 0)
-				gunPause[i] -= game->speedAdj;
-			if(gunTrigger)
-			{
-				float flash;
-				float pause;
-				switch(i)
-				{
-					case 0:
-						flash = 5.0/game->speedAdj;
-						pause = gunPause[i]/game->speedAdj;
-						gunFlash0[i] = (flash-pause)/flash;
-						if(gunActive[i])
-							gunFlash1[i] = (flash-pause)/flash;
-						else
-							gunFlash1[i] = 0.0;
-						break;
-					case 1:
-						flash = 10.0/game->speedAdj;
-						pause = gunPause[i]/game->speedAdj;
-						if(gunActive[i] && gunPause[i] < flash)
-							gunFlash0[i] = (flash-pause)/flash;
-						else
-							gunFlash0[i] = 0.0;
-						break;
-					case 2:
-						flash = 5.0/game->speedAdj;
-						pause = gunPause[i]/game->speedAdj;
-						if(gunActive[i])
-						{
-							if(gunPause[i] < flash)
-							{
-								if(gunSwap)
-								{
-									gunFlash0[i] = (flash-pause)/flash;
-									gunFlash1[i] = 0.0;
-								}
-								else
-								{
-									gunFlash0[i] = 0.0;
-									gunFlash1[i] = (flash-pause)/flash;
-								}
-							}
-						}
-						else
-						{
-							gunFlash0[i] = 0.0;
-							gunFlash1[i] = 0.0;
-						}
-						break;
-				}
-			}
-			else
-			{
-				if(gunFlash0[i] > 0.0)	gunFlash0[i] -= 0.075*game->speedAdj;
-				else	gunFlash0[i] = 0.0;
-
-				if(gunFlash1[i] > 0.0)	gunFlash1[i] -= 0.075*game->speedAdj;
-				else	gunFlash1[i] = 0.0;
-			}
-		}
-
-		#-- decrement item activation
-		switch(currentItemIndex)
-		{
-			case 0: # self destruct
-				useItemArmed -= 0.02;
-				break;
-			case 1:
-				if(useItemArmed)
-					doDamage(1);
-				break;
-		}
-		if(useItemArmed < 0.0)
-			useItemArmed = 0.0;
-
-		#-- decrement supershields
-		if(shields >= HERO_SHIELDS)
-		{
-			shields -= 0.15*game->speedAdj;
-
-		}
-
-		float s = (1.0-game->speedAdj)+(game->speedAdj*0.8);
-		secondaryMove[0] *= s;
-		secondaryMove[1] *= s;
-		pos[0] += secondaryMove[0]*game->speedAdj;
-		pos[1] += secondaryMove[1]*game->speedAdj;
-		moveEvent(0,0);
+				if gun.flash1 > 0.:
+					gun.flash1 -= 0.075*game.speedAdj
+				else:
+					gun.flash1 = 0.
+		# decrement item activation
+		if self.currentItemIndex == 0: # self destruct
+			useItemArmed -= 0.02
+		elif self.currentItemIndex == 1:
+			if useItemArmed:
+				doDamage(1)
+		if useItemArmed < 0.
+			useItemArmed = 0.
+		# decrement supershields
+		if shields >= HERO_SHIELDS:
+			shields -= 0.15 * game.speedAdj
+		float s = (1. - game.speedAdj) + (game.speedAdj*0.8)
+		secondaryMove[0] *= s
+		secondaryMove[1] *= s
+		pos[0] += secondaryMove[0] * game.speedAdj
+		pos[1] += secondaryMove[1] * game.speedAdj
+		moveEvent(0,0)
 		"""
 
 	def draw(self):
