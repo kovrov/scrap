@@ -1,6 +1,15 @@
-﻿import win32con
-from ctypes import *
+﻿from ctypes import *
 from ctypes import wintypes
+
+
+WM_NCCREATE = 0x81
+WM_DESTROY = 0x02
+CS_VREDRAW = 0x01
+CS_HREDRAW = 0x02
+WS_OVERLAPPEDWINDOW = 0xCF0000
+CW_USEDEFAULT = -0x80000000
+SW_SHOWNORMAL = 0x01
+FORMAT_MESSAGE_FROM_SYSTEM = 0x1000
 
 # LRESULT is defined as LONG_PTR (signed type)
 if sizeof(c_int32) == sizeof(c_void_p): LRESULT = c_int32
@@ -23,7 +32,7 @@ def assert_nonzerro(res):
 	if res == 0:
 		errno = windll.kernel32.GetLastError()
 		message = create_string_buffer(1024)
-		windll.kernel32.FormatMessageA(win32con.FORMAT_MESSAGE_FROM_SYSTEM,
+		windll.kernel32.FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
 									   c_void_p(), errno, 0,
 									   message, len(message),
 									   c_void_p())
@@ -31,8 +40,8 @@ def assert_nonzerro(res):
 	return res
 
 RegisterClass = windll.user32.RegisterClassW
-RegisterClass.argtypes = [POINTER(WNDCLASS)]
 RegisterClass.restype = assert_nonzerro
+RegisterClass.argtypes = [POINTER(WNDCLASS)]
 
 CreateWindowEx = windll.user32.CreateWindowExW
 CreateWindowEx.restype = assert_nonzerro
@@ -42,17 +51,16 @@ CreateWindowEx.argtypes = [wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR,
 						   wintypes.LPVOID]
 
 DefWindowProc = windll.user32.DefWindowProcW
-DefWindowProc.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
 DefWindowProc.restype = LRESULT
+DefWindowProc.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
 
 GetMessage = windll.user32.GetMessageW
-GetMessage.argtypes = [POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT]
 GetMessage.restype = wintypes.BOOL
+GetMessage.argtypes = [POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT]
 
 DispatchMessage = windll.user32.DispatchMessageW
 DispatchMessage.restype = LRESULT
 DispatchMessage.argtypes = [POINTER(wintypes.MSG)]
-
 
 class CREATESTRUCT(Structure):
 	_fields_ = [('lpCreateParams', wintypes.LPVOID),
@@ -68,42 +76,38 @@ class CREATESTRUCT(Structure):
 				('lpszClass', wintypes.LPCWSTR),
 				('dwExStyle', wintypes.DWORD)]
 
+#-------------------------------------------------------------------------------
 
 def wnd_proc(hWnd, message, wParam, lParam):
-	if message == win32con.WM_NCCREATE:
-		createStruct = CREATESTRUCT.from_address(lParam)
-		print createStruct
-		#print type(createStruct.lpszClass)
-		#print type(createStruct.dwExStyle)
-		return 0
-	elif message == win32con.WM_DESTROY:
+	if message == WM_NCCREATE:
+		cs = CREATESTRUCT.from_address(lParam)
+		print cs.lpszName
+		print cs.lpszClass
+		assert 1 == DefWindowProc(hWnd, message, wParam, lParam)
+		return 1
+	elif message == WM_DESTROY:
 		windll.user32.PostQuitMessage(0)
 	else:
 		return DefWindowProc(hWnd, message, wParam, lParam)
 	return 0
 WndProc = WNDPROC(wnd_proc)
 
-def register_wndclass():
+def main():
+	# register wndclass
 	wndclass = WNDCLASS()
-	wndclass.style = win32con.CS_HREDRAW | win32con.CS_VREDRAW
+	wndclass.style = CS_HREDRAW | CS_VREDRAW
 	wndclass.lpfnWndProc = WndProc
 	wndclass.hInstance = windll.kernel32.GetModuleHandleW(None)
 	wndclass.hbrBackground = 1
 	wndclass.lpszClassName = u"WINTEST"
 	RegisterClass(byref(wndclass))
-
-def create_window(nCmdShow):
-	hWnd = CreateWindowEx(0, u"WINTEST", u"втф?",
-						  win32con.WS_OVERLAPPEDWINDOW,
-						  win32con.CW_USEDEFAULT, 0,
-						  win32con.CW_USEDEFAULT, 0,
+	# create window
+	hWnd = CreateWindowEx(0, u"WINTEST", u"test window", WS_OVERLAPPEDWINDOW,
+						  CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
 						  0, 0, windll.kernel32.GetModuleHandleW(None), None)
-	windll.user32.ShowWindow(hWnd, nCmdShow)
+	windll.user32.ShowWindow(hWnd, SW_SHOWNORMAL)
 	windll.user32.UpdateWindow(hWnd)
-
-def main():
-	register_wndclass()
-	create_window(win32con.SW_SHOWNORMAL)
+	# pump messages
 	msg = wintypes.MSG()
 	pMsg = pointer(msg)
 	while GetMessage(pMsg, None, 0, 0):
