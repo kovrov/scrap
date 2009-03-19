@@ -2,7 +2,7 @@ import urllib2
 
 
 APPNAME = "Directory listing scanner"
-DATAFILE = "image_robot.txt"
+DATAFILE = "./image_robot.txt"
 AGENTNAME = "webls/0.1"
 
 def img_info(opener, url):
@@ -25,12 +25,12 @@ if __name__ == "__main__":
 	import wx
 	import time
 	# init data
-	file = open(DATAFILE, 'a+')
+	file = open(DATAFILE, 'r+')
 	pattern = file.readline().split()
 	url = pattern[0]
 	begin = int(pattern[1])
 	end = int(pattern[2])
-	known = [int(line.split()[0]) for line in file if line and line[0] != '#']
+	known = [int(line.split(' ', 1)[0]) for line in file if len(line) > 1 and line[0] != '#']
 	found = 0
 	# init io
 	opener = urllib2.build_opener()
