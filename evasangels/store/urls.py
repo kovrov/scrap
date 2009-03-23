@@ -1,10 +1,10 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-#	url(r'^(?P<slug>[-\w]+)/process/$',
-#		view	= 'store.views.process_store',
-#		name	= 'process_store',
-#	),
+	url(r'^line/(?P<line_id>[-\w]+)/$',
+		view	= 'store.views.line_preview',
+		name	= 'store_line_preview',
+	),
 #	url(r'^(?P<slug>[-\w]+)/$',
 #		view	= 'store.views.store_detail',
 #		name	= 'store_detail',
