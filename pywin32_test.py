@@ -36,10 +36,9 @@ def create_window(class_atom, title):
 def main():
 	class_atom = register_wndclass()
 	create_window(class_atom, "pywin32 test")
-	while True:
+	res = True
+	while res:
 		res,msg = win32gui.GetMessage(0, 0, 0)
-		if res == 0:
-			break
 		win32gui.TranslateMessage(msg)
 		win32gui.DispatchMessage(msg)
 	return msg[2]
