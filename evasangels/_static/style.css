@@ -1,0 +1,27 @@
+
+body { font-family: 
+	Georgia,
+	/*Schoolbook,*/
+	/*Garamond,*/
+	/*Bookman,*/
+	serif;
+}
+
+h1.logo {
+	text-align: center;
+	background: url(logo.png) no-repeat center;
+	/*display: none ! important;*/
+	text-indent: -5000px;
+	height: 160px;
+}
+
+ul.navbar {
+	display:block;
+	padding:0px;
+	margin:0px;
+	text-align: center;
+}
+
+ul.navbar li {
+	display:inline;
+}
