@@ -1,27 +1,70 @@
 
-body { font-family: 
-	Georgia,
-	/*Schoolbook,*/
-	/*Garamond,*/
-	/*Bookman,*/
-	serif;
+/* global */
+body {
+	font-family: Georgia, serif;
+	position: relative;
+	text-align: center;
 }
 
-h1.logo {
-	text-align: center;
+
+/* logo substitution */
+#logo {
 	background: url(logo.png) no-repeat center;
-	/*display: none ! important;*/
 	text-indent: -5000px;
 	height: 160px;
 }
 
-ul.navbar {
+
+/* links stripe */
+#links {
 	display:block;
 	padding:0px;
 	margin:0px;
-	text-align: center;
 }
 
-ul.navbar li {
+#links li {
 	display:inline;
+}
+
+
+/* content */
+#content {
+	position: relative;
+	width: 800px;
+	margin: 0 auto;
+	text-align: left; /* counter the body center */
+	/*border: 1px solid red;*/
+}
+
+#content h2 {
+	margin-left: 600px;
+	/*border: 1px solid red;*/
+}
+
+#content .image {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	/*border: 1px solid red;*/
+}
+
+#content p {
+	margin-left: 600px;
+	/*border: 1px solid red;*/
+}
+
+#content div.nav {
+	margin-top: 2em;
+	margin-left: 600px;
+	/*border: 1px solid red;*/
+}
+
+
+/* ... */
+#copy {
+	width: 800px;
+	margin: 0 auto;
+	margin-top: 2em;
+	text-align: left; /* counter the body center */
+	/*border: 1px solid red;*/
 }
