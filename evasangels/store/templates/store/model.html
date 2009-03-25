@@ -1,0 +1,13 @@
+<h1>{{ model.name }}</h1>
+
+<div>
+	<a href="{{ model.image.url }}">
+		<img src="{{ model.thumbnail.url }}" />
+	</a>
+</div>
+
+<p>{{ model.description }}</p>
+
+<div>
+	<a href="#{{ model.paypal_id }}">order now</a>
+</div>

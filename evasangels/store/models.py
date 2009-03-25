@@ -13,6 +13,10 @@ class Item(models.Model):
 	def __unicode__(self):
 		return self.name
 
+	@models.permalink
+	def absolute_url(self):
+		return ('store-item-view', [str(self.id)])
+
 
 class Collection(models.Model):
 	name        = models.CharField(max_length=200)
@@ -20,3 +24,7 @@ class Collection(models.Model):
 
 	def __unicode__(self):
 		return self.name
+
+	@models.permalink
+	def absolute_url(self):
+		return ('store-line-view', [str(self.id)])
