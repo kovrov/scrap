@@ -1,37 +1,58 @@
 
 /* global */
 body {
-	font-family: Georgia, serif;
+	font-family: Verdana, sans-serif;
+	/*font-family: Georgia, serif;*/
 	position: relative;
 	text-align: center;
 }
 
 
 /* logo substitution */
-#logo {
+#logo_container {
 	background: url(logo.png) no-repeat center;
-	text-indent: -5000px;
 	height: 160px;
+}
+#logo {
+	display: none;
 }
 
 
 /* links stripe */
+#links_container {
+	width: 800px; margin: 0 auto;
+	background: url(links-left.png) no-repeat left;
+}
+
 #links {
-	display:block;
-	padding:0px;
-	margin:0px;
+	padding: 0px;
+	margin: 0px;
+	padding-right: 50px;
+	margin-left: 50px;
+	line-height: 49px; /* ul height */
+	color: #FFF2B7;
+	background: #1E0E00 url(links-right.png) no-repeat right;
+	font-size: 13pt;
+	font-style: italic;
 }
 
 #links li {
-	display:inline;
+	display: inline;
+	/*padding: 0px;
+	margin: 0px;*/
+}
+
+#links a:link, #links a:visited {
+	color: inherit; /* !important */
+	margin: 0px;
+	padding: 10px;
 }
 
 
 /* content */
 #content {
 	position: relative;
-	width: 800px;
-	margin: 0 auto;
+	width: 800px; margin: 0 auto;
 	text-align: left; /* counter the body center */
 	/*border: 1px solid red;*/
 }
@@ -39,6 +60,9 @@ body {
 #content h2 {
 	margin-left: 600px;
 	/*border: 1px solid red;*/
+	
+	font-weight: normal;
+	font-style: italic;
 }
 
 #content .image {
@@ -51,20 +75,32 @@ body {
 #content p {
 	margin-left: 600px;
 	/*border: 1px solid red;*/
+	font-size: 0.75em;
 }
 
 #content div.nav {
 	margin-top: 2em;
 	margin-left: 600px;
 	/*border: 1px solid red;*/
+	font-weight: normal;
+	font-style: italic;
+	font-size: 1.2em;
+}
+
+#content div.nav span {
+	display: block;
+}
+
+#content div.nav.next:after {
+	content: "\00A0\2192"; /* &nbsp;&rarr; */
 }
 
 
 /* ... */
 #copy {
-	width: 800px;
-	margin: 0 auto;
+	width: 800px; margin: 0 auto;
 	margin-top: 2em;
 	text-align: left; /* counter the body center */
 	/*border: 1px solid red;*/
+	font-size: 0.75em;
 }
