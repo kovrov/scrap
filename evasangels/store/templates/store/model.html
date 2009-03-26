@@ -1,13 +1,14 @@
-<h1>{{ model.name }}</h1>
 
-<div>
-	<a href="{{ model.image.url }}">
-		<img src="{{ model.thumbnail.url }}" />
-	</a>
-</div>
+{% extends "base.html" %}
 
-<p>{{ model.description }}</p>
+{% block content %}
 
-<div>
-	<a href="#{{ model.paypal_id }}">order now</a>
-</div>
+		<h2>{{ model.name }}</h2>
+		<div class="image">
+			<a href="{{ model.image.url }}">
+				<img src="{{ model.thumbnail.url }}" alt="">
+			</a>
+		</div>
+		<p>{{ model.description }}</p>
+
+{% endblock %}

@@ -52,6 +52,7 @@ body {
 	position: relative;
 	width: 780px; margin: 50px auto;
 	text-align: left; /* counter the body center */
+	min-height: 400px;
 }
 
 #content h2 {

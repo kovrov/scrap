@@ -1,16 +1,23 @@
-<h1>{{ line.name }}</h1>
 
-{% if model_list %}
-	<ul>
-	{% for model in model_list %}
-		<li>
-			{{ model.name }}
-			<a href="{{ model.absolute_url }}">
-				<img src="{{ model.thumbnail.url }}" />
-			</a>
-		</li>
-	{% endfor %}
-	</ul>
-{% else %}
-	<p>No models are available.</p>
-{% endif %}
+{% extends "base.html" %}
+
+{% block content %}
+
+	<h2>{{ line.name }}</h2>
+
+	{% if model_list %}
+		<ul>
+		{% for model in model_list %}
+			<li>
+				{{ model.name }}
+				<a href="{{ model.absolute_url }}">
+					<img src="{{ model.thumbnail.url }}" />
+				</a>
+			</li>
+		{% endfor %}
+		</ul>
+	{% else %}
+		<p>No models are available.</p>
+	{% endif %}
+
+{% endblock %}
