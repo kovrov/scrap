@@ -27,4 +27,4 @@ class Collection(models.Model):
 
 	@models.permalink
 	def absolute_url(self):
-		return ('store-line-view', [str(self.id)])
+		return ('store-collection-view', [str(self.id)])

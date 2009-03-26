@@ -3,18 +3,18 @@
 
 {% block content %}
 
-	<h2>Lines</h2>
+	<h2>Collections</h2>
 
-	{% if lines_list %}
+	{% if collections_list %}
 		<ul>
-		{% for line in lines_list %}
+		{% for collection in collections_list %}
 			<li>
-				<a href="{{ line.absolute_url }}">{{ line.name }}</a>
+				<a href="{{ collection.absolute_url }}">{{ collection.name }}</a>
 			</li>
 		{% endfor %}
 		</ul>
 	{% else %}
-		<p>No lines are available.</p>
+		<p>No collections are available.</p>
 	{% endif %}
 
 {% endblock %}
