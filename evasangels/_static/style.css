@@ -9,7 +9,7 @@ body {
 
 
 /* logo substitution */
-#logo_container {
+#logo_block {
 	background: url(logo.png) no-repeat center;
 	height: 180px;
 }
@@ -19,7 +19,7 @@ body {
 
 
 /* links stripe */
-#links_container {
+#links_block {
 	width: 855px; margin: 0 auto;
 	background: url(links-left.png) no-repeat left;
 }
@@ -48,31 +48,31 @@ body {
 
 
 /* content */
-#content {
+#content_block {
 	position: relative;
 	width: 780px; margin: 50px auto;
 	text-align: left; /* counter the body center */
 	min-height: 400px;
 }
 
-#content h2 {
+#content_block h2 {
 	margin-left: 600px;
 	font-weight: normal;
 	font-style: italic;
 }
 
-#content .image {
+#content_block .image {
 	position: absolute;
 	top: 0px;
 	left: 0px;
 }
 
-#content p {
+#content_block p {
 	margin-left: 600px;
 	font-size: 0.75em;
 }
 
-#content div.nav {
+#content_block div.nav {
 	margin-top: 2em;
 	margin-left: 600px;
 	font-weight: normal;
@@ -80,17 +80,17 @@ body {
 	font-size: 1.2em;
 }
 
-#content div.nav span {
+#content_block div.nav span {
 	display: block;
 }
 
-#content div.nav.next:after {
+#content_block div.nav.next:after {
 	content: "\00A0\2192"; /* &nbsp;&rarr; */
 }
 
 
 /* ... */
-#copy {
+#copy_block {
 	width: 780px; margin: 0 auto;
 	margin-top: 2em;
 	text-align: left; /* counter the body center */
