@@ -3,7 +3,7 @@ from models import Item, Collection
 
 
 class ItemAdmin(admin.ModelAdmin):
-    list_filter = ('collection',)
+	list_filter = ('collection',)
 
 
 admin.site.register(Item, ItemAdmin)
