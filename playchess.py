@@ -48,58 +48,61 @@ def parse_features(string):
 	return features
 	
 
+
 class GnuChessEngine(object):
 	args = ["xboard"]
 	move_patterns = (re.compile(r"(?P<NUMBER>\d)\. \.\.\. (?P<MOVE>\w+)"),
 	                 re.compile(r"move (?P<MOVE>\w+)"))
 	def __init__(self, path="gnuches"):
-		self.__move = threading.Event()
-		self.__move.set()
-		self.last_engine_move = None
-		self.process = SubProcess([path] + self.args, self.process_command)
-		self.process.send("xboard")
-		self.process.send("protover 2")
+		self.__engine_move = threading.Event()
+		self.__engine_move.set()  # as engine pay for black
+		self.__engine_move.value = None  # just added a new property
+		self.__process = SubProcess([path]+self.args, self.process_command)
+		self.__process.send("xboard")
+		self.__process.send("protover 2")
 		self.new()
 
 	def new(self):
-		self.process.send("new")
-		self.process.send("random")
+		self.__process.send("new")
+		self.__process.send("random")
 
 	def exit(self):
-		self.process.send("exit")
+		self.__process.send("exit")
 
 	def move(self, move):
 		#  1. check if my move
-		assert self.__move.is_set()
-		self.__move.clear()
-		self.process.send(move)
+		assert self.__engine_move.is_set()
+		self.__engine_move.clear()
+		self.__engine_move.value = None
+		self.__process.send(move)  # with response?
 
 	def process_command(self, command):
 		# check if this is a move.
-		for pattern in self.move_patterns:
-			match = pattern.match(command)
+		for match in (p.match(command) for p in self.move_patterns):
 			if match:
-				self.last_engine_move = match.groupdict()["MOVE"]
-				self.__move.set()
+				assert not self.__engine_move.is_set()
+				self.__engine_move.value = match.groupdict()["MOVE"]
+				self.__engine_move.set()
 				return
 		# if not a move, then a command perhaps.
 		if command.startswith("feature"):
 			features = parse_features(command[len("feature"):])
 			return
-		# well, what ever...
+		# well, whatever...
 
-	def wait_for_engine_move(self):
-		self.__move.wait()
-		return self.last_engine_move
+	def engine_move(self, wait=False):
+		if wait:
+			self.__engine_move.wait()
+		return self.__engine_move.value
 
 
 #-------------------------------------------------------------------------------
 chess = GnuChessEngine("c:/soft/winboard/gnuches5.exe")  # a new default game
 print "my move: e2e4"
 chess.move("e2e4")  # by default we play as white
-print "engine move:", chess.wait_for_engine_move()
+print "engine move:", chess.engine_move(wait=True)
 print "my move: g1f3"
 chess.move("g1f3")  # this move is allways safe as second one
-print "engine move:", chess.wait_for_engine_move()
+print "engine move:", chess.engine_move(wait=True)
 print "exit"
 chess.exit()  # terminate the engine
