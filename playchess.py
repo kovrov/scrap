@@ -55,8 +55,8 @@ class GnuChessEngine(object):
 	                 re.compile(r"move (?P<MOVE>\w+)"))
 	def __init__(self, path="gnuches"):
 		self.__engine_move = threading.Event()
-		self.__engine_move.set()  # as engine pay for black
 		self.__engine_move.value = None  # just added a new property
+		self.__engine_move.set()  # as engine pay for black
 		self.__process = SubProcess([path]+self.args, self.process_command)
 		self.__process.send("xboard")
 		self.__process.send("protover 2")
@@ -70,7 +70,6 @@ class GnuChessEngine(object):
 		self.__process.send("exit")
 
 	def move(self, move):
-		#  1. check if my move
 		assert self.__engine_move.is_set()
 		self.__engine_move.clear()
 		self.__engine_move.value = None
