@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
+#-threaded-subprocess-----------------------------------------------------------
 import threading
 import subprocess
-import re
 PIPE, STDOUT = subprocess.PIPE, subprocess.STDOUT
-
 
 def read_stdout(stdout, callback):
 	line = None
@@ -21,6 +20,11 @@ class SubProcess(subprocess.Popen):
 
 	def send(self, line):
 		self.stdin.write(line+"\n")
+
+
+#-gnu-chess---------------------------------------------------------------------
+import threading
+import re
 
 
 def parse_features(string):
@@ -45,11 +49,14 @@ def parse_features(string):
 	
 
 class GnuChessEngine(object):
-	args = ["c:/soft/winboard/gnuches5.exe", "xboard"]
+	args = ["xboard"]
 	move_patterns = (re.compile(r"(?P<NUMBER>\d)\. \.\.\. (?P<MOVE>\w+)"),
 	                 re.compile(r"move (?P<MOVE>\w+)"))
-	def __init__(self):
-		self.process = SubProcess(self.args, self.process_command)
+	def __init__(self, path="gnuches"):
+		self.__move = threading.Event()
+		self.__move.set()
+		self.last_engine_move = None
+		self.process = SubProcess([path] + self.args, self.process_command)
 		self.process.send("xboard")
 		self.process.send("protover 2")
 		self.new()
@@ -62,7 +69,9 @@ class GnuChessEngine(object):
 		self.process.send("exit")
 
 	def move(self, move):
-		print "# MY MOVE:", move
+		#  1. check if my move
+		assert self.__move.is_set()
+		self.__move.clear()
 		self.process.send(move)
 
 	def process_command(self, command):
@@ -70,23 +79,27 @@ class GnuChessEngine(object):
 		for pattern in self.move_patterns:
 			match = pattern.match(command)
 			if match:
-				print "# ENGINE MOVE:", match.groupdict()["MOVE"]
+				self.last_engine_move = match.groupdict()["MOVE"]
+				self.__move.set()
 				return
 		# if not a move, then a command perhaps.
 		if command.startswith("feature"):
-			for name,value in parse_features(command[len("feature"):]).items():
-				print (name,value)
+			features = parse_features(command[len("feature"):])
 			return
 		# well, what ever...
-		print repr(command)
 
 	def wait_for_engine_move(self):
-		self.__wait_for_engine_move = True
-		pass
+		self.__move.wait()
+		return self.last_engine_move
 
-chess = GnuChessEngine()  # a new default game
+
+#-------------------------------------------------------------------------------
+chess = GnuChessEngine("c:/soft/winboard/gnuches5.exe")  # a new default game
+print "my move: e2e4"
 chess.move("e2e4")  # by default we play as white
-chess.wait_for_engine_move()
+print "engine move:", chess.wait_for_engine_move()
+print "my move: g1f3"
 chess.move("g1f3")  # this move is allways safe as second one
-chess.wait_for_engine_move()
+print "engine move:", chess.wait_for_engine_move()
+print "exit"
 chess.exit()  # terminate the engine
