@@ -6,8 +6,8 @@ This is typical "controller" in MVC terminology.
 import board
 import fsm
 
-BATTLE_STARTED='BATTLE_STARTED';PLAYER_TURN='PLAYER_TURN';BATTLE_ENDED='BATTLE_ENDED' # states
-SETUP='SETUP';SHOOT='SHOOT';RESTART='RESTART' # events
+BATTLE_STARTED='BATTLE_STARTED'; PLAYER_TURN='PLAYER_TURN'; BATTLE_ENDED='BATTLE_ENDED' # states
+SETUP='SETUP'; SHOOT='SHOOT'; RESTART='RESTART' # events
 SEA_SIDE = 10
 
 # A "facade" around particular gamelogic implementation
