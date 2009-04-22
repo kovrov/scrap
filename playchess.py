@@ -1,5 +1,25 @@
 #!/usr/bin/env python
+"""
+Chess Engine Communication Protocol states:
 
+init_mode
+	* feature receive
+	* feature accept|reject
+
+move_mode
+	* send move
+	* offer draw?
+	* new|end game?
+
+wait_mode
+	* accept move
+	* offer draw?
+	* new|end game?
+
+ping_mode
+	?
+
+"""
 import re
 import threading
 import subprocess
@@ -31,13 +51,14 @@ def parse_features(features_string):
 				re.compile(r"""^(\w+)\s*=\s*'([^']+)'\s*(.*)$"""),
 				re.compile(r"""^(\w+)\s*=\s*([^\s'"]+)\s*(.*)$"""))
 	features = {}
-	next_string = features_string.strip()
-	while next_string:
-		for match in (m for m in (p.match(next_string) for p in patterns) if m):
-			name, value, next_string = match.groups()
+	next_str = features_string.strip()
+	while next_str:
+		for match in (m for m in (p.match(next_str) for p in patterns) if m):
+			name, value_str, next_str = match.groups()
 			try:
-				value = float(value)
-				value = int(value)
+				value = float(value_str)
+				value = int(value_str)
+				value = value_str
 			except: pass
 			features[name] = value
 			break
@@ -48,10 +69,17 @@ def parse_features(features_string):
 
 class GnuChessEngine(object):
 	__args = ["xboard"]
-	__move_patterns = (re.compile(r"(?P<NUMBER>\d)\. \.\.\. (?P<MOVE>\w+)"),
-	                   re.compile(r"move (?P<MOVE>\w+)"))
+	__receive_move_patterns = (re.compile(r"move (?P<MOVE>\w+)")),
+			re.compile(r"(?P<NUMBER>\d)\. \.\.\. (?P<MOVE>\w+)"),
+	__receive_illigalmove_patterns = re.compile(r"Illegal move: (?P<MOVE>\w+)"),
+			re.compile(r"Illegal move \((?P<REASON>[\w\s]+)\): (?P<MOVE>\w+)")
 
 	def __init__(self, path="gnuches"):
+		#  default config
+		self.__send_move_format = "%s"
+		self.__may_offer_draw = False
+		self.__pingable = False
+		#  rest of initialization
 		self.__can_send = threading.Event()
 		self.__can_send.set()
 		self.__process = subprocess.Popen([path]+self.__args, stdin=PIPE, stdout=PIPE, bufsize=0)
@@ -93,13 +121,16 @@ class GnuChessEngine(object):
 	def __receive(self, command):
 		logging.info("engine >> %s", repr(command))
 		# check if this is a move.
-		for match in (p.match(command) for p in self.__move_patterns):
+		for match in (p.match(command) for p in self.__receive_move_patterns):
 			if match:
 				self.__engine_hint.clear()
 				self.__engine_hint.value = None
 				assert not self.__engine_move.is_set()
 				self.__engine_move.value = match.groupdict()["MOVE"]
 				self.__engine_move.set()
+				return
+		for match in (p.match(command) for p in self.__receive_illigalmove_patterns):
+			if match:
 				return
 		# if not a move, then a command perhaps.
 		if command.startswith("feature"):  # typically response for "protover"
@@ -109,6 +140,10 @@ class GnuChessEngine(object):
 			assert not self.__engine_hint.is_set()
 			self.__engine_hint.value = command[len("Hint:"):].strip()
 			self.__engine_hint.set()
+			return
+		if command == "offer draw":  # engine wants to offer a draw by agreement
+			return
+		if command == "resign":  # engine wants to resign
 			return
 		# well, whatever...
 
@@ -143,6 +178,12 @@ class GnuChessEngine(object):
 		self.__send("hint")
 		self.__engine_hint.wait()
 		return self.__engine_hint.value
+
+	def ping(self):
+		if not self.__pingable:
+			raise Exception("ping not implemented")
+		#self.__block_mode("ping", ):
+		self.__send("ping")
 
 """
 #-------------------------------------------------------------------------------
@@ -196,7 +237,7 @@ desired_features = {
 	'setboard':  True, #
 	'playother': True, #
 	'time':      True, #
-	'draw':      True, #
+	'draw':      True, # self.__may_offer_draw = Frue
 	'reuse':     True, #
 	'analyze':   True, #
 	'myname':    None,  # don't care
@@ -214,3 +255,58 @@ for key in set(engine_features) & set(desired_features):
 		print "(%s)" % resp[True]
 	else:
 		print "(%s)" % resp[engine_features[key] == desired_features[key]]
+
+
+#  Commands from the engine to xboard
+
+#  feature FEATURE1=VALUE1 FEATURE2=VALUE2 ...
+startswith(r'''feature ''')
+
+#  Illegal move: MOVE
+re.compile(r'''^Illegal move: (?P<MOVE>\w+)'''),
+
+#  Illegal move (REASON): MOVE
+re.compile(r'''^Illegal move \((?P<REASON>[\w\s]+)\): (?P<MOVE>\w+)''')
+
+#  Error (ERRORTYPE): COMMAND
+re.compile('''Error (ERRORTYPE): COMMAND''')
+
+#  move MOVE
+re.compile(r'''^move (?P<MOVE>\w+)''')),
+re.compile(r'''^(?P<NUMBER>\d)\. \.\.\. (?P<MOVE>\w+)''')
+
+#  RESULT {COMMENT}
+re.compile(r'''^RESULT {COMMENT}''')
+
+#  resign
+       == '''resign'''
+
+# offer draw
+       == '''offer draw'''
+
+# tellopponent MESSAGE
+startswith('''tellopponent ''') # MESSAGE
+
+# tellothers MESSAGE
+startswith('''tellothers ''') # MESSAGE
+
+# tellall MESSAGE
+startswith('''tellall ''') # MESSAGE
+
+# telluser MESSAGE
+startswith('''telluser ''') # MESSAGE
+
+# tellusererror MESSAGE
+startswith('''tellusererror ''') # MESSAGE
+
+# askuser REPTAG MESSAGE
+re.compile(r'''^askuser REPTAG MESSAGE''')
+
+# tellics MESSAGE
+startswith('''tellics ''') # MESSAGE
+
+# tellicsnoalias MESSAGE
+startswith('''tellicsnoalias ''') # MESSAGE
+
+# # COMMENT
+startswith(r'''#''') # COMMENT
