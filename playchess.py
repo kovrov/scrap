@@ -171,7 +171,7 @@ engine_features = {
 	'analyze': 1,
 }
 
-features = {
+default_features = {
 	'ping':      False,  # (True)
 	'setboard':  False,  # (True)
 	'playother': False,  # (True)
@@ -183,15 +183,34 @@ features = {
 	'sigterm':   True,
 	'reuse':     True,  # (True)
 	'analyze':   True,  # (True)
-	'myname':    "",
+	'myname':    None,
 	'variants':  [],
 	'colors':    True,  # (False)
 	'ics':       False,
-	'name':      False,
+	'name':      None,
 	'pause':     False,
+}
+
+desired_features = {
+	'ping':      True, #
+	'setboard':  True, #
+	'playother': True, #
+	'time':      True, #
+	'draw':      True, #
+	'reuse':     True, #
+	'analyze':   True, #
+	'myname':    None,  # don't care
+	'variants':  "normal",
+	'colors':    False, # don't like
+	'name':      None,  # don't care
 }
 
 
 resp = ("rejected","accepted")
-for name, value in engine_features.iteritems():
-	print "%s : %s (%s)" % (name, value, resp[features.get(name, None) == value])
+
+for key in set(engine_features) & set(desired_features):
+	print "%s: %s == %s" % (key, engine_features[key], desired_features[key]),
+	if desired_features[key] is None:  # don't care - accept
+		print "(%s)" % resp[True]
+	else:
+		print "(%s)" % resp[engine_features[key] == desired_features[key]]
