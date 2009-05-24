@@ -1,9 +1,10 @@
-import urllib2
-
-
 APPNAME = "Directory listing scanner"
-DATAFILE = "./image_robot.txt"
+DATAFILES = ["./scanner_data1.txt","./scanner_data2.txt"]
 AGENTNAME = "webls/0.1"
+
+import urllib2
+import time
+import wx
 
 def img_info(opener, url):
 	try:
@@ -20,41 +21,66 @@ def img_info(opener, url):
 			'length': int(info["Content-Length"]),
 			'type': info["Content-Type"]}
 
-
-if __name__ == "__main__":
-	import wx
-	import time
-	# init data
-	file = open(DATAFILE, 'r+')
-	pattern = file.readline().split()
-	url = pattern[0]
-	begin = int(pattern[1])
-	end = int(pattern[2])
-	known = [int(line.split(' ', 1)[0]) for line in file if len(line) > 1 and line[0] != '#']
+def process_file(filename):
 	found = 0
+	# init data
+	file = open(filename, 'r+')
+	pattern = file.readline().split()
+	url_format = pattern[0]
+	url_format_args_expr = compile(pattern[1], '<string>', 'eval')
+	url_args = eval(pattern[2])
+	begin = url_args['begin']
+	end = url_args['end']
+	variants = url_args.get('variants')
+	known = [line.split(' ', 1)[0] for line in file if len(line) > 1 and line[0] != '#']
 	# init io
 	opener = urllib2.build_opener()
 	opener.addheaders = [('User-agent', AGENTNAME)]
 	# init gui
-	app = wx.App()
 	MAX = end - begin
 	dlg = wx.ProgressDialog(APPNAME, "scanning ...", MAX-1, None)
 	for i in xrange(begin, end):
-		if i in known:
-			continue
-		# update data
-		info = img_info(opener, url % i)
-		if info:
-			found += 1
-			file.write(str(i) + ' ' + info['date'] + '\n')
-		# update ui
-		n = i - begin
-		dlg.Update(n, "%d of %d" % (n + 1, MAX))
+		if variants:
+			for v in xrange (variants):
+				iv = ":".join((str(i), str(v)))
+				if iv in known:
+					continue
+				# update data
+				url = url_format % eval(url_format_args_expr)
+				info = img_info(opener, url)
+				if info:
+					found += 1
+					file.write(iv + ' ' + url + ' ' + info['date'] + '\n')
+				# update ui
+				n = i - begin
+				dlg.Update(n, "%d of %d" % (n + 1, MAX))
+		else:
+			if str(i) in known:
+				continue
+			# update data
+			url = url_format % eval(url_format_args_expr)
+			info = img_info(opener, url)
+			if info:
+				found += 1
+				file.write(str(i) + ' ' + url + ' ' + info['date'] + '\n')
+			# update ui
+			n = i - begin
+			dlg.Update(n, "%d of %d" % (n + 1, MAX))
 	# update data
 	file.write("# scan ended at " + time.strftime("%Y/%m/%d-%H:%M") + " - " + str(found) + ' images found\n')
 	# update ui
+	return (n+1, found)
+
+if __name__ == "__main__":
+	total_scanned = 0
+	total_found = 0
+	app = wx.App(0)
+	for filename in DATAFILES:
+		scanned, found = process_file(filename)
+		total_scanned += scanned
+		total_found += found
 	dlg = wx.MessageDialog(None, "Done.\n"
-							"Scanned %d URLs, found %d files." % (n+1, found),
+							"Scanned %d URLs, found %d files." % (total_scanned, total_found),
 							APPNAME, wx.OK | wx.ICON_INFORMATION)
 	dlg.ShowModal()
 	dlg.Destroy()
