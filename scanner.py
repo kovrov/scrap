@@ -1,6 +1,13 @@
 APPNAME = "Directory listing scanner"
-DATAFILES = ["./scanner_data1.txt","./scanner_data2.txt"]
+DATAFILES = ["./datafile1.txt", "./datafile2.txt"]
 AGENTNAME = "webls/0.1"
+
+"""
+example of datafile headers:
+
+http://s7d3.scene7.com/is/image/JanieAndJack/%s (i,) {'begin':100009412,'end':100009420}
+http://www.gap.com/Asset_Archive/GPWeb/Assets/Product/%(prefix)03d/%(sku)06d/main/gp%(sku)06d-%(variant)02dp01v01.jpg {'prefix':i/1000,'sku':i,'variant':v} {'begin':501758,'end':501760,'variants':3}
+"""
 
 import urllib2
 import time
