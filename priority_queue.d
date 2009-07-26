@@ -18,6 +18,7 @@ class TaskQueue(T) : Thread
 	{
 		synchronized (this.mutex)
 		{
+			assert (!this.busy);
 			this.insert(x);
 			this.cond.notify();
 		}
@@ -33,36 +34,44 @@ class TaskQueue(T) : Thread
 	}
 
   private:
+	bool busy;
 	void run()
 	{
 		while (!this.done)
 		{
-			if (this.heap.length < 2)  // no tasks
+			synchronized (this.mutex)
 			{
-				/*synchronized (this.mutex)*/ cond.wait();
-				debug writefln("+++ woke up to do something?");
-				continue;
-			}
+				this.busy = true;
+				scope (exit) this.busy = false;
+				if (this.heap.length < 2)  // no tasks
+				{
+					cond.wait();
+					debug writefln("+++ woke up to do something?");
+					continue;
+				}
 
-			auto now = getUTCtime();
-			auto task = this.heap[1];
-			if (now < task.time)
-			{
-				/*synchronized (this.mutex)*/ cond.wait((task.time - now) * sleep_ticks);
-				now = getUTCtime();
+				auto now = getUTCtime();
+				auto task = this.heap[1];
 				if (now < task.time)
-					debug writefln("### woke up too soon! (%s.%s sec earlier)",
-							(task.time - now) / ticksPerSecond % 60,
-							(task.time - now) % ticksPerSecond);
-				continue;
-			}
+				{
+					cond.wait((task.time - now) * sleep_ticks);
+					debug
+					{	now = getUTCtime();
+						if (now < task.time)
+							debug writefln("### woke up too soon! (%s.%s sec earlier)",
+									(task.time - now) / ticksPerSecond % 60,
+									(task.time - now) % ticksPerSecond);
+					}
+					continue;
+				}
 
-			task = this.pop();
-			auto timeout = task.update(now);
-			if (timeout != d_time_nan)
-			{
-				task.time = now + timeout;
-				this.insert(task);
+				task = this.pop();
+				auto timeout = task.update(now);
+				if (timeout != d_time_nan)
+				{
+					task.time = now + timeout;
+					this.insert(task);
+				}
 			}
 		}
 	}
