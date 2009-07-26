@@ -10,15 +10,14 @@ class TaskQueue(T) : Thread
 	this()
 	{
 		super(&run);
-		this.mutex = new Mutex;
-		this.cond = new Condition(this.mutex);
+		this.cond_mutex = new Mutex;
+		this.cond = new Condition(this.cond_mutex);
 	}
 
 	void enqueue(T x)
 	{
-		synchronized (this.mutex)
+		synchronized (this.cond_mutex)
 		{
-			assert (!this.busy);
 			this.insert(x);
 			this.cond.notify();
 		}
@@ -26,7 +25,7 @@ class TaskQueue(T) : Thread
 
 	void stop()
 	{
-		synchronized (this.mutex)
+		synchronized (this.cond_mutex)
 		{
 			this.done = true;
 			this.cond.notify();
@@ -34,44 +33,39 @@ class TaskQueue(T) : Thread
 	}
 
   private:
-	bool busy;
 	void run()
 	{
+		synchronized (this.cond_mutex)
 		while (!this.done)
 		{
-			synchronized (this.mutex)
+			if (this.heap.length < 2)  // no tasks
 			{
-				this.busy = true;
-				scope (exit) this.busy = false;
-				if (this.heap.length < 2)  // no tasks
-				{
-					cond.wait();
-					debug writefln("+++ woke up to do something?");
-					continue;
-				}
+				cond.wait();  // unlocks cond_mutex
+				debug writefln("+++ woke up to do something?");
+				continue;
+			}
 
-				auto now = getUTCtime();
-				auto task = this.heap[1];
-				if (now < task.time)
-				{
-					cond.wait((task.time - now) * sleep_ticks);
-					debug
-					{	now = getUTCtime();
-						if (now < task.time)
-							debug writefln("### woke up too soon! (%s.%s sec earlier)",
-									(task.time - now) / ticksPerSecond % 60,
-									(task.time - now) % ticksPerSecond);
-					}
-					continue;
+			auto now = getUTCtime();
+			auto task = this.heap[1];
+			if (now < task.time)
+			{
+				cond.wait((task.time - now) * sleep_ticks);  // unlocks cond_mutex
+				debug
+				{	now = getUTCtime();
+					if (now < task.time)
+						debug writefln("### woke up too soon! (%s.%s sec earlier)",
+								(task.time - now) / ticksPerSecond % 60,
+								(task.time - now) % ticksPerSecond);
 				}
+				continue;
+			}
 
-				task = this.pop();
-				auto timeout = task.update(now);
-				if (timeout != d_time_nan)
-				{
-					task.time = now + timeout;
-					this.insert(task);
-				}
+			task = this.pop();
+			auto timeout = task.update(now);
+			if (timeout != d_time_nan)
+			{
+				task.time = now + timeout;
+				this.insert(task);
 			}
 		}
 	}
@@ -114,7 +108,7 @@ class TaskQueue(T) : Thread
 
 	bool done;
 	Condition cond;
-	Mutex mutex;
+	Mutex cond_mutex;
     T[] heap = [T.init,];
 	//invariant() { assert (this.heap.length > 0); }
 }
