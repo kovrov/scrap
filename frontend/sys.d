@@ -168,7 +168,7 @@ class WindowGDI(IOMANAGER) : Window
 				win32.POINT pos;
 				win32.GetCursorPos(&pos);
 				win32.ScreenToClient(hWnd, &pos);
-				io.dispatch_MOUSE_input(Point(pos.x, pos.y), MOUSE.LEAVE);
+				io.dispatch_MOUSE_input(Point(cast(short)pos.x, cast(short)pos.y), MOUSE.LEAVE);
 			}
 			break;
 
@@ -181,7 +181,7 @@ class WindowGDI(IOMANAGER) : Window
 
 		case win32.WM_GETMINMAXINFO:
 			auto mmi = cast(win32.MINMAXINFO*)lParam;
-			auto size = Size(mmi.ptMinTrackSize.x, mmi.ptMinTrackSize.y);
+			auto size = Size(cast(ushort)mmi.ptMinTrackSize.x, cast(ushort)mmi.ptMinTrackSize.y);
 			auto w = hWnd in _windows;
 			if (w !is null && w.io.query_MINMAX_info(size))
 			{

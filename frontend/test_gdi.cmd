@@ -1,6 +1,6 @@
 @echo off
 
-set PATH=C:\soft\digitalmars\dmd2\windows\bin;%PATH%
+set PATH=C:\soft\digitalmars\dmd2\bin;%PATH%
 set GUI=-L/EXETYPE:NT/SUBSYSTEM:WINDOWS:4.0
 set VER=-version=WindowsXP
 

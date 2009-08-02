@@ -144,6 +144,8 @@ template base(BASE /* : ui.TargetNode */)
 					return ui.FB.ReleaseMouse | ui.FB.StateChanged;
 				}
 				return ui.FB.NONE;
+			default:
+				assert (false);
 			}
 		}
 
