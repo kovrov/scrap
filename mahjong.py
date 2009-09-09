@@ -80,26 +80,41 @@ random.shuffle(tiles)
 for slot, tile in zip(board, tiles):
 	slot.tile = tile
 
-selected = None
+class Game:
+	def __init__(self):
+		self.selected = None
+		self.undo = []  # [((slot,tile),(slot,tile)),]
 
-window = pyglet.window.Window((tex_grid.item_width-off) * 16, (tex_grid.item_height-off) * 9)  # 16x9 tiles
+game = Game()
+
+# board is 15x8 tiles
+board_width = (tex_grid.item_width-off)*15 + off
+board_height = (tex_grid.item_height-off)*8 + off
+
+window = pyglet.window.Window(board_width, board_height)
 @window.event
 def on_draw():
-	background_board.blit(0, 0)
+	window.clear() #background_board.blit(0, 0)
 	for slot in board:
 		if slot.tile is None:
 			continue
 		slot_x, slot_y, slot_z = slot.pos
 		tile_x = slot_x * (tex_grid.item_width - off) / 2 + slot_z * off
 		tile_y = slot_y * (tex_grid.item_height - off) / 2 + slot_z * off
-		if selected is slot:
+		if game.selected is slot:
 			glColor3f(1,0.5,0.5)
+		elif game.selected is not None and game.selected.tile.match == slot.tile.match:
+			if slot.is_open():
+				glColor3f(1,0.85,0.85)
+			else:
+				glColor3f(0.75,0.75,0.75)
+		elif not slot.is_open():
+			glColor3f(0.9,0.9,0.85)
 		else:
 			glColor3f(1,1,1)
 		slot.tile.texture.blit(tile_x, tile_y)
 @window.event
 def on_mouse_press(x, y, button, modifiers):
-	global selected
 	tile_width = tex_grid.item_width - off
 	tile_height = tex_grid.item_height - off
 	for slot in reversed(board):
@@ -111,15 +126,23 @@ def on_mouse_press(x, y, button, modifiers):
 		if tile_x <= x and x < tile_x + tile_width and tile_y <= y and y < tile_y + tile_height:
 			if not slot.is_open():
 				return
-			if selected is None:
-				selected = slot
-			elif selected is slot:
-				selected = None
-			elif selected.tile.match == slot.tile.match:
-				selected.tile = None
+			if game.selected is None:
+				game.selected = slot
+			elif game.selected is slot:
+				game.selected = None
+			elif game.selected.tile.match == slot.tile.match:
+				game.undo.append(((game.selected, game.selected.tile),(slot, slot.tile)))
+				game.selected.tile = None
 				slot.tile = None
-				selected = None
+				game.selected = None
 			return
+@window.event
+def on_key_press(symbol, modifiers):
+    if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.Z:
+		for slot, tile in game.undo.pop():
+			slot.tile = tile
+    elif symbol == pyglet.window.key.ESCAPE:
+		pyglet.app.exit()
 
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
