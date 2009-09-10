@@ -50,10 +50,11 @@ board = layouts['dragon']
 pyglet.resource.path.append('res')
 pyglet.resource.reindex()
 background_board = pyglet.resource.image('Background_board.jpg')
+background_controls = pyglet.resource.image('Background_controls.jpg')
 tiles_image = pyglet.resource.image('tiles.png')
 tiles_image_seq = pyglet.image.ImageGrid(tiles_image, 6, 7)
 tex_grid = pyglet.image.TextureGrid(tiles_image_seq)
-off = 8  # "height offset" value - hardcoded into bitmap
+tile_offset = 8  # "height offset" value - hardcoded into bitmap
 
 class Tile:
 	def __init__(self, texture, match):
@@ -84,39 +85,52 @@ class Game:
 	def __init__(self):
 		self.selected = None
 		self.undo = []  # [((slot,tile),(slot,tile)),]
+		self.screen_scale = 1.0
+		self.screen_dirty = True
 
 game = Game()
 
 # board is 15x8 tiles
-board_width = (tex_grid.item_width-off)*15 + off
-board_height = (tex_grid.item_height-off)*8 + off
+board_width = (tex_grid.item_width - tile_offset) * 15 + tile_offset
+board_height = (tex_grid.item_height - tile_offset) * 8 + tile_offset
+#board_width, board_height = 610, 480
+#ontrols_width, ontrols_height = 190, 480
 
-window = pyglet.window.Window(board_width, board_height)
+window = pyglet.window.Window(800,480)
 @window.event
 def on_draw():
-	window.clear() #background_board.blit(0, 0)
+	if not game.screen_dirty:
+		return
+	glColor3f(1,1,1)
+	background_board.blit(0, 0)
+	background_controls.blit(610, 0)
+	tile_width = (tex_grid.item_width - tile_offset) * game.screen_scale
+	tile_height = (tex_grid.item_height - tile_offset) * game.screen_scale
+	off = tile_offset * game.screen_scale
 	for slot in board:
 		if slot.tile is None:
 			continue
 		slot_x, slot_y, slot_z = slot.pos
-		tile_x = slot_x * (tex_grid.item_width - off) / 2 + slot_z * off
-		tile_y = slot_y * (tex_grid.item_height - off) / 2 + slot_z * off
+		tile_x = slot_x * tile_width / 2 + slot_z * off
+		tile_y = slot_y * tile_height / 2 + slot_z * off
 		if game.selected is slot:
 			glColor3f(1,0.5,0.5)
-		elif game.selected is not None and game.selected.tile.match == slot.tile.match:
-			if slot.is_open():
-				glColor3f(1,0.85,0.85)
-			else:
-				glColor3f(0.75,0.75,0.75)
-		elif not slot.is_open():
-			glColor3f(0.9,0.9,0.85)
+		#elif game.selected is not None and game.selected.tile.match == slot.tile.match:
+		#	if slot.is_open():
+		#		glColor3f(1,0.85,0.85)
+		#	else:
+		#		glColor3f(0.75,0.75,0.75)
+		#elif not slot.is_open():
+		#	glColor3f(0.9,0.9,0.85)
 		else:
 			glColor3f(1,1,1)
-		slot.tile.texture.blit(tile_x, tile_y)
+		slot.tile.texture.blit(tile_x, tile_y, 0, tile_width + off, tile_height + off)
+	game.screen_dirty = False
 @window.event
 def on_mouse_press(x, y, button, modifiers):
-	tile_width = tex_grid.item_width - off
-	tile_height = tex_grid.item_height - off
+	tile_width = (tex_grid.item_width - tile_offset) * game.screen_scale
+	tile_height = (tex_grid.item_height - tile_offset) * game.screen_scale
+	off = tile_offset * game.screen_scale
 	for slot in reversed(board):
 		if slot.tile is None:
 			continue
@@ -135,14 +149,20 @@ def on_mouse_press(x, y, button, modifiers):
 				game.selected.tile = None
 				slot.tile = None
 				game.selected = None
+			game.screen_dirty = True
 			return
 @window.event
 def on_key_press(symbol, modifiers):
     if modifiers & pyglet.window.key.MOD_CTRL and symbol == pyglet.window.key.Z:
 		for slot, tile in game.undo.pop():
 			slot.tile = tile
+		game.screen_dirty = True
     elif symbol == pyglet.window.key.ESCAPE:
 		pyglet.app.exit()
+@window.event
+def on_resize(width, height):
+	h_scale, h_height = float(width)/float(board_width), float(height)/float(board_height)
+	game.screen_scale = min(h_scale, h_height)
 
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
