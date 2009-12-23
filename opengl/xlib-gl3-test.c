@@ -1,4 +1,4 @@
-/* gcc xlib-gl3-test.c -lGL -o xlib-gl3-test
+/* gcc xlib-gl3-test.c -lGL -lm -o xlib-gl3-test
  * http://opengl.org/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX) */
 
 #include <stdio.h>
