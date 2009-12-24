@@ -171,11 +171,11 @@ Window create_window(Display *display, const char *title)
 	Window win;
 	XSetWindowAttributes swa;
 
-	swa.event_mask = StructureNotifyMask;
+	swa.event_mask = ExposureMask | PointerMotionMask | StructureNotifyMask;
 	win = XCreateWindow(display, DefaultRootWindow(display),
-				0, 0, 800, 480,
-				0, CopyFromParent, InputOutput, CopyFromParent,
-				CWEventMask, &swa);
+			0, 0, 800, 480,
+			0, CopyFromParent, InputOutput, CopyFromParent,
+			CWEventMask, &swa);
 	if (!win)
 	{
 		printf("Failed to create window.\n");
@@ -183,6 +183,9 @@ Window create_window(Display *display, const char *title)
 	}
 
 	XStoreName(display, win, title);
+
+	//set_window_properties(display, win);
+
 	XMapWindow(display, win);
 	XSync(display, False);
 
@@ -280,15 +283,17 @@ int main(int argc, char **argv)
 	}
 
 	win = create_window(display, "GL 3.0 Window");
+
 	gl_context = create_context(display);
 	glXMakeCurrent(display, win, gl_context);
 
 	run(display, win);
 
 	// cleanup
-	//gl_context = glXGetCurrentContext();
 	glXMakeCurrent(display, 0, 0);
 	glXDestroyContext(display, gl_context);
+	XDestroyWindow(display, win);
+	XCloseDisplay(display);
 
 	return 0;
 }

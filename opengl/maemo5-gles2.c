@@ -66,22 +66,11 @@ GLuint create_shader(GLenum type, const char* pSource)
 	return shader;
 }
 
-
-Window create_window(Display *display, const char *title)
+void set_window_properties(Display *display, Window win)
 {
-	Window win;
 	Atom wm_state, fullscreen, non_composited, portrait_mode_request, portrait_mode_support;
-
-	XSetWindowAttributes swa;
 	int one = 1;
 	long on = 1;
-
-	swa.event_mask = ExposureMask | PointerMotionMask;
-	win = XCreateWindow(display, DefaultRootWindow(display),
-			0, 0, 600, 400,
-			0, CopyFromParent, InputOutput, CopyFromParent,
-			CWEventMask, &swa);
-	XStoreName(display, win, title);
 
 	wm_state = XInternAtom(display, "_NET_WM_STATE", False);
 	fullscreen = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
@@ -103,6 +92,27 @@ Window create_window(Display *display, const char *title)
 		XChangeProperty(display, win, portrait_mode_support, XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &on, 1);
 	else
 		XDeleteProperty(display, win, portrait_mode_support);
+}
+
+Window create_window(Display *display, const char *title)
+{
+	Window win;
+	XSetWindowAttributes swa;
+
+	swa.event_mask = ExposureMask | PointerMotionMask;
+	win = XCreateWindow(display, DefaultRootWindow(display),
+			0, 0, 800, 480,
+			0, CopyFromParent, InputOutput, CopyFromParent,
+			CWEventMask, &swa);
+	if (!win)
+	{
+		printf("Failed to create window.\n");
+		exit(1);
+	}
+
+	XStoreName(display, win, title);
+
+	set_window_properties(display, win);
 
 	XMapWindow(display, win);
 	XSync(display, False);
@@ -253,17 +263,17 @@ void run(Display *display, Window win, EGLDisplay egl_display, EGLSurface egl_su
 	}
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	Display* display;
 	Window win;
 	EGLConfig egl_config;
 	EGLDisplay egl_display;
-	EGLContext egl_context;
 	EGLSurface egl_drawable;
+	EGLContext egl_context;
 
 	display = XOpenDisplay(NULL);
-	if(display == NULL)
+	if (display == NULL)
 	{
 		printf("Failed to open X display\n");
 		exit(1);
@@ -272,9 +282,9 @@ int main()
 	win = create_window(display, "GL test");
 	egl_display = get_egl_display(display);
 	egl_config = get_egl_config(egl_display);
-
 	egl_drawable = eglCreateWindowSurface(egl_display, egl_config, (void*)win, NULL);
-	if(egl_drawable == EGL_NO_SURFACE) {
+	if(egl_drawable == EGL_NO_SURFACE)
+	{
 		printf("Unable to create EGL surface (%x)\n", eglGetError());
 		exit(1);
 	}
@@ -284,8 +294,10 @@ int main()
 
 	run(display, win, egl_display, egl_drawable);
 
-	eglDestroySurface(egl_display, egl_drawable);
+	// cleanup
+	eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 	eglDestroyContext(egl_display, egl_context);
+	eglDestroySurface(egl_display, egl_drawable);
 	eglTerminate(egl_display);
 	XDestroyWindow(display, win);
 	XCloseDisplay(display);
