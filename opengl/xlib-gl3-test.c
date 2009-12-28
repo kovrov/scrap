@@ -317,6 +317,7 @@ bool gametick(int64_t time, void *data)
 {
 	Task *task = data;
 	task->time = time + 1000000000 / 30;
+	return false;
 }
 
 void run(Display *display, Window win)
@@ -401,9 +402,7 @@ void run(Display *display, Window win)
 
 		task = bheap_pop(&tasks);
 		if (!task->update(now, task))
-		{
 			queue_enqueue(&tasks, task);
-		}
 
 		scene.phase = fmodf(now*0.000000015f, 2 * 3.141f);
 		render(&scene);
