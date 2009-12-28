@@ -1,4 +1,4 @@
-/* gcc gles2.c -o gles2 -lEGL -lX11 -lGLESv2 */
+/* gcc gles2.c -o gles2 -lEGL -lX11 -lGLESv2 -lrt */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,11 +7,27 @@
 #include <X11/Xatom.h>
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
-#include <math.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
+
+#include <math.h>
+#include <time.h>
+//#include <sys/time.h>
+
+typedef struct
+{
+	EGLDisplay display;
+	EGLSurface surface;
+	EGLConfig config;
+	EGLContext context;
+} EGL;
+
+typedef struct
+{
+	float phase;
+	int phase_location;
+} Scene;
 
 const char* vertexSrc =
 "attribute vec4 position;"
@@ -42,16 +58,17 @@ void log_shader_info(GLuint shader)
 {
 	GLint length;
 	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-	if(length)
+	if (length)
 	{
 		char* buffer = malloc(length * sizeof(char));
 		glGetShaderInfoLog(shader, length, NULL, buffer);
-		printf("%s", buffer);
+		printf("ShaderInfoLog: %s\n", buffer);
 		free(buffer);
 		GLint success;
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-		if(success != GL_TRUE)
+		if (success != GL_TRUE)
 		{
+			printf("shader GL_COMPILE_STATUS fail\n");
 			exit(1);
 		}
 	}
@@ -99,7 +116,7 @@ Window create_window(Display *display, const char *title)
 	Window win;
 	XSetWindowAttributes swa;
 
-	swa.event_mask = ExposureMask | PointerMotionMask;
+	swa.event_mask = ExposureMask | PointerMotionMask | StructureNotifyMask;
 	win = XCreateWindow(display, DefaultRootWindow(display),
 			0, 0, 800, 480,
 			0, CopyFromParent, InputOutput, CopyFromParent,
@@ -115,32 +132,12 @@ Window create_window(Display *display, const char *title)
 	set_window_properties(display, win);
 
 	XMapWindow(display, win);
-	XSync(display, False);
+	// FIXME: wait for MapNotify event
 
 	return win;
 }
 
-EGLDisplay get_egl_display(Display *display)
-{
-	EGLDisplay egl_display;
-
-	egl_display = eglGetDisplay((EGLNativeDisplayType)display);
-	if(egl_display == EGL_NO_DISPLAY)
-	{
-		printf("Got no EGL display\n");
-		exit(1);
-	}
-
-	if(!eglInitialize(egl_display, NULL, NULL))
-	{
-		printf("Unable to initialize EGL\n");
-		exit(1);
-	}
-
-	return egl_display;
-}
-
-EGLConfig get_egl_config(EGLDisplay egl_display)
+EGLConfig egl_get_config(EGLDisplay egl_display)
 {
 	EGLConfig ecfg;
 	EGLint num_config;
@@ -151,13 +148,13 @@ EGLConfig get_egl_config(EGLDisplay egl_display)
 			EGL_NONE
 		};
 
-	if(!eglChooseConfig(egl_display, attr, &ecfg, 1, &num_config))
+	if (!eglChooseConfig(egl_display, attr, &ecfg, 1, &num_config))
 	{
 		printf("Failed to choose config (%x)\n", eglGetError());
 		exit(1);
 	}
 
-	if(num_config != 1)
+	if (num_config != 1)
 	{
 		printf("Didn't get exactly one config, but %d\n", num_config);
 		exit(1);
@@ -166,28 +163,59 @@ EGLConfig get_egl_config(EGLDisplay egl_display)
 	return ecfg;
 }
 
-EGLContext create_context(EGLDisplay egl_display, EGLConfig egl_config)
+void egl_init(EGL *egl, Display *display, Window win)
 {
-	EGLContext egl_context;
 	static EGLint ctxattr[] =
 		{
 			EGL_CONTEXT_CLIENT_VERSION, 2,
 			EGL_NONE
 		};
 
-	egl_context = eglCreateContext(egl_display, egl_config, EGL_NO_CONTEXT, ctxattr);
-	if(egl_context == EGL_NO_CONTEXT)
+	egl->display = eglGetDisplay((EGLNativeDisplayType)display);
+	if (egl->display == EGL_NO_DISPLAY)
+	{
+		printf("Got no EGL display\n");
+		exit(1);
+	}
+
+	if (!eglInitialize(egl->display, NULL, NULL))
+	{
+		printf("Unable to initialize EGL\n");
+		exit(1);
+	}
+
+	egl->config = egl_get_config(egl->display);
+	egl->surface = eglCreateWindowSurface(egl->display, egl->config, (void*)win, NULL);
+	if (egl->surface == EGL_NO_SURFACE)
+	{
+		printf("Unable to create EGL surface (%x)\n", eglGetError());
+		exit(1);
+	}
+
+	egl->context = eglCreateContext(egl->display, egl->config, EGL_NO_CONTEXT, ctxattr);
+	if (egl->context == EGL_NO_CONTEXT)
 	{
 		printf("Unable to create EGL context (%x)\n", eglGetError());
 		exit(1);
 	}
 
-	return egl_context;
+	eglMakeCurrent(egl->display, egl->surface, egl->surface, egl->context);
 }
 
-void render(int phase_location, EGLDisplay egl_display, EGLSurface egl_surface, XWindowAttributes *win_attrs)
+void egl_destroy(EGL *egl)
 {
-	static float phase = 0;
+	eglMakeCurrent(egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+	eglDestroyContext(egl->display, egl->context);
+	egl->surface = NULL;
+	eglDestroySurface(egl->display, egl->surface);
+	egl->surface = NULL;
+	eglTerminate(egl->display);
+	egl->display = NULL;
+}
+
+
+void render(Scene *scene, EGL *egl)
+{
 	static const float vertexArray[] =
 		{
 			 0, -1, 0, 1,
@@ -195,32 +223,24 @@ void render(int phase_location, EGLDisplay egl_display, EGLSurface egl_surface, 
 			-1,  1, 0, 1
 		};
 
-	glViewport(0, 0, win_attrs->width, win_attrs->height);
 	glClearColor(0, 1, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glUniform1f(phase_location, phase);
+	glUniform1f(scene->phase_location, scene->phase);
 
 	glVertexAttribPointer(0, 4, GL_FLOAT, false, 0, vertexArray);
 	glEnableVertexAttribArray(0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
-
-	eglSwapBuffers(egl_display, egl_surface);
-
-	phase = fmodf(phase + 0.2, 2 * 3.141f);
 }
 
-void run(Display *display, Window win, EGLDisplay egl_display, EGLSurface egl_surface)
+void run(Display *display, EGL *egl)
 {
 	bool quit = false;
-	int numFrames = 0;
-	struct timeval start_time;
-	struct timezone tz;
 	GLuint shaderProgram;
-	int phase_location;
-	XWindowAttributes win_attrs;
+	Scene scene;
 
-	gettimeofday(&start_time, &tz);
+	int64_t prev_time = 0;
+	int num_frames = 0;
 
 	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, create_shader(GL_VERTEX_SHADER, vertexSrc));
@@ -228,49 +248,69 @@ void run(Display *display, Window win, EGLDisplay egl_display, EGLSurface egl_su
 	glLinkProgram(shaderProgram);
 	glUseProgram(shaderProgram);
 
-	phase_location = glGetUniformLocation(shaderProgram, "phase");
-	if(phase_location < 0)
+	scene.phase_location = glGetUniformLocation(shaderProgram, "phase");
+	if (scene.phase_location < 0)
 	{
 		printf("Unable to get uniform location\n");
 		exit(1);
 	}
 
-	XGetWindowAttributes(display, win, &win_attrs);
-
 	while (!quit)
 	{
+		struct timespec ts;
+		int64_t time;
+
 		while (XPending(display))
 		{
 			XEvent xev;
 			XNextEvent(display, &xev);
 
-			if(xev.type == MotionNotify)
+			if (xev.type == MotionNotify)
 			{
 				quit = true;
 			}
+			else if (xev.type == ConfigureNotify)
+			{
+				XConfigureEvent *ev = (XConfigureEvent *)&xev;
+				glViewport(0, 0, ev->width, ev->height);
+			}
 		}
 
-		render(phase_location, egl_display, egl_surface, &win_attrs);
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		time = ts.tv_sec * 1000000000LL + ts.tv_nsec;
 
-		numFrames++;
-		if(numFrames % 100 == 0)
+		scene.phase = fmodf(time*0.000000015f, 2 * 3.141f);
+		render(&scene, egl);
+		eglSwapBuffers(egl->display, egl->surface);
+
+		num_frames++;
+		if (time - prev_time > 1000000000LL)
 		{
-			struct timeval now;
-			gettimeofday(&now, &tz);
-			float delta = now.tv_sec - start_time.tv_sec + (now.tv_usec - start_time.tv_usec) * 0.000001f;
-			printf("fps: %f\n", numFrames / delta);
+			int delta = (time - prev_time)/1000000000LL;
+			printf("fps: %d (%d)\n", num_frames / delta, num_frames);
+			num_frames = 0;
+			prev_time = time;
+		}
+
+		if (1)
+		{
+			struct timespec rqtp = ts;
+			rqtp.tv_nsec += (1000000000LL/30);
+			if (rqtp.tv_nsec >= 1000000000LL)
+			{
+				rqtp.tv_nsec %= 1000000000LL;
+				rqtp.tv_sec++;
+			}
+			clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &rqtp, NULL);
 		}
 	}
 }
 
 int main(int argc, char **argv)
 {
-	Display* display;
+	Display *display;
 	Window win;
-	EGLConfig egl_config;
-	EGLDisplay egl_display;
-	EGLSurface egl_drawable;
-	EGLContext egl_context;
+	EGL egl;
 
 	display = XOpenDisplay(NULL);
 	if (display == NULL)
@@ -280,27 +320,14 @@ int main(int argc, char **argv)
 	}
 
 	win = create_window(display, "GL test");
-	egl_display = get_egl_display(display);
-	egl_config = get_egl_config(egl_display);
-	egl_drawable = eglCreateWindowSurface(egl_display, egl_config, (void*)win, NULL);
-	if(egl_drawable == EGL_NO_SURFACE)
-	{
-		printf("Unable to create EGL surface (%x)\n", eglGetError());
-		exit(1);
-	}
+	egl_init(&egl, display, win);
 
-	egl_context = create_context(egl_display, egl_config);
-	eglMakeCurrent(egl_display, egl_drawable, egl_drawable, egl_context);
-
-	run(display, win, egl_display, egl_drawable);
+	run(display, &egl);
 
 	// cleanup
-	eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-	eglDestroyContext(egl_display, egl_context);
-	eglDestroySurface(egl_display, egl_drawable);
-	eglTerminate(egl_display);
+	egl_destroy(&egl);
 	XDestroyWindow(display, win);
-	XCloseDisplay(display);
+	//XCloseDisplay(display); /// FIXME: why it crashes on maemo5?
 
 	return 0;
 }
