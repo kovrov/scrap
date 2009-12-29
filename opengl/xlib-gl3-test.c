@@ -5,14 +5,10 @@
 #include "queue.h"
 
 #include <stdlib.h>
-//#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 #include <math.h>
-//#include <time.h>
-//#include <sys/time.h>
-//#include <sys/select.h>
 
 
 #define GL_GLEXT_PROTOTYPES 1
@@ -128,13 +124,9 @@ void render(void *data)
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 }
 
-bool gametick(int64_t time, void *data)
+bool gametick(int64_t time, Task *task)
 {
-	Task *task = NULL;
-	Scene *scene = NULL;
-
-	task = data;
-	scene = task->ctx;
+	Scene *scene = task->ctx;
 
 	scene->phase = fmodf(time * 0.000000015f, 2 * 3.141f);
 	task->time = time + 1000000000 / 30;
@@ -157,8 +149,8 @@ int main(int argc, char **argv)
 	queue_insert(application_tasks(app), &gametick_task);
 
 	application_run(app, &render, scene);
-	application_free(app);
 
+	application_free(app);
 	scene_free(scene);
 
 	return 0;

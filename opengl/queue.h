@@ -5,14 +5,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef bool (*TaskCB)(int64_t, void *);
+typedef struct task_tag Task;
 
-typedef struct
+typedef bool (*TaskCB)(int64_t, Task *task);
+
+struct task_tag
 {
 	int64_t time;
 	TaskCB update;
 	void* ctx;
-} Task;
+};
 
 typedef struct queue_tag Queue;
 

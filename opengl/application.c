@@ -1,7 +1,5 @@
 #include "application.h"
 
-#define GL_GLEXT_PROTOTYPES 1
-#define GLX_GLXEXT_PROTOTYPES 1
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
