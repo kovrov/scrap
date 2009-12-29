@@ -10,11 +10,9 @@
 
 #include <math.h>
 
-
 #define GL_GLEXT_PROTOTYPES 1
 #define GLX_GLXEXT_PROTOTYPES 1
 #include <GL/gl.h>
-
 
 
 typedef struct
@@ -38,16 +36,8 @@ const char* fragmentSrc =
 	"void main()"
 	"{"
 		"gl_FragColor = vec4(1, 1, 1, 1) * sin((pos.x * pos.x + pos.y * pos.y) * 40.0 + phase);"
+		//"gl_FragColor = vec4(1, 1, 1, 1) * step(pos.x * pos.x + pos.y * pos.y, phase * 0.2);"
 	"}";
-/*
-const char* fragmentSrc =
-	"varying vec2 pos;"
-	"uniform float phase;"
-	"void main()"
-	"{"
-		"gl_FragColor = vec4(1, 1, 1, 1) * step(pos.x * pos.x + pos.y * pos.y, phase * 0.2);"
-	"}";
-*/
 
 void log_shader_info(GLuint shader)
 {
@@ -124,7 +114,7 @@ void render(void *data)
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 }
 
-bool gametick(int64_t time, Task *task)
+bool gametick(Task *task, int64_t time)
 {
 	Scene *scene = task->ctx;
 

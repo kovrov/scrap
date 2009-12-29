@@ -175,7 +175,7 @@ void application_free(Application *app)
 	app->display = NULL;
 }
 
-void application_run(Application *app, RenderCB render, void *scene)
+void application_run(Application *app, RenderCB render, void *data)
 {
 	bool quit = false;
 
@@ -232,10 +232,10 @@ void application_run(Application *app, RenderCB render, void *scene)
 		}
 
 		task = queue_pop(app->tasks);
-		if (!task->update(now, task))
+		if (!task->update(task, now))
 			queue_insert(app->tasks, task);
 
-		render(scene);
+		render(data);
 		glXSwapBuffers(app->display, app->winow);
 
 		num_frames++;

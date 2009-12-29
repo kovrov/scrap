@@ -7,7 +7,7 @@
 
 typedef struct task_tag Task;
 
-typedef bool (*TaskCB)(int64_t, Task *task);
+typedef bool (*TaskCB)(Task *, int64_t);
 
 struct task_tag
 {
