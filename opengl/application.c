@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-//#include <stdbool.h>
 #include <stdio.h>
 
 #include <time.h>
@@ -17,7 +16,7 @@
 struct application_tag
 {
 	Display *display;
-	Window winow;
+	Window window;
 	GLXContext gl_context;
 	Queue *tasks;
 };
@@ -28,9 +27,10 @@ struct application_tag
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
 
-// Get a matching FB config/visual with the most samples per pixel
+/* Get a matching FB config/visual with the most samples per pixel */
 GLXFBConfig get_fb_config(Display *display)
 {
+	GLXFBConfig fb_config;
 	int best_fbc = -1, best_num_samp = -1;
 	int fbcount, i;
 	GLXFBConfig *fbc = NULL;
@@ -47,8 +47,8 @@ GLXFBConfig get_fb_config(Display *display)
 			GLX_DEPTH_SIZE     , 24,
 			GLX_STENCIL_SIZE   , 8,
 			GLX_DOUBLEBUFFER   , True,
-			//GLX_SAMPLE_BUFFERS , 1,
-			//GLX_SAMPLES        , 4,
+			/*GLX_SAMPLE_BUFFERS , 1, */
+			/*GLX_SAMPLES        , 4, */
 			None
 		};
 
@@ -58,7 +58,7 @@ GLXFBConfig get_fb_config(Display *display)
 		exit(1);
 	}
 
-	// Pick the FB config/visual with the most samples per pixel
+	/* Pick the FB config/visual with the most samples per pixel */
 	for (i = 0; i < fbcount; i++)
 	{
 		int samp_buf, samples;
@@ -78,7 +78,7 @@ GLXFBConfig get_fb_config(Display *display)
 		XFree(vi);
 	}
 
-	GLXFBConfig fb_config = fbc[best_fbc];
+	fb_config = fbc[best_fbc];
 	XFree(fbc);
 	return fb_config;
 }
@@ -91,22 +91,22 @@ GLXContext create_context(Display *display)
 
 	fb_config = get_fb_config(display);
 
-	/// FIXME: Create an old-style GLX context first, to get the correct function ptr.
+	/** FIXME: Create an old-style GLX context first, to get the correct function ptr. */
 	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddress((const GLubyte *) "glXCreateContextAttribsARB");
 	if (glXCreateContextAttribsARB)
 	{
-		// glXCreateContextAttribsARB does exist, try to get a GL 3.0 context...
+		/* glXCreateContextAttribsARB does exist, try to get a GL 3.0 context... */
 		static int context_attribs[] =
 			{
 				GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
 				GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-				//GLX_CONTEXT_FLAGS_ARB GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+				/* GLX_CONTEXT_FLAGS_ARB GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, */
 				None
 			};
 		ctx = glXCreateContextAttribsARB(display, fb_config, 0, True, context_attribs);
 	}
 
-	// fallback to 2.x GLX context
+	/* fallback to 2.x GLX context */
 	if (0 == ctx)
 	{
 		printf("Failed to create GL 3.0 context ... using old-style GLX context\n");
@@ -139,25 +139,25 @@ Application * application_new(const char *title)
 	}
 
 	swa.event_mask = ExposureMask | PointerMotionMask | StructureNotifyMask;
-	app->winow = XCreateWindow(app->display, DefaultRootWindow(app->display),
+	app->window = XCreateWindow(app->display, DefaultRootWindow(app->display),
 			0, 0, 800, 480,
 			0, CopyFromParent, InputOutput, CopyFromParent,
 			CWEventMask, &swa);
-	if (!app->winow)
+	if (!app->window)
 	{
 		printf("Failed to create window.\n");
 		exit(1);
 	}
 
-	XStoreName(app->display, app->winow, title);
+	XStoreName(app->display, app->window, title);
 
-	//set_window_properties(app->display, app->winow);
+	/* set_window_properties(app->display, app->window); */
 
-	XMapWindow(app->display, app->winow);
-	// FIXME: wait for MapNotify event
+	XMapWindow(app->display, app->window);
+	/* FIXME: wait for MapNotify event */
 
 	app->gl_context = create_context(app->display);
-	glXMakeCurrent(app->display, app->winow, app->gl_context);
+	glXMakeCurrent(app->display, app->window, app->gl_context);
 
 	return app;
 }
@@ -169,22 +169,21 @@ void application_free(Application *app)
 	glXMakeCurrent(app->display, 0, NULL);
 	glXDestroyContext(app->display, app->gl_context);
 	app->gl_context = NULL;
-	XDestroyWindow(app->display, app->winow);
-	app->winow = 0;
+	XDestroyWindow(app->display, app->window);
+	app->window = 0;
 	XCloseDisplay(app->display);
 	app->display = NULL;
 }
 
-void application_run(Application *app, RenderCB render, void *data)
+void application_run(Application *app, RenderCB render, void *scene)
 {
 	bool quit = false;
+	int64_t prev_time = 0;
+	int num_frames = 0;
 
 	int fd = XConnectionNumber(app->display);
 	fd_set fdset;
 	FD_ZERO(&fdset);
-
-	int64_t prev_time = 0;
-	int num_frames = 0;
 
 	while (!quit)
 	{
@@ -210,22 +209,22 @@ void application_run(Application *app, RenderCB render, void *data)
 
 		if (queue_is_empty(app->tasks))
 		{
-			/// WAIT_FOR_EVENT
+			/** WAIT_FOR_EVENT */
 			FD_SET(fd, &fdset);
 			pselect(fd+1, &fdset, NULL, NULL, NULL, NULL);
 			continue;
 		}
 
 		clock_gettime(CLOCK_MONOTONIC, &ts);
-		now = ts.tv_sec * 1000000000LL + ts.tv_nsec;
+		now = ts.tv_sec * 1000000000 + ts.tv_nsec;
 
 		if (now < queue_top(app->tasks)->time)
 		{
-			/// WAIT_FOR_EVENT_WITH_TIMEOUT
+			/** WAIT_FOR_EVENT_WITH_TIMEOUT */
 			struct timespec timeout;
 			int64_t diff = queue_top(app->tasks)->time - now;
-			timeout.tv_sec = diff / 1000000000LL;
-			timeout.tv_nsec = diff % 1000000000LL;
+			timeout.tv_sec = diff / 1000000000;
+			timeout.tv_nsec = diff % 1000000000;
 			FD_SET(fd, &fdset);
 			pselect(fd+1, &fdset, NULL, NULL, &timeout, NULL);
 			continue;
@@ -235,13 +234,13 @@ void application_run(Application *app, RenderCB render, void *data)
 		if (!task->update(task, now))
 			queue_insert(app->tasks, task);
 
-		render(data);
-		glXSwapBuffers(app->display, app->winow);
+		if (scene_render(scene))
+			glXSwapBuffers(app->display, app->window);
 
 		num_frames++;
-		if (now - prev_time > 1000000000LL)
+		if (now - prev_time > 1000000000)
 		{
-			int delta = (now - prev_time)/1000000000LL;
+			int delta = (now - prev_time)/1000000000;
 			printf("fps: %d (%d)\n", num_frames / delta, num_frames);
 			num_frames = 0;
 			prev_time = now;

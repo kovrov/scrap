@@ -30,8 +30,9 @@ void queue_free(Queue *q)
 
 
 /* binary heap stuff */
-void queue_insert(Queue *q, Task *task) // insert
+void queue_insert(Queue *q, Task *task)
 {
+	int index;
 	if (q->allocated < q->length + 1)
 	{
 		q->heap = realloc(q->heap, q->allocated * 2 * sizeof(Task *));
@@ -39,7 +40,7 @@ void queue_insert(Queue *q, Task *task) // insert
 	}
 
 	q->length += 1;
-	int index = q->length - 1;
+	index = q->length - 1;
 	while (index > 1 && task->time < q->heap[index / 2]->time)
 	{
 		q->heap[index] = q->heap[index / 2];
@@ -50,16 +51,17 @@ void queue_insert(Queue *q, Task *task) // insert
 
 Task * queue_pop(Queue *q)
 {
-	//assert (q->length - 1 > 0);
+	/* assert (q->length - 1 > 0); */
+	unsigned node_index;
 	Task * first = q->heap[1];
 	Task * last = q->heap[1] = q->heap[q->length];
 	q->length -= 1;
-	if (q->length < 2) // no elements
+	if (q->length < 2) /* no elements */
 		return first;
-	int node_index = 1;
-	while (node_index * 2 < q->length)  // until there is atleast one child
+	node_index = 1;
+	while (node_index * 2 < q->length)  /* until there is atleast one child */
 	{
-		int child_index = node_index * 2;
+		unsigned child_index = node_index * 2;
 		if (child_index + 1 < q->length && q->heap[child_index + 1] < q->heap[child_index])
 			child_index++;
 		if (q->heap[child_index] >= last)

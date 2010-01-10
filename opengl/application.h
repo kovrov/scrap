@@ -1,13 +1,13 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-
+#include <stdbool.h>
 #include "queue.h"
 
 
 typedef struct application_tag Application;
 
-typedef void (RenderCB)(void *data);
+typedef bool (*RenderCB)(void *data);
 
 
 Application * application_new(const char *title);
