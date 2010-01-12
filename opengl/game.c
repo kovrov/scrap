@@ -106,7 +106,7 @@ GameState *game_new(Queue *scheduler, Scene *scene)
 	memset(game->grid, -1, GAME_GRID_WIDTH * GAME_GRID_HEIGHT);
 
 	game->scene = scene;
-	scene_scale(game->scene, 0.05);
+	scene_scale(game->scene, 16.0);
 	game->block_item = scene_item_new();
 	scene_add_item(game->scene, game->block_item);
 //	game->grid_item = scene_item_new();

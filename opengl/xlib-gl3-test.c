@@ -12,16 +12,21 @@
 
 int main(int argc, char **argv)
 {
-	Application *app = NULL;
-	Scene *scene = NULL;
+	Application *app;
+	Scene *scene;
 	GameState *game;
+	ViewPort view_port;
 
 	app = application_new("OpenGL application");
 	scene = scene_new();  /* a gl context have to be created at this point! */
 	game = game_new(application_tasks(app), scene);
 	game_restart(game);
 
-	application_run(app, (RenderCB)&scene_render, scene);
+	view_port.self = scene;
+	view_port.render = (RenderCB)&scene_render;
+	view_port.resize = (ResizeCB)&scene_resize;
+
+	application_run(app, &view_port);
 
 	application_free(app);
 	scene_free(scene);

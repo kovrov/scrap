@@ -1,5 +1,3 @@
-#include "application.h"
-
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
@@ -12,6 +10,8 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
+#include "matrix.h"
+#include "application.h"
 
 struct application_tag
 {
@@ -175,7 +175,7 @@ void application_free(Application *app)
 	app->display = NULL;
 }
 
-void application_run(Application *app, RenderCB render, void *scene)
+void application_run(Application *app, ViewPort *view_port)
 {
 	bool quit = false;
 	int64_t prev_time = 0;
@@ -203,7 +203,7 @@ void application_run(Application *app, RenderCB render, void *scene)
 			else if (xev.type == ConfigureNotify)
 			{
 				XConfigureEvent *ev = (XConfigureEvent *)&xev;
-				glViewport(0, 0, ev->width, ev->height);
+				view_port->resize(view_port->self, ev->width, ev->height);
 			}
 		}
 
@@ -234,7 +234,7 @@ void application_run(Application *app, RenderCB render, void *scene)
 		if (!task->update(task, now))
 			queue_insert(app->tasks, task);
 
-		if (scene_render(scene))
+		if (view_port->render(view_port->self))
 			glXSwapBuffers(app->display, app->window);
 
 		num_frames++;

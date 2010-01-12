@@ -1,4 +1,4 @@
-SOURCES=xlib-gl3-test.c game.c application.c scene.c queue.c
+SOURCES=xlib-gl3-test.c game.c application.c scene.c queue.c matrix.c
 
 CC=gcc
 CFLAGS=-g -W

@@ -11,6 +11,7 @@ typedef struct Scene_tag Scene;
 
 Scene * scene_new();
 void scene_free(Scene *scene);
+void scene_resize(Scene *scene, int width, int height);
 bool scene_render(Scene *scene);
 void scene_add_item(Scene *, SceneItem *);
 void scene_scale(Scene *, float);

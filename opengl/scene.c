@@ -2,13 +2,13 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
-
 #include <assert.h>
 
 #define GL_GLEXT_PROTOTYPES 1
 #define GLX_GLXEXT_PROTOTYPES 1
 #include <GL/gl.h>
 
+#include "matrix.h"
 #include "scene.h"
 
 
@@ -17,6 +17,7 @@
 
 const char* vertexSrc =
 	"uniform mat4 u_matrix;"
+	"uniform mat4 u_projection_matrix;"
 	"attribute vec2 a_position;"
 	"attribute vec3 a_color;"
 
@@ -29,6 +30,7 @@ const char* vertexSrc =
 		"position.z = 0.0;"
 		"position.w = 1.0;"
 		"gl_Position = u_matrix * position;"
+		"gl_Position = u_projection_matrix * gl_Position;"
 
 		"color = a_color;"
 	"}";
@@ -82,8 +84,10 @@ struct Scene_tag
 {
 	SceneItem *block_item;
 	SceneItem *grid_item;
-	GLfloat matrix[4][4];
+	Matrix modelview_matrix;
+	Matrix projection_matrix;
 	int matrix_location;
+	int projection_matrix_location;
 };
 
 
@@ -106,6 +110,13 @@ Scene * scene_new()
 		exit(1);
 	}
 
+	scene->projection_matrix_location = glGetUniformLocation(shaderProgram, "u_projection_matrix");
+	if(scene->projection_matrix_location < 0)
+	{
+		printf("Unable to get uniform location\n");
+		exit(1);
+	}
+
 	g_vertices_index = glGetAttribLocation(shaderProgram, "a_position");
 	if(g_vertices_index < 0)
 	{
@@ -120,17 +131,12 @@ Scene * scene_new()
 		exit(1);
 	}
 
-
-
 	scene->block_item = NULL;///scene_item_new();
 	scene->grid_item = scene_item_new();
 
 	// identity
-    memset(scene->matrix, 0x0, sizeof(scene->matrix));
-    scene->matrix[0][0] = 1.0f;
-    scene->matrix[1][1] = 1.0f;
-    scene->matrix[2][2] = 1.0f;
-    scene->matrix[3][3] = 1.0f;
+	matrix_init_identity(&scene->modelview_matrix);
+	printf("* BEFORE!\n");
 
 	return scene;
 }
@@ -143,13 +149,26 @@ void scene_free(Scene *scene)
 	free(scene);
 }
 
+void scene_resize(Scene *scene, int width, int height)
+{
+	//scene->world_scale = 1.0 / (width > height ? width : height);
+
+	glViewport(0, 0, width, height);
+
+	matrix_init_ortho(&scene->projection_matrix, 0.0, width, 0.0, height, -1.0, 1.0);
+	//matrix_init_identity(&scene->projection_matrix);
+	printf("* AFTER?!\n");
+
+	//matrix_op_mul(&scene->projection_matrix, &scene->projection_matrix, &scene->modelview_matrix);
+}
 
 bool scene_render(Scene *scene)
 { $_DBG_FN
 	glClearColor(0, 1, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glUniformMatrix4fv(scene->matrix_location, 1, GL_FALSE, &scene->matrix[0][0]);
+	glUniformMatrix4fv(scene->matrix_location, 1, GL_FALSE, (GLfloat*)&scene->modelview_matrix);
+	glUniformMatrix4fv(scene->projection_matrix_location, 1, GL_FALSE, (GLfloat*)&scene->projection_matrix);
 
 	scene_item_draw(scene->block_item);
 
@@ -164,20 +183,8 @@ void scene_add_item(Scene *scene, SceneItem *item)
 
 void scene_scale(Scene *scene, float scale)
 {
-    scene->matrix[0][0] *= scale;
-    scene->matrix[0][1] *= scale;
-    scene->matrix[0][2] *= scale;
-    scene->matrix[0][3] *= scale;
-
-    scene->matrix[1][0] *= scale;
-    scene->matrix[1][1] *= scale;
-    scene->matrix[1][2] *= scale;
-    scene->matrix[1][3] *= scale;
-
-    scene->matrix[2][0] *= scale;
-    scene->matrix[2][1] *= scale;
-    scene->matrix[2][2] *= scale;
-    scene->matrix[2][3] *= scale;
+	//glScalef(scale, scale, scale);
+	matrix_mul_f(&scene->modelview_matrix, &scene->modelview_matrix, scale);
 }
 
 

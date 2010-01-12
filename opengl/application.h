@@ -6,16 +6,23 @@
 
 
 typedef struct application_tag Application;
+typedef struct ViewPort_tag ViewPort;
+typedef bool (*RenderCB)(void *);
+typedef void (*ResizeCB)(void *, int, int);
 
-typedef bool (*RenderCB)(void *data);
+struct ViewPort_tag
+{
+	void *self;
+	RenderCB render;
+	ResizeCB resize;
+};
 
+Application * application_new(const char *);
 
-Application * application_new(const char *title);
+void application_free(Application *);
 
-void application_free(Application *app);
+void application_run(Application *, ViewPort *);
 
-void application_run(Application *app, RenderCB render, void *scene);
-
-Queue * application_tasks(Application *app);
+Queue * application_tasks(Application *);
 
 #endif
